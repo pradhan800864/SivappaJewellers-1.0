@@ -25,7 +25,7 @@ const BlogDetails = () => {
       <div className="blogDetailsSection">
         <div className="blogDetailsSectionContainer">
           <div className="blogDetailsHeading">
-            <h2>5 Tips to Increase Your Online Sales</h2>
+            <h2>Guide to Choosing Kids Bracelet With the Right Fit</h2>
             <div className="blogDetailsMetaData">
               <span>by admin</span>
               <span>May 19, 2023</span>
@@ -98,7 +98,7 @@ const BlogDetails = () => {
           </div>
           <div className="blogDetailsContentImg">
             <img src={blogimage1} alt="" />
-            <img src={blogimage2} alt="" />
+            {/* <img src={blogimage2} alt="" /> */}
           </div>
           <div className="blogDetailsContent">
             <p>

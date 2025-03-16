@@ -152,4 +152,16 @@
   .heroColorBtn {
     bottom: 10px;
   }
+
+  .imageSlider {
+    width: 100%;
+    max-width: 500px; /* Adjust as needed */
+    margin: auto;
+  }
+  
+  .imageSlider img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
 }

@@ -22,7 +22,7 @@ const ContactPage = () => {
         <h2>Contact Us</h2>
         <div className="contactMap">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d49206.16593395236!2d2.5776979486328124!3d39.57346430000001!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x129793280de39c05%3A0x85d5f5ea839d6c2a!2sUOMO!5e0!3m2!1sen!2sin!4v1708798894132!5m2!1sen!2sin"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3872.4843769043555!2d78.045081!3d15.8333229!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bb5e7669b62db2f:0xded0185e3645c62b!2sSri%20Sivappa%20Jewellers!5e0!3m2!1sen!2sin!4v1708798894132!5m2!1sen!2sin"
             width="800"
             height="600"
             allowfullscreen=""
@@ -34,15 +34,15 @@ const ContactPage = () => {
         <div className="contactInfo">
           <div className="contactAddress">
             <div className="address">
-              <h3>Store in London</h3>
+              <h3>Store in Kurnool</h3>
               <p>
-                1418 River Drive, Suite 35 Cottonhall, CA 9622
-                <br /> United Kingdom
+                Shop No:4, Police Quarters, Kurnool
+                <br /> Andhra Pradesh
               </p>
               <p>
-                admin@dummymail.com
+                sivappajeweller@gmail.com
                 <br />
-                +44 20 7123 4567
+                +91 94402557666
               </p>
             </div>
             <div className="address">

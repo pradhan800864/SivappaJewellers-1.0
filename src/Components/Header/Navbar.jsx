@@ -46,8 +46,8 @@ const Navbar = () => {
       <nav className="navBar">
         <div className="logoLinkContainer">
           <div className="logoContainer">
-            <Link to="/" onClick={scrollToTop}>
-              <img src={logo} alt="Logo" />
+            <Link to="/" onClick={scrollToTop} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <h2> Sivappa Jewellers</h2>
             </Link>
           </div>
           <div className="linkContainer">

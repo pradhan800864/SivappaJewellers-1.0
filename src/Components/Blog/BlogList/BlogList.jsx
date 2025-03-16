@@ -18,15 +18,12 @@ const BlogList = () => {
       <div className="blogListSection">
         <div className="blogListHeaderContainer">
           <div className="blogListHeader">
-            <h2>The Blog</h2>
+            <h2>Our Blog's</h2>
             <div className="blogListHeaderCategories">
-              <p>ALL</p>
-              <p>COMPANY</p>
-              <p className="activeCategory">FASHION</p>
-              <p>STYLE</p>
-              <p>TRENDS</p>
-              <p>BEAUTY</p>
-            </div>
+            <p>NEW COLLECTIONS</p>
+            <p className="activeCategory">TRENDING JEWELRY</p>
+            <p>GEMSTONES & METALS</p>
+          </div>
           </div>
         </div>
         <div className="blogPostListContainer">
