@@ -1,7 +1,6 @@
 import React from "react";
 import "./Services.css";
 
-import { FaCartFlatbedSuitcase } from "react-icons/fa6";
 import { TfiHeadphoneAlt } from "react-icons/tfi";
 import { MdVerified } from "react-icons/md";
 import { AiOutlineReload } from "react-icons/ai";

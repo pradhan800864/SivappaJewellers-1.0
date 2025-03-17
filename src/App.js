@@ -17,8 +17,10 @@ import Authentication from "./Pages/Authentication";
 import ResetPass from "./Components/Authentication/Reset/ResetPass";
 import BlogDetails from "./Components/Blog/BlogDetails/BlogDetails";
 import TermsConditions from "./Pages/TermsConditions";
+import Profile from "./Pages/Profile";
 import ShoppingCart from "./Components/ShoppingCart/ShoppingCart";
 import Popup from "./Components/PopupBanner/Popup";
+import { AuthProvider } from "./Context/AuthContext";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
@@ -26,6 +28,7 @@ const App = () => {
     <>
       <Popup />
       <ScrollToTop />
+      <AuthProvider>
       <BrowserRouter>
         <Header />
         <Routes>
@@ -34,6 +37,7 @@ const App = () => {
           <Route path="/shop" element={<Shop />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/product" element={<ProductDetails />} />
           <Route path="/loginSignUp" element={<Authentication />} />
           <Route path="/resetPassword" element={<ResetPass />} />
@@ -45,6 +49,7 @@ const App = () => {
         <Footer />
         <Toaster />
       </BrowserRouter>
+      </AuthProvider>
     </>
   );
 };

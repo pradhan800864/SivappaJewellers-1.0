@@ -4,7 +4,6 @@ import "./BlogDetails.css";
 
 import blogdetail1 from "../../../Assets/Blog/blogDetail1.jpg";
 import blogimage1 from "../../../Assets/Blog/blogDetail2.jpg";
-import blogimage2 from "../../../Assets/Blog/blogDetail3.jpg";
 
 import { FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
