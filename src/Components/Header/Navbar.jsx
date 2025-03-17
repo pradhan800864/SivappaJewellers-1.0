@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Navbar.css";
 
 import { useSelector } from "react-redux";
@@ -27,7 +27,7 @@ const Navbar = () => {
   const cart = useSelector((state) => state.cart);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const [user, setUser] = useState(null);
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
     document.body.style.overflow = mobileMenuOpen ? "auto" : "hidden";
@@ -39,6 +39,36 @@ const Navbar = () => {
       behavior: "smooth",
     });
   };
+
+  // ✅ Fetch logged-in user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return; // If no token, user is not logged in
+
+      console.log(token)
+
+      try {
+        const response = await fetch("http://localhost:4998/api/users/me", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+
+        console.log(data)
+        if (response.ok) {
+          setUser(data); // Set user data
+        } else {
+          console.error("Failed to fetch user:", data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   return (
     <>
@@ -82,9 +112,12 @@ const Navbar = () => {
         </div>
         <div className="iconContainer">
           <FiSearch size={22} onClick={scrollToTop} />
-          <Link to="/loginSignUp" onClick={scrollToTop}>
+          
+          <Link to={user ? "/profile" : "/loginSignUp"} onClick={scrollToTop} className="userContainer">
             <FaRegUser size={22} />
+            {user && <span className="userGreeting">Hi, {user.username.toUpperCase()}</span>}
           </Link>
+
           <Link to="/cart" onClick={scrollToTop}>
             <Badge
               badgeContent={cart.items.length === 0 ? "0" : cart.items.length}

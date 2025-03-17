@@ -1,6 +1,5 @@
 import React from "react";
 import "./Footer.css";
-import logo from "../../Assets/logo.png";
 import paymentIcon from "../../Assets/paymentIcon.png";
 import { FaFacebookF } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";

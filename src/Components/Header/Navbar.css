@@ -244,3 +244,17 @@
 .mobile-menuSocial_links svg {
   cursor: pointer;
 }
+
+.userContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between icon and text */
+  text-decoration: none;
+  color: inherit;
+}
+
+.userGreeting {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
