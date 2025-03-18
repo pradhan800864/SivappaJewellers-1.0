@@ -1,32 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import * as THREE from "three"; // ✅ Import THREE.js for material changes
 
-export function Model({ color, ...props }) {
-  const { nodes, materials } = useGLTF("/shirt_baked_2.glb");
+export function Model(props) {
+  const { nodes, materials } = useGLTF("/diamond_ring.glb");
   const modelRef = useRef();
 
-  const [scale, setScale] = useState([1, 1, 1]);
-  const [position, setPosition] = useState([1, 1, 1]);
-
   useEffect(() => {
-    function updateScale() {
-      const width = window.innerWidth;
-      if (width < 600) {
-        setScale([13, 13, 13]);
-        setPosition([0, -1, 0]);
-      } else if (width >= 600 && width < 1200) {
-        setPosition([0, 0, 0]);
-      } else {
-        setScale([12, 12, 12]);
-        setPosition([0, 0, 0]);
-      }
+    if (materials.wire_143225087) {
+      materials.wire_143225087.color.set("#FFD700"); // ✅ Real Gold Color
+      materials.wire_143225087.metalness = 1; // ✅ Full metallic effect
+      materials.wire_143225087.roughness = 0.2; // ✅ Smooth & reflective
     }
-
-    updateScale();
-
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
   }, []);
 
   useFrame(() => {
@@ -35,28 +21,16 @@ export function Model({ color, ...props }) {
     }
   });
 
-  useEffect(() => {
-    Object.values(materials).forEach((material) => {
-      material.color.set(color);
-    });
-  }, [color, materials]);
-
   return (
-    <group
-      ref={modelRef}
-      {...props}
-      dispose={null}
-      position={position}
-      scale={scale}
-    >
+    <group ref={modelRef} {...props} dispose={null} position={[0, -1, 0]} scale={[0.15, 0.15, 0.15]}>
       <mesh
-        geometry={nodes.T_Shirt_male.geometry}
-        material={materials.lambert1}
-        position={[0.419, -0.2, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
+        geometry={nodes.OBJ_1.geometry}
+        material={materials.wire_143225087}
+        position={[0, 0, 0]}
+        rotation={[0, 0, 0]}
       />
     </group>
   );
 }
 
-useGLTF.preload("/shirt_baked_2.glb");
+useGLTF.preload("/diamond_ring.glb");
