@@ -230,3 +230,38 @@ button:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
+
+.stepTwoButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.skipButton {
+  background: none;
+  border: 2px solid #c32929;
+  color: #c32929;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.skipButton:hover {
+  background: #c32929;
+  color: white;
+}
+
+.doneButton {
+  background: #c32929;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.doneButton:hover {
+  background: #a41f1f;
+}

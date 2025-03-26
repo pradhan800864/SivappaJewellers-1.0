@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProfilePage.css";
 import { toast } from "react-hot-toast";
+import ReferralsPage from "../Referrals/ReferralsPage"; // ✅ Import Referrals Component
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -64,10 +65,9 @@ const ProfilePage = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          id: user.id, // ✅ Send user ID
+          id: user.id, 
           username: formData.username,
           email: formData.email,
           mobile_number: formData.mobile_number,
@@ -141,12 +141,8 @@ const ProfilePage = () => {
           </>
         )}
 
-        {/* ✅ Referrals Section (Without Copy Button) */}
-        {activeTab === "Referrals" && (
-          <div className="referralSection">
-            <p><strong>Your Referral Code:</strong> {user.referral_code}</p>
-          </div>
-        )}
+        {/* ✅ Referrals Section */}
+        {activeTab === "Referrals" && <ReferralsPage user={user} />}
       </div>
     </div>
   );
