@@ -36,10 +36,28 @@ router.post("/register", async (req, res) => {
         [referral_code]
       );
 
-      if (referrer.rows.length > 0) {
-        referrerId = referrer.rows[0].id; // Store referrer ID
-      } else {
+      if (referrer.rows.length === 0) {
         return res.status(400).json({ error: "Invalid referral code" });
+      }
+
+      referrerId = referrer.rows[0].id;
+
+      // ✅ Get company user ID (to exclude from the child limit check)
+      const companyUser = await pool.query(
+        "SELECT id FROM users WHERE username = 'COMPANY'"
+      );
+      const companyUserId = companyUser.rows[0]?.id;
+
+      // ✅ Check if referrer has already 2 children (except Company)
+      if (referrerId !== companyUserId) {
+        const childCount = await pool.query(
+          "SELECT COUNT(*) FROM users WHERE referrer_id = $1",
+          [referrerId]
+        );
+
+        if (parseInt(childCount.rows[0].count) >= 2) {
+          return res.status(400).json({ error: "This user has already reached the maximum of 2 referrals." });
+        }
       }
     }
 
