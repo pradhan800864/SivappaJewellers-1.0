@@ -176,4 +176,24 @@
   .profileDetails input:focus {
     border-color: #c32929;
   }
+  .referralList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
   
+  .referralItem {
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  .referralItem p {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+  
+  .referralItem strong {
+    font-weight: 600;
+  }

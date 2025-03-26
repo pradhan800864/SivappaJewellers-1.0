@@ -1,32 +1,25 @@
--- Drop existing table if it exists (to reset the schema)
+-- 🔹 Drop existing table if it exists (use with caution in production)
 DROP TABLE IF EXISTS users;
 
--- Create the users table
+-- 🔹 Create users table
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    mobile_number VARCHAR(15) UNIQUE NOT NULL,
-    referral_code VARCHAR(14) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,               -- Auto-incrementing user ID
+    username VARCHAR(255) NOT NULL,      -- Username (Required)
+    email VARCHAR(255) UNIQUE NOT NULL,  -- Email (Must be unique)
+    password TEXT NOT NULL,              -- Encrypted Password
+    mobile_number VARCHAR(20) UNIQUE NOT NULL, -- Mobile (Must be unique)
+    referral_code VARCHAR(15) UNIQUE,    -- User's unique referral code
+    referrer_id INT,                     -- Parent user (who referred them)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Auto timestamp
+
+    -- 🔹 Foreign Key Constraint (Links referrer_id to another user)
+    CONSTRAINT fk_referrer FOREIGN KEY (referrer_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- ✅ Generate Unique Referral Codes for Existing Users
-UPDATE users 
-SET referral_code = 
-  (SELECT 
-     CONCAT(
-       UPPER(SUBSTRING(MD5(random()::text), 1, 4)), '-',
-       UPPER(SUBSTRING(MD5(random()::text), 5, 4)), '-',
-       UPPER(SUBSTRING(MD5(random()::text), 9, 4))
-     ))
-WHERE referral_code IS NULL;
+-- 🔹 Indexes for faster lookups
+CREATE UNIQUE INDEX idx_referral_code ON users(referral_code);
+CREATE INDEX idx_referrer_id ON users(referrer_id);
 
--- ✅ Ensure referral_code is NOT NULL after assigning values
-ALTER TABLE users ALTER COLUMN referral_code SET NOT NULL;
-
--- ✅ Sample Data (Optional)
-INSERT INTO users (username, email, password, mobile_number, referral_code) VALUES 
-('JohnDoe', 'john@example.com', '$2a$10$abcdef1234567890', '1234567890', 'ABCD-EFGH-IJKL'),
-('JaneDoe', 'jane@example.com', '$2a$10$abcdef1234567890', '0987654321', 'MNOP-QRST-UVWX');
+-- 🔹 Insert default "Company" user (Referrer for direct signups)
+INSERT INTO users (username, email, password, mobile_number, referral_code)
+VALUES ('COMPANY', 'company@gmail.com', 'hashedpassword', '0000000000', 'COMPANY-001');
