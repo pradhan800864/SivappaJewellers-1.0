@@ -94,7 +94,7 @@ const LoginSignUp = () => {
           toast.success("Registration successful! Please log in.", { duration: 3000 });
           setActiveTab("tabButton1"); // ✅ Switch to Login Tab Automatically
         }
-      } else if (data.error === "User has reached the maximum number of children (2).") {
+      } else if (data.error === "This user has already reached the maximum of 2 referrals.") {
         toast.error("User has reached the maximum number of referrals allowed.", { duration: 3000 });
       }
       else {

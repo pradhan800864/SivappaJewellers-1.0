@@ -145,7 +145,7 @@ const ReferralsPage = ({ user }) => {
           <h4>Users You Referred</h4>
           {referrals.map((child, index) => (
             <p key={child.id}>
-              <strong>User{index + 1}:</strong> {child.username.toUpperCase()}
+              <strong>{index + 1}:</strong> {child.username.toUpperCase()}
             </p>
           ))}
         </div>
