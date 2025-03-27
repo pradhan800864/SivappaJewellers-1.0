@@ -41,6 +41,35 @@
   width: 100%;
 }
 
+
+.col-link-men {
+  display: flex;
+  color: white;
+}
+
+.col-link-men a {
+  position: relative;
+  color: white;
+}
+
+.men-shop-color {
+  color: white;
+}
+.col-link-men a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  width: 50%;
+  border-bottom: 2px solid white;
+  transition: width 0.2s ease;
+}
+
+.col-link-men a:hover::after {
+  width: 100%;
+  color: white;
+}
+
 .collectionRight {
   display: grid;
   grid-template-rows: 1fr 1fr;
@@ -50,12 +79,14 @@
 .collectionTop {
   background-image: url("../../../Assets/Collection/collection2.jpg");
   background-size: cover;
-  background-position: center;
+  background-position: 50% 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 30px;
   background-color: #eff0f1;
+  color: white;
+
 }
 
 .collectionBottom {
