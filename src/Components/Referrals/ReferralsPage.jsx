@@ -101,7 +101,6 @@ const ReferralsPage = ({ user }) => {
 
   return (
     <div className="referralList">
-      <h3>My Referrals</h3>
 
       {/* ✅ Logged-in User’s Referral Code */}
       <p><strong>Your Referral Code:</strong> {user.referral_code}</p>
