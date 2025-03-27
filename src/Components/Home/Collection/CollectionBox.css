@@ -9,8 +9,9 @@
 
 .collectionLeft {
   background-image: url("../../../Assets/Collection/collection1.jpg");
-  background-size: cover;
-  background-position: center center;
+  background-size:cover; /* ✅ Ensures full image fits inside */
+  background-repeat: no-repeat; /* ✅ Prevents repeating */
+  background-position: 50% 80%;
   padding: 30px;
   display: flex;
   flex-direction: column;
@@ -66,12 +67,14 @@
 .box1 {
   background-image: url("../../../Assets/Collection/collection3.jpg");
   background-size: cover;
-  background-position: center;
+  background-position: 100% 90%; /* ✅ Moves image 10% to the right */
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 30px;
   background-color: #eff0f1;
+  align-items: flex-end; /* ✅ Aligns everything to the right */
+  text-align: right; /* ✅ Aligns text from right to left */
 }
 
 .box2 {

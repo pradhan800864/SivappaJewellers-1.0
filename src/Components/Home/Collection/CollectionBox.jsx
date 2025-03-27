@@ -17,8 +17,9 @@ const CollectionBox = () => {
         <div className="collectionLeft">
           <p className="col-p">Hot List</p>
           <h3 className="col-h3">
-            <span>Women</span> Collection
+            <span>Oriana</span> Collection
           </h3>
+          <p>Light weight jewellery</p>
           <div className="col-link">
             <Link to="/shop" onClick={scrollToTop}>
               <h5>Shop Now</h5>
