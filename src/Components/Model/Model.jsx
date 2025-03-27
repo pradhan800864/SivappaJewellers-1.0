@@ -18,28 +18,17 @@ export function Model(props) {
       materials.wire_143225087.roughness = 0.2;
     }
 
-    // ✅ Diamond Material (Make it shine like a real diamond)
     if (materials.wire_215215215) {
-      materials.wire_215215215.color.set("#FFFFFF");
-      materials.wire_215215215.metalness = 0;
-      materials.wire_215215215.roughness = 0;
-      materials.wire_215215215.transparent = true;
-      materials.wire_215215215.opacity = 30;
-      materials.wire_215215215.ior = 2.42; // Real diamond IOR
-      materials.wire_215215215.transmission = 1; // Makes it transparent
-      materials.wire_215215215.clearcoat = 1;
+      materials.wire_215215215.color.set("#FF1744"); // Pure White for Diamond
+      materials.wire_215215215.metalness = 0.9; // Almost fully metallic
+      materials.wire_215215215.roughness = 0; // Fully smooth (like glass)
+      materials.wire_215215215.transparent = true; 
+      materials.wire_215215215.opacity = 0.95;
+      materials.wire_215215215.transmission = 1; // ✅ Adds Refraction
+      materials.wire_215215215.ior = 2.417; // ✅ Realistic Diamond IOR (Index of Refraction)
+      materials.wire_215215215.reflectivity = 1; // ✅ High reflectivity
+      materials.wire_215215215.clearcoat = 1; // ✅ Extra Shiny Layer
       materials.wire_215215215.clearcoatRoughness = 0;
-      materials.wire_215215215.reflectivity = 1;
-
-      // ✅ Enhancements for realistic diamond shine
-      materials.wire_215215215.iridescence = 1; // Adds colorful reflections
-      materials.wire_215215215.iridescenceIOR = 1.3; // Bends light slightly
-      materials.wire_215215215.iridescenceThicknessRange = [200, 500]; // Light dispersion effect
-
-      materials.wire_215215215.anisotropy = 0.5; // Makes light bend inside
-      materials.wire_215215215.anisotropyRotation = Math.PI / 4; // Controls light distortion
-
-      materials.wire_215215215.dispersion = 0.1; // Adds slight rainbow effect (simulated caustics)
     }
   }, []);
 
