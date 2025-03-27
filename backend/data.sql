@@ -1,7 +1,13 @@
--- 🔹 Drop existing table if it exists (use with caution in production)
+-- 🔹 Step 1: Create Database (If Not Exists)
+CREATE DATABASE gold_ecommerce;
+
+-- 🔹 Step 2: Connect to the Database
+\c gold_ecommerce;
+
+-- 🔹 Step 3: Drop the `users` table if it exists (Use with caution in production)
 DROP TABLE IF EXISTS users;
 
--- 🔹 Create users table
+-- 🔹 Step 4: Create `users` Table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,               -- Auto-incrementing user ID
     username VARCHAR(255) NOT NULL,      -- Username (Required)
@@ -16,10 +22,11 @@ CREATE TABLE users (
     CONSTRAINT fk_referrer FOREIGN KEY (referrer_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- 🔹 Indexes for faster lookups
+-- 🔹 Step 5: Add Indexes for Faster Performance
 CREATE UNIQUE INDEX idx_referral_code ON users(referral_code);
 CREATE INDEX idx_referrer_id ON users(referrer_id);
 
--- 🔹 Insert default "Company" user (Referrer for direct signups)
+-- 🔹 Step 6: Insert Default "Company" User (Referrer for Direct Signups)
 INSERT INTO users (username, email, password, mobile_number, referral_code)
-VALUES ('COMPANY', 'company@gmail.com', 'hashedpassword', '0000000000', 'COMPANY-001');
+VALUES ('COMPANY', 'company@gmail.com', 'securepassword', '0000000000', 'COMPANY-001')
+ON CONFLICT (email) DO NOTHING;
