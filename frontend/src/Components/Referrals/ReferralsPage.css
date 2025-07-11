@@ -1,0 +1,110 @@
+.referralList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .referralItem {
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  .referralItem p {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+  
+  .referralItem strong {
+    font-weight: 600;
+  }
+  .referralList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .referrerSection, .addReferrerSection {
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
+  }
+  
+  .referralItem {
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #fff;
+  }
+  
+  .addReferrerForm {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .addReferrerForm input {
+    padding: 8px;
+    flex: 1;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  button {
+    padding: 8px 15px;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  .joinCompanyButton {
+    background-color: #ff4d4f; /* ✅ Red color */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
+  }
+  
+  .joinCompanyButton:hover {
+    background-color: #cc3c3f;
+  }
+  .buttonContainer {
+    display: flex;
+    flex-direction: column; /* ✅ Stack buttons vertically */
+    gap: 30px; /* ✅ Add space between buttons */
+    align-items: center; /* ✅ Center-align buttons */
+  }
+  
+  .primaryButton, .secondaryButton {
+    background-color: #1b1b1b; /* ✅ Matches Account Settings button */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    width: 40%;  /* ✅ Maintain the current width */
+    min-width: 150px; /* ✅ Prevents buttons from becoming too small */
+    text-align: center;
+  }
+  
+  .primaryButton:hover {
+    background-color: #333;
+  }
+  
+  .secondaryButton {
+    background-color: transparent;
+    color: #1b1b1b;
+    border: 1px solid #1b1b1b;
+  }
+  
+  .secondaryButton:hover {
+    background-color: #1b1b1b;
+    color: white;
+  }
