@@ -1,0 +1,13 @@
+diff --git a/node_modules/@mediapipe/tasks-vision/vision_bundle_mjs.js.map b/node_modules/@mediapipe/tasks-vision/vision_bundle_mjs.js.map
+new file mode 100644
+index 0000000..f51aaaf
+--- /dev/null
++++ b/node_modules/@mediapipe/tasks-vision/vision_bundle_mjs.js.map
+@@ -0,0 +1,7 @@
++{
++  "version": 3,
++  "file": "vision_bundle_mjs.js",
++  "sources": [],
++  "names": [],
++  "mappings": ""
++}

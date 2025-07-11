@@ -1,0 +1,7 @@
+diff --git a/node_modules/@mediapipe/tasks-vision/vision_bundle_mjs.js.map b/node_modules/@mediapipe/tasks-vision/vision_bundle_mjs.js.map
+new file mode 100644
+index 0000000..0967ef4
+--- /dev/null
++++ b/node_modules/@mediapipe/tasks-vision/vision_bundle_mjs.js.map
+@@ -0,0 +1 @@
++{}

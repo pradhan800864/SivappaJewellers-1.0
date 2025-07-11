@@ -1,0 +1,61 @@
+npm install patch-package --save-dev
+mkdir -p node_modules/@mediapi
+
+"scripts": {
+  "postinstall": "patch-package"
+}
+
+Thanks — this new error:
+
+```
+TypeError: Cannot read properties of undefined (reading 'map')
+    at Object.loader (.../node_modules/source-map-loader/...)
+```
+
+means that **`source-map-loader` is trying to parse a `.map` file**, but the content is invalid — likely because we used an **empty `{}`** for the dummy `.map` earlier.
+
+---
+
+### ✅ Fix: Use a Properly Structured Dummy Source Map
+
+Instead of `{}`, use this minimal but **valid** source map JSON:
+
+---
+
+### 🛠️ Step-by-Step
+
+#### 1. Replace your dummy `.map` file with valid content
+
+```bash
+cat <<EOF | tee frontend/node_modules/@mediapipe/tasks-vision/vision_bundle_mjs.js.map > /dev/null
+{
+  "version": 3,
+  "file": "vision_bundle_mjs.js",
+  "sources": [],
+  "names": [],
+  "mappings": ""
+}
+EOF
+```
+
+---
+
+#### 2. Recreate the patch
+
+```bash
+npx patch-package @mediapipe/tasks-vision
+```
+
+---
+
+#### 3. Restart your dev server
+
+```bash
+npm start
+```
+
+✅ This should eliminate the `TypeError` because the `.map` file now has the structure `source-map-loader` expects.
+
+---
+
+Let me know if you want me to generate the `.patch` file or test it against your specific package version.
