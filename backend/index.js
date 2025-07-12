@@ -9,6 +9,10 @@ app.use(express.json()); // Parse JSON requests
 
 // API Routes
 app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api", require("./routes/productRoutes"));
+// Serve images if needed
+app.use("/uploads", express.static("uploads"));
+
 
 // Sample route
 app.get("/", (req, res) => {

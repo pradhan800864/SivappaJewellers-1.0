@@ -19,14 +19,14 @@ import BlogDetails from "./Components/Blog/BlogDetails/BlogDetails";
 import TermsConditions from "./Pages/TermsConditions";
 import Profile from "./Pages/Profile";
 import ShoppingCart from "./Components/ShoppingCart/ShoppingCart";
-import Popup from "./Components/PopupBanner/Popup";
+// import Popup from "./Components/PopupBanner/Popup";
 import { AuthProvider } from "./Context/AuthContext";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
   return (
     <>
-      <Popup />
+      {/* <Popup /> */}
       <ScrollToTop />
       <AuthProvider>
       <BrowserRouter>

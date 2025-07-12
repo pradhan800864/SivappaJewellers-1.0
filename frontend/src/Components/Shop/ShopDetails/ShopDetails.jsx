@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./ShopDetails.css";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -6,19 +6,28 @@ import { addToCart } from "../../../Features/Cart/cartSlice";
 
 import Filter from "../Filters/Filter";
 import { Link } from "react-router-dom";
-import StoreData from "../../../Data/StoreData";
 import { FiHeart } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import { IoFilterSharp, IoClose } from "react-icons/io5";
 import { FaAngleRight, FaAngleLeft } from "react-icons/fa6";
 import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 const ShopDetails = () => {
   const dispatch = useDispatch();
-
+  const [products, setProducts] = useState([]);
   const [wishList, setWishList] = useState({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 9;
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:4998/api/products")
+      .then((res) => setProducts(res.data))
+      .catch((err) => console.error("Failed to fetch products:", err));
+  }, []);
 
   const handleWishlistClick = (productID) => {
     setWishList((prevWishlist) => ({
@@ -77,6 +86,12 @@ const ShopDetails = () => {
     }
   };
 
+  // Pagination logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(products.length / productsPerPage);
+
   return (
     <>
       <div className="shopDetails">
@@ -116,10 +131,11 @@ const ShopDetails = () => {
                 </div>
               </div>
             </div>
+
             <div className="shopDetailsProducts">
               <div className="shopDetailsProductsContainer">
-                {StoreData.slice(0, 6).map((product) => (
-                  <div className="sdProductContainer">
+                {currentProducts.map((product) => (
+                  <div className="sdProductContainer" key={product.productID}>
                     <div className="sdProductImages">
                       <Link to="/Product" onClick={scrollToTop}>
                         <img
@@ -158,17 +174,14 @@ const ShopDetails = () => {
                       </div>
                       <div className="sdProductNameInfo">
                         <Link to="/product" onClick={scrollToTop}>
-                          <h5>{product.productName}</h5>
+                          <h5>{product.name}</h5>
                         </Link>
-
-                        <p>${product.productPrice}</p>
+                        <p>₹{Number(product.final_price).toLocaleString("en-IN")}</p>
                         <div className="sdProductRatingReviews">
                           <div className="sdProductRatingStar">
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
+                            {[...Array(5)].map((_, i) => (
+                              <FaStar key={i} color="#FEC78A" size={10} />
+                            ))}
                           </div>
                           <span>{product.productReviews}</span>
                         </div>
@@ -178,23 +191,48 @@ const ShopDetails = () => {
                 ))}
               </div>
             </div>
+
             <div className="shopDetailsPagination">
               <div className="sdPaginationPrev">
-                <p onClick={scrollToTop}>
+                <p
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                      scrollToTop();
+                    }
+                  }}
+                  style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
+                >
                   <FaAngleLeft />
                   Prev
                 </p>
               </div>
               <div className="sdPaginationNumber">
                 <div className="paginationNum">
-                  <p onClick={scrollToTop}>1</p>
-                  <p onClick={scrollToTop}>2</p>
-                  <p onClick={scrollToTop}>3</p>
-                  <p onClick={scrollToTop}>4</p>
+                  {[...Array(totalPages).keys()].map((pageNum) => (
+                    <p
+                      key={pageNum}
+                      onClick={() => {
+                        setCurrentPage(pageNum + 1);
+                        scrollToTop();
+                      }}
+                      className={currentPage === pageNum + 1 ? "active" : ""}
+                    >
+                      {pageNum + 1}
+                    </p>
+                  ))}
                 </div>
               </div>
               <div className="sdPaginationNext">
-                <p onClick={scrollToTop}>
+                <p
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      setCurrentPage(currentPage + 1);
+                      scrollToTop();
+                    }
+                  }}
+                  style={{ opacity: currentPage === totalPages ? 0.5 : 1 }}
+                >
                   Next
                   <FaAngleRight />
                 </p>
@@ -203,6 +241,7 @@ const ShopDetails = () => {
           </div>
         </div>
       </div>
+
       {/* Drawer */}
       <div className={`filterDrawer ${isDrawerOpen ? "open" : ""}`}>
         <div className="drawerHeader">
