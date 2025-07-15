@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useContext } from "react";
 import "./Navbar.css";
 
 import { useSelector } from "react-redux";
@@ -22,12 +22,12 @@ import { FaYoutube } from "react-icons/fa";
 import { FaPinterest } from "react-icons/fa";
 
 import Badge from "@mui/material/Badge";
+import { AuthContext } from "../../Context/AuthContext";
 
 const Navbar = () => {
   const cart = useSelector((state) => state.cart);
-
+  const { user } = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
     document.body.style.overflow = mobileMenuOpen ? "auto" : "hidden";
@@ -39,36 +39,6 @@ const Navbar = () => {
       behavior: "smooth",
     });
   };
-
-  // ✅ Fetch logged-in user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return; // If no token, user is not logged in
-
-      console.log(token)
-
-      try {
-        const response = await fetch("http://localhost:4998/api/users/me", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = await response.json();
-
-        console.log(data)
-        if (response.ok) {
-          setUser(data); // Set user data
-        } else {
-          console.error("Failed to fetch user:", data.error);
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error);
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   return (
     <>

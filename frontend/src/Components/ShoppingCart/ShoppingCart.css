@@ -4,6 +4,45 @@
   flex-direction: column;
 }
 
+.loginSuccessMsg {
+  padding: 12px;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 4px;
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.returningUserToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.returningUserToggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: black;
+  appearance: auto;
+  cursor: pointer;
+}
+
+.cartPriceCell {
+  vertical-align: middle;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.cartPriceWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  height: 100%;
+  min-height: 100px; /* Matches the product image height */
+  font-size: 16px;
+}
+
 .shoppingCartSection h2 {
   font-size: 35px;
   font-weight: 700;
@@ -1017,4 +1056,11 @@
   .shopCartFooterContainer form button {
     padding: 0 5px;
   }
+}
+.returningUserToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  width: fit-content;
 }

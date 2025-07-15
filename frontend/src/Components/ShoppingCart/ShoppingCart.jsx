@@ -1,22 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./ShoppingCart.css";
 import { useSelector, useDispatch } from "react-redux";
 import {
   removeFromCart,
   updateQuantity,
-  selectCartTotalAmount,
 } from "../../Features/Cart/cartSlice";
-
+import { toast } from "react-hot-toast";
 import { MdOutlineClose } from "react-icons/md";
-
+import { loginUser } from "../../utils/auth";
 import { Link } from "react-router-dom";
-
+import { AuthContext } from "../../Context/AuthContext"; // Update the path as per your project
+import { useContext } from "react";
 import success from "../../Assets/success.png";
 
 const ShoppingCart = () => {
   const cartItems = useSelector((state) => state.cart.items);
   const dispatch = useDispatch();
-
+  // eslint-disable-next-line
+  const { isAuthenticated: isAuthenticatedFromContext, loading, login, user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("cartTab1");
   const [payments, setPayments] = useState(false);
 
@@ -31,8 +32,115 @@ const ShoppingCart = () => {
       dispatch(updateQuantity({ productID: productId, quantity: quantity }));
     }
   };
+  const [storeAddress, setStoreAddress] = useState(null);
+  const [isReturningUser, setIsReturningUser] = useState(false);
+  // eslint-disable-next-line
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    mobile_number: "",
+  });
+  const [createAccount, setCreateAccount] = useState(false);
 
-  const totalPrice = useSelector(selectCartTotalAmount);
+  const [pincode, setPincode] = useState("");
+  const [isPincodeValid, setIsPincodeValid] = useState(false);
+    // eslint-disable-next-line
+  const [nearestLocation, setNearestLocation] = useState(null);
+    // eslint-disable-next-line
+  const [orderCode, setOrderCode] = useState(null);
+
+  const handleCheckPincode = async () => {
+    if (!/^\d{6}$/.test(pincode)) {
+      toast.error("Please enter a valid 6-digit pincode.");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:4998/api/pincode/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pincode }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        setIsPincodeValid(true);
+        setNearestLocation(data.nearestLocation);
+        setOrderCode(data.orderCode);
+        setStoreAddress(data.address);  // NEW
+        toast.success("Pincode validated!");
+      } else {
+        toast.error(data.error || "Pincode validation failed.");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Try again.");
+    }
+  };
+
+  const subtotal = cartItems.reduce(
+    (acc, item) => acc + item.final_price * item.quantity,
+    0
+  );
+  const gst = subtotal * 0.03;
+  const total = subtotal + gst;
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      const result = await loginUser(email, password);
+      if (result.token) {
+        await login(result.token);  // ✅ This updates AuthContext
+        toast.success("Login successful!");
+        setIsReturningUser(false);  // optional: collapse login form
+        setPincode("");             // optional: reset pincode
+      } else {
+        toast.error("Invalid credentials");
+      }
+    } catch (error) {
+      toast.error("Login failed");
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        mobile_number: formData.mobile_number,
+        referral_code: null,
+      };
+  
+      const response = await fetch("http://localhost:4998/api/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        toast.success("Registered successfully!");
+        setCreateAccount(false);
+        setIsReturningUser(true);
+      } else {
+        toast.error(data.error || "Registration failed.");
+      }
+    } catch (error) {
+      toast.error("Server error. Try again later.");
+    }
+  };
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -57,14 +165,6 @@ const ShoppingCart = () => {
   const orderNumber = Math.floor(Math.random() * 100000);
 
   // Radio Button Data
-
-  const [selectedPayment, setSelectedPayment] = useState(
-    "Direct Bank Transfer"
-  );
-
-  const handlePaymentChange = (e) => {
-    setSelectedPayment(e.target.value);
-  };
 
   return (
     <div>
@@ -130,10 +230,10 @@ const ShoppingCart = () => {
                     <thead>
                       <tr>
                         <th>Product</th>
-                        <th></th>
+                        <th>Name</th>
                         <th>Price</th>
                         <th>Quantity</th>
-                        <th>Subtotal</th>
+                        {/* <th>Subtotal</th> */}
                         <th></th>
                       </tr>
                     </thead>
@@ -151,16 +251,18 @@ const ShoppingCart = () => {
                             <td data-label="">
                               <div className="shoppingBagTableProductDetail">
                                 <Link to="/product" onClick={scrollToTop}>
-                                  <h4>{item.productName}</h4>
+                                  <h4>{item.name}</h4>
                                 </Link>
                                 <p>{item.productReviews}</p>
                               </div>
                             </td>
-                            <td
+                            <td className="cartPriceCell"
                               data-label="Price"
                               style={{ textAlign: "center" }}
                             >
-                              ${item.productPrice}
+                              <div className="cartPriceWrapper">
+                                ₹{Number(item.final_price).toLocaleString("en-IN")}
+                              </div>
                             </td>
                             <td data-label="Quantity">
                               <div className="ShoppingBagTableQuantity">
@@ -172,7 +274,7 @@ const ShoppingCart = () => {
                                     )
                                   }
                                 >
-                                  -
+                                  <span style={{ color: "black", fontSize: "20px" }}>-</span>
                                 </button>
                                 <input
                                   type="text"
@@ -194,19 +296,9 @@ const ShoppingCart = () => {
                                     )
                                   }
                                 >
-                                  +
+                                  <span style={{ color: "black", fontSize: "20px" }}>+</span>
                                 </button>
                               </div>
-                            </td>
-                            <td data-label="Subtotal">
-                              <p
-                                style={{
-                                  textAlign: "center",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                ${item.quantity * item.productPrice}
-                              </p>
                             </td>
                             <td data-label="">
                               <MdOutlineClose
@@ -231,7 +323,7 @@ const ShoppingCart = () => {
                       )}
                     </tbody>
                     <tfoot>
-                      <th
+                      <td
                         colSpan="6"
                         className="shopCartFooter"
                         style={{
@@ -250,8 +342,16 @@ const ShoppingCart = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                 }}
+                                style={{
+                                  backgroundColor: "black",
+                                  color: "white",
+                                  padding: "10px 16px",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  cursor: "pointer"
+                                }}
                               >
-                                Apply Coupon
+                               Apply Coupon
                               </button>
                             </form>
                             <button
@@ -264,7 +364,7 @@ const ShoppingCart = () => {
                             </button>
                           </div>
                         )}
-                      </th>
+                      </td>
                     </tfoot>
                   </table>
 
@@ -321,7 +421,7 @@ const ShoppingCart = () => {
                                       +
                                     </button>
                                   </div>
-                                  <span>${item.productPrice}</span>
+                                  <span>₹{Number(item.final_price).toLocaleString("en-IN")}</span>
                                 </div>
                                 <div className="shoppingBagTableMobileItemsDetailTotal">
                                   <MdOutlineClose
@@ -330,7 +430,7 @@ const ShoppingCart = () => {
                                       dispatch(removeFromCart(item.productID))
                                     }
                                   />
-                                  <p>${item.quantity * item.productPrice}</p>
+                                  <p>₹{Number(item.quantity * item.final_price).toLocaleString("en-IN")}</p>
                                 </div>
                               </div>
                             </div>
@@ -373,42 +473,6 @@ const ShoppingCart = () => {
                   </div>
                 </div>
                 <div className="shoppingBagTotal">
-                  <h3>Cart Totals</h3>
-                  <table className="shoppingBagTotalTable">
-                    <tbody>
-                      <tr>
-                        <th>Subtotal</th>
-                        <td>${totalPrice.toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <th>Shipping</th>
-                        <td>
-                          <div className="shoppingBagTotalTableCheck">
-                            <p>${(totalPrice === 0 ? 0 : 5).toFixed(2)}</p>
-                            <p>Shipping to Al..</p>
-                            <p
-                              onClick={scrollToTop}
-                              style={{
-                                cursor: "pointer",
-                              }}
-                            >
-                              CHANGE ADDRESS
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>VAT</th>
-                        <td>${(totalPrice === 0 ? 0 : 11).toFixed(2)}</td>
-                      </tr>
-                      <tr>
-                        <th>Total</th>
-                        <td>
-                          ${(totalPrice === 0 ? 0 : totalPrice + 16).toFixed(2)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
                   <button
                     onClick={() => {
                       handleTabClick("cartTab2");
@@ -427,190 +491,232 @@ const ShoppingCart = () => {
               <div className="checkoutSection">
                 <div className="checkoutDetailsSection">
                   <h4>Billing Details</h4>
-                  <div className="checkoutDetailsForm">
-                    <form>
-                      <div className="checkoutDetailsFormRow">
-                        <input type="text" placeholder="First Name" />
-                        <input type="text" placeholder="Last Name" />
-                      </div>
+
+                  {/* Show checkbox only if not authenticated */}
+                  {!isAuthenticatedFromContext && !isReturningUser && (
+                    <div className="returningUserToggle">
                       <input
-                        type="text"
-                        placeholder="Company Name (optional)"
+                        type="checkbox"
+                        id="returningUserCheckbox"
+                        checked={isReturningUser}
+                        onChange={() => setIsReturningUser(true)}
                       />
-                      <select name="country" id="country">
-                        <option value="Country / Region" selected disabled>
-                          Country / Region
-                        </option>
-                        <option value="India">India</option>
-                        <option value="Canada">Canada</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                        <option value="United States">United States</option>
-                        <option value="Turkey">Turkey</option>
-                      </select>
-                      <input type="text" placeholder="Street Address*" />
-                      <input type="text" placeholder="" />
-                      <input type="text" placeholder="Town / City *" />
-                      <input type="text" placeholder="Postcode / ZIP *" />
-                      <input type="text" placeholder="Phone *" />
-                      <input type="mail" placeholder="Your Mail *" />
-                      <div className="checkoutDetailsFormCheck">
-                        <label>
-                          <input type="checkbox" />
-                          <p>Create An Account?</p>
+                      <label htmlFor="returningUserCheckbox">
+                        Sign In Already Registered User
+                      </label>
+                    </div>
+                  )}
+
+                  <div className="checkoutDetailsForm">
+                    {loading ? (
+                      <p>Checking authentication...</p>
+                    ) : isAuthenticatedFromContext ? (
+                      // ✅ If authenticated, show success message & pincode
+                      <>
+                        <p className="loginSuccessMsg">
+                          🗝️ Authentication Successful. Please enter pincode to check the product availability in near by stores.
+                        </p>
+                        <div className="pincodeCheckSection" style={{ marginTop: "16px" }}>
+                          <input
+                            type="text"
+                            placeholder="Enter Pincode"
+                            style={{
+                              padding: "10px",
+                              width: "200px",
+                              marginRight: "10px",
+                              borderRadius: "4px",
+                              border: "1px solid #ccc"
+                            }}
+                            value={pincode}
+                            onChange={(e) => setPincode(e.target.value)}
+                            maxLength={6}
+                          />
+                          <button
+                            style={{
+                              backgroundColor: "black",
+                              color: "white",
+                              padding: "10px 16px",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer"
+                            }}
+                            onClick={handleCheckPincode}
+                          >
+                            Check Availability
+                          </button>
+                          {isPincodeValid && (
+                            <div style={{ marginTop: "10px", color: "green" }}>
+                              📍 Pincode Validated 
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : isReturningUser ? (
+                      // ✅ Login form
+                      <form>
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <input
+                          type="password"
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleLogin}
+                          style={{
+                            backgroundColor: "black",
+                            color: "white",
+                            padding: "10px 20px",
+                            border: "none",
+                            borderRadius: "4px",
+                            cursor: "pointer",
+                            marginTop: "10px"
+                          }}
+                        >
+                          Login
+                        </button>
+                      </form>
+                    ) : (
+                      // ✅ Registration form
+                      <form>
+                        <input
+                          type="text"
+                          placeholder="Username *"
+                          value={formData.username}
+                          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        />
+                        <input
+                          type="tel"
+                          placeholder="Mobile Number *"
+                          value={formData.mobile_number}
+                          onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
+                        />
+                        <input
+                          type="email"
+                          placeholder="Email *"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        />
+                        <input
+                          type="password"
+                          placeholder="Password *"
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        />
+
+                        <label className="returningUserToggle">
+                          <input
+                            type="checkbox"
+                            checked={createAccount}
+                            onChange={() => setCreateAccount(!createAccount)}
+                          />
+                          Create An Account?
                         </label>
-                        <label>
-                          <input type="checkbox" />
-                          <p>Ship to a different Address</p>
-                        </label>
-                      </div>
-                      <textarea
-                        cols={30}
-                        rows={8}
-                        placeholder="Order Notes (Optional)"
-                      />
-                    </form>
+
+                        {createAccount && (
+                          <button
+                            type="button"
+                            className="registerBtn"
+                            onClick={handleRegister}
+                            style={{
+                              backgroundColor: "black",
+                              color: "white",
+                              padding: "10px 20px",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginTop: "10px"
+                            }}
+                          >
+                            Register
+                          </button>
+                        )}
+                      </form>
+                    )}
                   </div>
                 </div>
+
+
+
                 <div className="checkoutPaymentSection">
-                  <div className="checkoutTotalContainer">
-                    <h3>Your Order</h3>
-                    <div className="checkoutItems">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>PRODUCTS</th>
-                            <th>SUBTOTALS</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {cartItems.map((items) => (
-                            <tr>
-                              <td>
-                                {items.productName} x {items.quantity}
-                              </td>
-                              <td>${items.productPrice * items.quantity}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="checkoutTotal">
-                      <table>
-                        <tbody>
-                          <tr>
-                            <th>Subtotal</th>
-                            <td>${totalPrice.toFixed(2)}</td>
-                          </tr>
-                          <tr>
-                            <th>Shipping</th>
-                            <td>$5</td>
-                          </tr>
-                          <tr>
-                            <th>VAT</th>
-                            <td>$11</td>
-                          </tr>
-                          <tr>
-                            <th>Total</th>
+                <div className="checkoutTotalContainer">
+                  <h3>Your Order</h3>
+                  <div className="checkoutItems">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>PRODUCTS</th>
+                          <th>SUBTOTALS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cartItems.map((item) => (
+                          <tr key={item.productID}>
                             <td>
-                              $
-                              {(totalPrice === 0 ? 0 : totalPrice + 16).toFixed(
-                                2
-                              )}
+                              {item.name} x {item.quantity}
                             </td>
+                            <td>₹{(item.final_price * item.quantity).toLocaleString("en-IN")}</td>
                           </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className="checkoutPaymentContainer">
-                    <label>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="Direct Bank Transfer"
-                        defaultChecked
-                        onChange={handlePaymentChange}
-                      />
-                      <div className="checkoutPaymentMethod">
-                        <span>Direct Bank Transfer</span>
-                        <p>
-                          Make your payment directly into our bank account.
-                          Please use your Order ID as the payment reference.Your
-                          order will not be shipped until the funds have cleared
-                          in our account.
-                        </p>
+
+                  {/* Calculate Subtotal, GST, Total */}
+                  {(() => {
+                    const subtotal = cartItems.reduce(
+                      (sum, item) => sum + item.final_price * item.quantity,
+                      0
+                    );
+                    const gst = subtotal * 0.03;
+                    const total = subtotal + gst;
+
+                    return (
+                      <div className="checkoutTotal">
+                        <table>
+                          <tbody>
+                            <tr>
+                              <th>Subtotal</th>
+                              <td>₹{subtotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
+                            </tr>
+                            <tr>
+                              <th>GST (3%)</th>
+                              <td>₹{gst.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
+                            </tr>
+                            <tr>
+                              <th>Total</th>
+                              <td>₹{total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="Check Payments"
-                        onChange={handlePaymentChange}
-                      />
-                      <div className="checkoutPaymentMethod">
-                        <span>Check Payments</span>
-                        <p>
-                          Phasellus sed volutpat orci. Fusce eget lore mauris
-                          vehicula elementum gravida nec dui. Aenean aliquam
-                          varius ipsum, non ultricies tellus sodales eu. Donec
-                          dignissim viverra nunc, ut aliquet magna posuere eget.
-                        </p>
-                      </div>
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="Cash on delivery"
-                        onChange={handlePaymentChange}
-                      />
-                      <div className="checkoutPaymentMethod">
-                        <span>Cash on delivery</span>
-                        <p>
-                          Phasellus sed volutpat orci. Fusce eget lore mauris
-                          vehicula elementum gravida nec dui. Aenean aliquam
-                          varius ipsum, non ultricies tellus sodales eu. Donec
-                          dignissim viverra nunc, ut aliquet magna posuere eget.
-                        </p>
-                      </div>
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="Paypal"
-                        onChange={handlePaymentChange}
-                      />
-                      <div className="checkoutPaymentMethod">
-                        <span>Paypal</span>
-                        <p>
-                          Phasellus sed volutpat orci. Fusce eget lore mauris
-                          vehicula elementum gravida nec dui. Aenean aliquam
-                          varius ipsum, non ultricies tellus sodales eu. Donec
-                          dignissim viverra nunc, ut aliquet magna posuere eget.
-                        </p>
-                      </div>
-                    </label>
-                    <div className="policyText">
-                      Your personal data will be used to process your order,
-                      support your experience throughout this website, and for
-                      other purposes described in our{" "}
-                      <Link to="/terms" onClick={scrollToTop}>
-                        Privacy Policy
-                      </Link>
-                      .
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleTabClick("cartTab3");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                      setPayments(true);
-                    }}
-                  >
-                    Place Order
-                  </button>
+                    );
+                  })()}
+                </div>
+                  
+                <button
+                  type="button"  // ✅ Prevent default form submission behavior
+                  onClick={(e) => {
+                    console.log("Pressed button");
+                    if (!isPincodeValid) {
+                      toast.error("Please enter a valid 6-digit pincode and confirm availability.");
+                      return;
+                    }
+
+                    handleTabClick("cartTab3");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    setPayments(true);
+                  }}
+                  disabled={!pincode || !isPincodeValid}
+                >
+                  Place Order
+                </button>
                 </div>
               </div>
             )}
@@ -625,6 +731,12 @@ const ShoppingCart = () => {
                     </div>
                     <h3>Your order is completed!</h3>
                     <p>Thank you. Your order has been received.</p>
+                    {storeAddress && (
+                      <p>
+                        🎉 Your order has been forwarded to our nearest store at <strong>{storeAddress}</strong>.
+                        Our customer service team will contact you shortly to confirm the details.
+                      </p>
+                    )}
                   </div>
                   <div className="orderInfo">
                     <div className="orderInfoItem">
@@ -637,12 +749,9 @@ const ShoppingCart = () => {
                     </div>
                     <div className="orderInfoItem">
                       <p>Total</p>
-                      <h4>${totalPrice.toFixed(2)}</h4>
+                      <h4>₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</h4>
                     </div>
-                    <div className="orderInfoItem">
-                      <p>Payment Method</p>
-                      <h4>{selectedPayment}</h4>
-                    </div>
+                   
                   </div>
                   <div className="orderTotalContainer">
                     <h3>Order Details</h3>
@@ -656,39 +765,29 @@ const ShoppingCart = () => {
                         </thead>
                         <tbody>
                           {cartItems.map((items) => (
-                            <tr>
-                              <td>
-                                {items.productName} x {items.quantity}
-                              </td>
-                              <td>${items.productPrice * items.quantity}</td>
+                            <tr key={items.productID}>
+                              <td>{items.name} x {items.quantity}</td>
+                              <td>₹{(items.final_price * items.quantity).toLocaleString("en-IN")}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
+
                     <div className="orderTotal">
                       <table>
                         <tbody>
                           <tr>
                             <th>Subtotal</th>
-                            <td>${totalPrice.toFixed(2)}</td>
+                            <td>₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                           <tr>
-                            <th>Shipping</th>
-                            <td>$5</td>
-                          </tr>
-                          <tr>
-                            <th>VAT</th>
-                            <td>$11</td>
+                            <th>GST (3%)</th>
+                            <td>₹{gst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                           <tr>
                             <th>Total</th>
-                            <td>
-                              $
-                              {(totalPrice === 0 ? 0 : totalPrice + 16).toFixed(
-                                2
-                              )}
-                            </td>
+                            <td>₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                         </tbody>
                       </table>

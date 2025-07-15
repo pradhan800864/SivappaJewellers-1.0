@@ -42,4 +42,86 @@ router.get("/products", async (req, res) => {
     }
   });
 
+
+  router.post("/pincode/check", async (req, res) => {
+    const { pincode } = req.body;
+  
+    if (!/^\d{6}$/.test(pincode)) {
+      return res.status(400).json({ error: "Invalid pincode format" });
+    }
+  
+    try {
+      // Step 1: Check in shops
+      const shopResult = await pool.query("SELECT * FROM shops WHERE pincode = $1", [pincode]);
+      if (shopResult.rows.length > 0) {
+        return res.json({
+          nearestLocation: shopResult.rows[0].shop_name || "Shop",
+          address: shopResult.rows[0].address,
+          orderCode: `ORD-${Date.now()}`
+        });
+      }
+  
+      // Step 2: Check in owners
+      const ownerResult = await pool.query("SELECT * FROM owner WHERE pincode = $1", [pincode]);
+      if (ownerResult.rows.length > 0) {
+        return res.json({
+          nearestLocation: ownerResult.rows[0].username || "Owner",
+          address: ownerResult.rows[0].address,
+          orderCode: `ORD-${Date.now()}`
+        });
+      }
+  
+      // Step 3: Find nearest available pincode
+      const allPincodes = await pool.query(`
+        SELECT pincode FROM (
+          SELECT pincode FROM shops
+          UNION
+          SELECT pincode FROM owner
+        ) all_pincodes
+      `);
+  
+      const nearest = allPincodes.rows
+        .map((row) => ({
+          pincode: row.pincode,
+          distance: Math.abs(Number(row.pincode) - Number(pincode))
+        }))
+        .sort((a, b) => a.distance - b.distance)[0];
+  
+      if (nearest) {
+        // Try to find address for the nearest pincode
+        const shopNearest = await pool.query("SELECT * FROM shops WHERE pincode = $1", [nearest.pincode]);
+        if (shopNearest.rows.length > 0) {
+          return res.json({
+            nearestLocation: shopNearest.rows[0].shop_name || "Shop",
+            address: shopNearest.rows[0].address,
+            orderCode: `ORD-${Date.now()}`
+          });
+        }
+  
+        const ownerNearest = await pool.query("SELECT * FROM owner WHERE pincode = $1", [nearest.pincode]);
+        if (ownerNearest.rows.length > 0) {
+          return res.json({
+            nearestLocation: ownerNearest.rows[0].username || "Owner",
+            address: ownerNearest.rows[0].address,
+            orderCode: `ORD-${Date.now()}`
+          });
+        }
+  
+        // fallback: return nearest pincode without address
+        return res.json({
+          nearestLocation: `Closest available pincode: ${nearest.pincode}`,
+          address: null,
+          orderCode: `ORD-${Date.now()}`
+        });
+      }
+  
+      return res.status(404).json({ error: "No available delivery location found." });
+  
+    } catch (err) {
+      console.error("Error in pincode check:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+  
+
 module.exports = router;

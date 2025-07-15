@@ -1,11 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const savedItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+const savedTotal = Number(localStorage.getItem("cartTotalAmount")) || 0;
+
 const initialState = {
-  items: [],
-  totalAmount: 0,
+  items: savedItems,
+  totalAmount: savedTotal,
 };
 
 const MAX_QUANTITY = 20;
+
+const updateLocalStorage = (items, totalAmount) => {
+  localStorage.setItem("cartItems", JSON.stringify(items));
+  localStorage.setItem("cartTotalAmount", totalAmount.toString());
+};
 
 const cartSlice = createSlice({
   name: "cart",
@@ -16,6 +24,7 @@ const cartSlice = createSlice({
       const existingItem = state.items.find(
         (item) => item.productID === product.productID
       );
+
       if (existingItem) {
         if (existingItem.quantity < MAX_QUANTITY) {
           existingItem.quantity += 1;
@@ -25,24 +34,25 @@ const cartSlice = createSlice({
         state.items.push({ ...product, quantity: 1 });
         state.totalAmount += product.productPrice;
       }
+
+      updateLocalStorage(state.items, state.totalAmount);
     },
+
     updateQuantity(state, action) {
       const { productID, quantity } = action.payload;
       const itemToUpdate = state.items.find(
         (item) => item.productID === productID
       );
       if (itemToUpdate) {
-        const difference = quantity - itemToUpdate.quantity;
-        if (quantity <= MAX_QUANTITY) {
-          itemToUpdate.quantity = quantity;
-          state.totalAmount += difference * itemToUpdate.productPrice;
-        } else {
-          itemToUpdate.quantity = MAX_QUANTITY;
-          state.totalAmount +=
-            (MAX_QUANTITY - itemToUpdate.quantity) * itemToUpdate.productPrice;
-        }
+        const oldQty = itemToUpdate.quantity;
+        const newQty = quantity > MAX_QUANTITY ? MAX_QUANTITY : quantity;
+        itemToUpdate.quantity = newQty;
+        state.totalAmount += (newQty - oldQty) * itemToUpdate.productPrice;
       }
+
+      updateLocalStorage(state.items, state.totalAmount);
     },
+
     removeFromCart(state, action) {
       const productId = action.payload;
       const itemToRemove = state.items.find(
@@ -54,6 +64,8 @@ const cartSlice = createSlice({
           (item) => item.productID !== productId
         );
       }
+
+      updateLocalStorage(state.items, state.totalAmount);
     },
   },
 });

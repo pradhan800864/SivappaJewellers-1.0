@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProfilePage.css";
 import { toast } from "react-hot-toast";
 import ReferralsPage from "../Referrals/ReferralsPage"; // ✅ Import Referrals Component
+import { AuthContext } from "../../Context/AuthContext";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -14,6 +15,9 @@ const ProfilePage = () => {
     email: "",
     mobile_number: "",
   });
+
+
+  const { logout } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -49,6 +53,7 @@ const ProfilePage = () => {
   }, [navigate]);
 
   const handleLogout = () => {
+    logout();
     localStorage.removeItem("token"); // Clear token
     navigate("/loginSignUp"); // Redirect to login
   };

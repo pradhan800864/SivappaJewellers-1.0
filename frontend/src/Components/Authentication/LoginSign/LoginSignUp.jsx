@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import "./LoginSignUp.css";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { AuthContext } from "../../../Context/AuthContext";
 
 const LoginSignUp = () => {
   const [activeTab, setActiveTab] = useState("tabButton1");
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
-
+  const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -88,6 +89,7 @@ const LoginSignUp = () => {
         if (activeTab === "tabButton1") {
           // ✅ LOGIN SUCCESS
           localStorage.setItem("token", data.token);
+          await login(data.token);
           toast.success("Logged in successfully!", { duration: 3000 });
           navigate("/");
         } else {

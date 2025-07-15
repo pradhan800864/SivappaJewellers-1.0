@@ -55,7 +55,7 @@ const ShopDetails = () => {
 
   const handleAddToCart = (product) => {
     const productInCart = cartItems.find(
-      (item) => item.productID === product.productID
+      (item) => item.productID === product.id
     );
 
     if (productInCart && productInCart.quantity >= 20) {
@@ -71,7 +71,10 @@ const ShopDetails = () => {
         },
       });
     } else {
-      dispatch(addToCart(product));
+      dispatch(addToCart({
+        ...product,
+        productID: product.id  // set this explicitly
+      }));
       toast.success(`Added to cart!`, {
         duration: 2000,
         style: {
@@ -135,7 +138,7 @@ const ShopDetails = () => {
             <div className="shopDetailsProducts">
               <div className="shopDetailsProductsContainer">
                 {currentProducts.map((product) => (
-                  <div className="sdProductContainer" key={product.productID}>
+                  <div className="sdProductContainer" key={product.id}>
                     <div className="sdProductImages">
                       <Link to="/Product" onClick={scrollToTop}>
                         <img
@@ -161,11 +164,11 @@ const ShopDetails = () => {
                     </div>
                     <div className="sdProductInfo">
                       <div className="sdProductCategoryWishlist">
-                        <p>Dresses</p>
+                        <p>Jewellery</p>
                         <FiHeart
-                          onClick={() => handleWishlistClick(product.productID)}
+                          onClick={() => handleWishlistClick(product.id)}
                           style={{
-                            color: wishList[product.productID]
+                            color: wishList[product.id]
                               ? "red"
                               : "#767676",
                             cursor: "pointer",
