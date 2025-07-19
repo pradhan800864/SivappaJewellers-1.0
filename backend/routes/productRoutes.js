@@ -55,6 +55,7 @@ router.get("/products", async (req, res) => {
       const shopResult = await pool.query("SELECT * FROM shops WHERE pincode = $1", [pincode]);
       if (shopResult.rows.length > 0) {
         return res.json({
+          storeId: shopResult.rows[0].id,
           nearestLocation: shopResult.rows[0].shop_name || "Shop",
           address: shopResult.rows[0].address,
           orderCode: `ORD-${Date.now()}`
@@ -65,6 +66,7 @@ router.get("/products", async (req, res) => {
       const ownerResult = await pool.query("SELECT * FROM owner WHERE pincode = $1", [pincode]);
       if (ownerResult.rows.length > 0) {
         return res.json({
+          storeId: ownerResult.rows[0].id,
           nearestLocation: ownerResult.rows[0].username || "Owner",
           address: ownerResult.rows[0].address,
           orderCode: `ORD-${Date.now()}`
@@ -94,7 +96,8 @@ router.get("/products", async (req, res) => {
           return res.json({
             nearestLocation: shopNearest.rows[0].shop_name || "Shop",
             address: shopNearest.rows[0].address,
-            orderCode: `ORD-${Date.now()}`
+            orderCode: `ORD-${Date.now()}`,
+            storeId: shopNearest.rows[0].id
           });
         }
   
@@ -103,7 +106,8 @@ router.get("/products", async (req, res) => {
           return res.json({
             nearestLocation: ownerNearest.rows[0].username || "Owner",
             address: ownerNearest.rows[0].address,
-            orderCode: `ORD-${Date.now()}`
+            orderCode: `ORD-${Date.now()}`,
+            storeId: ownerNearest.rows[0].id
           });
         }
   
@@ -123,5 +127,28 @@ router.get("/products", async (req, res) => {
     }
   });
   
+  router.post("/place-order", async (req, res) => {
+    const { userId, storeId, pincode, products } = req.body;
+  
+    if (!userId || !storeId || !pincode || !products || products.length === 0) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+  
+    const orderId = `ORD-${Date.now()}`;
+    const orderStatus = "Pending";
+  
+    try {
+      await pool.query(
+        `INSERT INTO customer_orders (user_id, order_id, store_id, pincode, products, order_status)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [userId, orderId, storeId, pincode, JSON.stringify(products), orderStatus]
+      );
+  
+      return res.json({ success: true, message: "Order placed successfully", orderId });
+    } catch (err) {
+      console.error("Error placing order:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
 module.exports = router;

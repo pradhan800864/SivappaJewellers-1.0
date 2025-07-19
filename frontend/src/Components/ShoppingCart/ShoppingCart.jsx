@@ -52,7 +52,9 @@ const ShoppingCart = () => {
   const [nearestLocation, setNearestLocation] = useState(null);
     // eslint-disable-next-line
   const [orderCode, setOrderCode] = useState(null);
-
+  const [nearestStoreId, setNearestStoreId] = useState(null);
+  // eslint-disable-next-line
+  const [nearestStore, setNearestStore] = useState(null);
   const handleCheckPincode = async () => {
     if (!/^\d{6}$/.test(pincode)) {
       toast.error("Please enter a valid 6-digit pincode.");
@@ -69,6 +71,8 @@ const ShoppingCart = () => {
       const data = await response.json();
   
       if (response.ok) {
+        setNearestStore({ name: data.nearestLocation, address: data.address });
+        setNearestStoreId(data.storeId);
         setIsPincodeValid(true);
         setNearestLocation(data.nearestLocation);
         setOrderCode(data.orderCode);
@@ -79,6 +83,47 @@ const ShoppingCart = () => {
       }
     } catch (error) {
       toast.error("Something went wrong. Try again.");
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    console.log(!isPincodeValid, !nearestStoreId, !user)
+    if (!isPincodeValid || nearestStoreId==null || !user) {
+      toast.error("Please validate pincode before placing order.");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:4998/api/place-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          storeId: nearestStoreId, // Make sure you have this from the pincode check response
+          pincode,
+          products: cartItems.map((item) => ({
+            productID: item.productID,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        // 🔁 Move to the confirmation tab
+        handleTabClick("cartTab3");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setPayments(true);
+        toast.success("Order placed successfully!");
+      } else {
+        toast.error(data.error || "Failed to place order.");
+      }
+    } catch (error) {
+      toast.error("Server error while placing order.");
     }
   };
 
@@ -701,22 +746,14 @@ const ShoppingCart = () => {
                 </div>
                   
                 <button
-                  type="button"  // ✅ Prevent default form submission behavior
-                  onClick={(e) => {
-                    console.log("Pressed button");
-                    if (!isPincodeValid) {
-                      toast.error("Please enter a valid 6-digit pincode and confirm availability.");
-                      return;
-                    }
-
-                    handleTabClick("cartTab3");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                    setPayments(true);
-                  }}
+                  type="button"
+                  onClick={handlePlaceOrder}
                   disabled={!pincode || !isPincodeValid}
+                  
                 >
                   Place Order
                 </button>
+
                 </div>
               </div>
             )}

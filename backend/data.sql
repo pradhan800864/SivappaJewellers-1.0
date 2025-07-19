@@ -30,3 +30,19 @@ CREATE INDEX idx_referrer_id ON users(referrer_id);
 INSERT INTO users (username, email, password, mobile_number, referral_code)
 VALUES ('COMPANY', 'company@gmail.com', 'securepassword', '0000000000', 'COMPANY-001')
 ON CONFLICT (email) DO NOTHING;
+
+CREATE TABLE customer_orders (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  order_id VARCHAR(100) NOT NULL UNIQUE,
+  store_id INTEGER NOT NULL,
+  order_status VARCHAR(50) DEFAULT 'Pending',
+  products JSONB NOT NULL,
+  pincode VARCHAR(6) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (store_id) REFERENCES shops(id),
+  customer_address text,
+  advance_payment NUMERIC(12,2) NOT NULL DEFAULT 0,
+  expected_delivery_date DATE
+);
