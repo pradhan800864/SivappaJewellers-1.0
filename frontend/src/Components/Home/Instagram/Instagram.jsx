@@ -17,7 +17,7 @@ const Instagram = () => {
   return (
     <>
       <div className="instagram">
-        <h2>@SIVAPPA JEWELLERS</h2>
+        <h2>@SAI SURYA JEWELLERS</h2>
         <div className="instagramTiles">
           <div className="instagramtile">
             <img src={insta1} alt="" />

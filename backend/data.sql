@@ -46,3 +46,14 @@ CREATE TABLE customer_orders (
   advance_payment NUMERIC(12,2) NOT NULL DEFAULT 0,
   expected_delivery_date DATE
 );
+
+
+CREATE TABLE customer_billing (
+  id SERIAL PRIMARY KEY,
+  order_id             VARCHAR(100) NOT NULL REFERENCES customer_orders(order_id),
+  payment_type         VARCHAR(50)  NOT NULL,       -- 'advance' or 'final'
+  amount               NUMERIC(12,2) NOT NULL,
+  payment_method       VARCHAR(50)  NOT NULL,       -- 'UPI','CARD','CASH'
+  transaction_details  TEXT,
+  paid_at              TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+);

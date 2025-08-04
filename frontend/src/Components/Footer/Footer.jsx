@@ -30,7 +30,7 @@ const Footer = () => {
         <div className="footer__container">
           <div className="footer_left">
             <div className="footer_logo_container">
-            <h2>SIVAPPA JEWELLERS</h2>
+            <h2>SAI SURYA JEWELLERS</h2>
             </div>
 
             <p>Shop No:4, Police Quarters, Kurnool, Andhra Pradesh 518001</p>

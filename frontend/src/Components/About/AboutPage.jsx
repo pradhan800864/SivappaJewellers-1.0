@@ -22,7 +22,7 @@ const AboutPage = () => {
   return (
     <>
       <div className="aboutSection">
-        <h2>About Sivappa Jewellers</h2>
+        <h2>About Sai Surya Jewellers</h2>
         <img src={about1} alt="" />
         <div className="aboutContent">
           <h3>Our Story</h3>

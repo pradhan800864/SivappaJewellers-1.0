@@ -15,7 +15,8 @@ const ProfilePage = () => {
     email: "",
     mobile_number: "",
   });
-
+  const [transactions, setTransactions] = useState([]);
+  const [showWalletHistory, setShowWalletHistory] = useState(false);
 
   const { logout } = useContext(AuthContext);
 
@@ -41,6 +42,10 @@ const ProfilePage = () => {
             email: data.email,
             mobile_number: data.mobile_number || "",
           });
+
+          const txRes = await fetch(`http://localhost:4998/api/wallet/history/${data.id}?limit=5`);
+          const txData = await txRes.json();
+          if (txRes.ok) setTransactions(txData);
         } else {
           console.error("Failed to fetch user:", data.error);
         }
@@ -147,7 +152,40 @@ const ProfilePage = () => {
         )}
 
         {/* ✅ Referrals Section */}
-        {activeTab === "Referrals" && <ReferralsPage user={user} />}
+        {activeTab === "Referrals" && (
+          <>
+            <ReferralsPage user={user} />
+
+            <div className="walletSection" style={{ marginTop: "1.5rem" }}>
+              <p><strong>Wallet:</strong> {user.wallet ?? 0} coins</p>
+              
+              <div className="walletHistoryDropdown">
+                <button onClick={() => setShowWalletHistory(!showWalletHistory)} className="walletToggle">
+                  {showWalletHistory ? "Hide Wallet History" : "Show Wallet History"}
+                </button>
+
+                {showWalletHistory && (
+                  <div className="walletHistoryList">
+                    {transactions.length === 0 ? (
+                      <p className="noTx">No recent wallet activity.</p>
+                    ) : (
+                      <ul>
+                        {transactions.map((tx, idx) => (
+                          <li key={idx}>
+                            <span className={tx.type === "credit" ? "text-green" : "text-red"}>
+                              {tx.type === "credit" ? "+" : "-"}{tx.coins} coins
+                            </span>{" "}
+                            ({tx.source}) – {new Date(tx.created_at).toLocaleDateString()}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

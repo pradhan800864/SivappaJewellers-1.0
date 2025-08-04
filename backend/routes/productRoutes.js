@@ -151,4 +151,26 @@ router.get("/products", async (req, res) => {
     }
   });
 
+
+  router.get('/wallet/history/:userId', async (req, res) => {
+    const userId = req.params.userId;
+    const limit = req.query.limit || 5;
+  
+    try {
+      const result = await pool.query(
+        `SELECT coins, type, source, note, created_at 
+         FROM wallet_transactions 
+         WHERE user_id = $1 
+         ORDER BY created_at DESC 
+         LIMIT $2`,
+        [userId, limit]
+      );
+  
+      res.json(result.rows);
+    } catch (err) {
+      console.error('Error fetching wallet history:', err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  });
+
 module.exports = router;

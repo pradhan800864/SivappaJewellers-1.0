@@ -138,7 +138,7 @@ router.post("/login", async (req, res) => {
   // ✅ Fetch logged-in user details
   router.get("/me", verifyToken, async (req, res) => {
     try {
-      const user = await pool.query("SELECT id, username, email, mobile_number, referral_code FROM users WHERE id = $1", [
+      const user = await pool.query("SELECT id, username, email, mobile_number, referral_code, wallet FROM users WHERE id = $1", [
         req.user.user_id,
       ]);
   
