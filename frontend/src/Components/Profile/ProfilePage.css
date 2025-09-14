@@ -229,3 +229,15 @@
     font-size: 12px;
     color: #888;
   }
+  .referralTreeContainer {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 12px;
+    overflow: hidden;
+  }
+  .ref-tree-loading, .ref-tree-error, .ref-tree-empty {
+    padding: 12px;
+    color: #444;
+  }

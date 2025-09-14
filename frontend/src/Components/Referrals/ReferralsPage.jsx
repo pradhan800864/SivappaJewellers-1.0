@@ -1,157 +1,178 @@
 import React, { useEffect, useState } from "react";
 import "./ReferralsPage.css";
 import { toast } from "react-hot-toast";
+import ReferralTree from "./ReferralTree";
+
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:4998";
 
 const ReferralsPage = ({ user }) => {
-  const [referrals, setReferrals] = useState([]); // Children (users referred by logged-in user)
-  const [referrer, setReferrer] = useState(null); // Parent (who referred the logged-in user)
-  const [referralCodeInput, setReferralCodeInput] = useState(""); // Input field for adding a referrer
-  const [isAddingReferrer, setIsAddingReferrer] = useState(false); // Show input field conditionally
+  const [referrer, setReferrer] = useState(null);
+  const [referralCodeInput, setReferralCodeInput] = useState("");
+  const [isAddingReferrer, setIsAddingReferrer] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    fetchReferralData();
+    fetchReferrer();
   }, [user]);
 
-  // ✅ Fetch referrer & children dynamically
-  const fetchReferralData = async () => {
+  const fetchReferrer = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) return;
-
-      // Fetch children (users referred by logged-in user)
-      const childRes = await fetch("http://localhost:4998/api/users/children", {
-        method: "GET",
+      const res = await fetch(`${API_BASE}/api/users/referrer`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const childData = await childRes.json();
-      if (childRes.ok) setReferrals(childData);
-      else console.error("Failed to fetch referrals:", childData.error);
-
-      // Fetch parent (who referred the logged-in user)
-      const parentRes = await fetch("http://localhost:4998/api/users/referrer", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const parentData = await parentRes.json();
-      if (parentRes.ok) setReferrer(parentData);
-      else console.error("Failed to fetch referrer:", parentData.error);
-    } catch (error) {
-      console.error("Error fetching referral data:", error);
+      const data = await res.json();
+      if (res.ok) setReferrer(data || null);
+      else console.error("Failed to fetch referrer:", data.error);
+    } catch (err) {
+      console.error("Error fetching referrer:", err);
     }
   };
 
-  // ✅ Handle adding a referrer
   const handleAddReferrer = async () => {
-    if (!referralCodeInput.trim()) return;
-
+    const code = referralCodeInput.trim();
+    if (!code) return;
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4998/api/users/addReferrer", {
+      const res = await fetch(`${API_BASE}/api/users/addReferrer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ referral_code: referralCodeInput }),
+        body: JSON.stringify({ referral_code: code }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      const data = await res.json();
+      if (res.ok) {
         toast.success("Referrer added successfully!", { duration: 3000 });
-        setReferralCodeInput(""); // ✅ Clear input
+        setReferralCodeInput("");
         setIsAddingReferrer(false);
-        fetchReferralData(); // ✅ Auto-update UI with new data
+        fetchReferrer(); // parent will now appear above you in the tree
       } else {
-        toast.error(data.error || "Invalid referral code. Please try again!", { duration: 3000 });
+        toast.error(data.error || "Invalid referral code. Please try again!", {
+          duration: 3000,
+        });
       }
-    } catch (error) {
-      console.error("Error adding referrer:", error);
+    } catch (err) {
+      console.error("Error adding referrer:", err);
       toast.error("Server error. Please try again later!", { duration: 3000 });
     }
   };
 
-  // ✅ Handle joining company as default referrer
   const handleJoinCompany = async () => {
     try {
       const token = localStorage.getItem("token");
-  
-      const response = await fetch("http://localhost:4998/api/users/addReferrer", {
+      const res = await fetch(`${API_BASE}/api/users/addReferrer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ referral_code: null }) // ✅ Send null to trigger company assignment
+        body: JSON.stringify({ referral_code: null }), // assign Company
       });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
+      const data = await res.json();
+      if (res.ok) {
         toast.success("Joined company successfully!", { duration: 3000 });
-        fetchReferralData(); // ✅ Auto-update UI
+        fetchReferrer();
       } else {
         toast.error(data.error || "Failed to join company");
       }
-    } catch (error) {
-      console.error("Error joining company:", error);
+    } catch (err) {
+      console.error("Error joining company:", err);
+      toast.error("Server error. Please try again later!", { duration: 3000 });
     }
   };
 
   return (
-    <div className="referralList">
+    <div className="referralList" style={{ display: "grid", gap: 12 }}>
+      {/* 1) Your referral code */}
+      <div
+        style={{
+          padding: "12px 16px",
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+          background: "#fff",
+        }}
+      >
+        <p style={{ margin: 0 }}>
+          <strong>Your Referral Code:</strong>{" "}
+          {user?.referral_code || user?.referralCode || "—"}
+        </p>
+      </div>
 
-      {/* ✅ Logged-in User’s Referral Code */}
-      <p><strong>Your Referral Code:</strong> {user.referral_code}</p>
-
-      {/* ✅ Referrer Section (Parent) */}
-      {referrer ? (
-        <div className="referrerSection">
-          <h4>You Were Referred By</h4>
-          <p><strong>Username:</strong> {referrer.username.toUpperCase()}</p>
-        </div>
-      ) : (
-        <div className="addReferrerSection">
-          <h4>Add Your Referrer</h4>
+      {/* 2) Add your referrer (only when no parent) */}
+      {!referrer && (
+        <div
+          className="addReferrerSection"
+          style={{
+            padding: "12px 16px",
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            background: "#fff",
+          }}
+        >
+          <h4 style={{ marginTop: 0 }}>Add Your Referrer</h4>
 
           {isAddingReferrer ? (
-            <div className="addReferrerForm">
+            <div className="addReferrerForm" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <input
                 type="text"
                 placeholder="Enter Referrer’s Code"
                 value={referralCodeInput}
                 onChange={(e) => setReferralCodeInput(e.target.value)}
+                style={{ padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: 8, minWidth: 260 }}
               />
-              <button className="primaryButton" onClick={handleAddReferrer}>Submit</button>
-              <button className="secondaryButton" onClick={() => setIsAddingReferrer(false)}>Cancel</button>
+              <button className="primaryButton" onClick={handleAddReferrer}>
+                Submit
+              </button>
+              <button className="secondaryButton" onClick={() => setIsAddingReferrer(false)}>
+                Cancel
+              </button>
+              <button className="secondaryButton" onClick={handleJoinCompany}>
+                Don’t Have a Referral Code? Join Company
+              </button>
             </div>
           ) : (
-            <>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button className="primaryButton" onClick={() => setIsAddingReferrer(true)}>
                 Enter Referral Code
               </button>
               <button className="secondaryButton" onClick={handleJoinCompany}>
-                Don't Have a Referral Code? Join Company
+                Don’t Have a Referral Code? Join Company
               </button>
-            </>
+            </div>
           )}
         </div>
       )}
 
-      {/* ✅ Children Section */}
-      {referrals.length > 0 ? (
-        <div className="referralItem">
-          <h4>Users You Referred</h4>
-          {referrals.map((child, index) => (
-            <p key={child.id}>
-              <strong>{index + 1}:</strong> {child.username.toUpperCase()}
-            </p>
-          ))}
+      {/* (Optional) When there is a parent, you can show who referred you */}
+      {referrer && (
+        <div
+          className="referrerSection"
+          style={{
+            padding: "12px 16px",
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            background: "#fff",
+          }}
+        >
+          <strong>Referred by:</strong>{" "}
+          {String(referrer.username || "").toUpperCase()}
         </div>
-      ) : (
-        <p>No referrals yet.</p>
       )}
+
+      {/* 3) Tree view */}
+      <div
+        style={{
+          borderRadius: 12,
+          border: "1px solid #e5e7eb",
+          background: "#fff",
+          padding: 12,
+        }}
+      >
+        <ReferralTree userId={user?.id} />
+      </div>
     </div>
   );
 };

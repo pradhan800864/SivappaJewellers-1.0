@@ -2,7 +2,8 @@ import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProfilePage.css";
 import { toast } from "react-hot-toast";
-import ReferralsPage from "../Referrals/ReferralsPage"; // ✅ Import Referrals Component
+// import ReferralTree from "../Referrals/ReferralTree";
+import ReferralsPage from "../Referrals/ReferralsPage";
 import { AuthContext } from "../../Context/AuthContext";
 
 const ProfilePage = () => {
