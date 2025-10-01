@@ -14,6 +14,8 @@ const LoginSignUp = () => {
     email: "",
     password: "",
     mobile_number: "",
+    address: "",
+    state: "",
     referral_code: "", // ✅ Default to empty string (not null)
   });
 
@@ -28,6 +30,8 @@ const LoginSignUp = () => {
       email: "",
       password: "",
       mobile_number: "",
+      address: "",
+      state: "",
       referral_code: "",
     });
     setError("");
@@ -55,7 +59,7 @@ const LoginSignUp = () => {
       } else {
         // ✅ REGISTER
         if (step === 1) {
-          if (!formData.username || !formData.email || !formData.password || !formData.mobile_number) {
+          if (!formData.username || !formData.email || !formData.password || !formData.mobile_number|| !formData.address|| !formData.state) {
             setError("All fields are required!");
             setLoading(false);
             return;
@@ -164,6 +168,8 @@ const LoginSignUp = () => {
                       <input type="tel" name="mobile_number" placeholder="Mobile Number *" value={formData.mobile_number} onChange={handleChange} required />
                       <input type="email" name="email" placeholder="Email address *" value={formData.email} onChange={handleChange} required />
                       <input type="password" name="password" placeholder="Password *" value={formData.password} onChange={handleChange} required />
+                      <input type="text" name="address" placeholder="Address *" value={formData.address} onChange={handleChange} required />
+                      <input type="text" name="state" placeholder="State *" value={formData.state} onChange={handleChange} required />
                       <button type="submit" disabled={loading}>
                         {loading ? "Checking..." : "Register"}
                       </button>

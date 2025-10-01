@@ -3,13 +3,13 @@ const router = express.Router();
 const pool = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { generateReferralCode } = require("../utils/referralCode.cjs");
+const { generateReferralCode } = require("../utils/referralCode.js");
 
 // ✅ User Registration with Referral Code
 // ✅ Use referral code generator in user registration
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password, mobile_number, referral_code, joinCompany } = req.body;
+    const { username, email, password, mobile_number, referral_code, address, state, joinCompany } = req.body;
 
     // ✅ Check if the user already exists
     const userExists = await pool.query(
@@ -75,8 +75,8 @@ router.post("/register", async (req, res) => {
 
     // ✅ Insert new user into the database
     const newUser = await pool.query(
-      "INSERT INTO users (username, email, password, mobile_number, referral_code, referrer_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [username, email, hashedPassword, mobile_number, newReferralCode, referrerId]
+      "INSERT INTO users (username, email, password, mobile_number, referral_code, address, state, referrer_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      [username, email, hashedPassword, mobile_number, newReferralCode, address, state, referrerId]
     );
 
     res.status(201).json({
