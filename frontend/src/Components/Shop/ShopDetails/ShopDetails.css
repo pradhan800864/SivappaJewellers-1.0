@@ -494,3 +494,8 @@
     gap: 2px;
   }
 }
+.paginationNum .ellipsis {
+  padding: 0 6px;
+  color: #999;
+  user-select: none;
+}

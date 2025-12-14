@@ -325,3 +325,10 @@
     gap: 2px;
   }
 }
+
+.trendyProduct_front,
+.trendyProduct_back {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}

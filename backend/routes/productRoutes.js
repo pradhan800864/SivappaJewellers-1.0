@@ -3,44 +3,46 @@ const router = express.Router();
 const pool = require("../db");
 
 router.get("/products", async (req, res) => {
-    try {
-      const result = await pool.query(`
-        SELECT
-          p.*,
-          p.image_urls[1]                          AS image_url,
-          mp.price_inr                             AS metal_rate,
-          (p.net_weight * mp.price_inr)            AS net_price,
-          p.making_charges                         AS making_charges,
-          p.stone_price                            AS stone_price,
-          (
-            p.net_weight * mp.price_inr
-            + p.making_charges
-            + p.stone_price
-          )                                        AS final_price
-        FROM products p
-        LEFT JOIN LATERAL (
-          SELECT price_inr
-          FROM metal_prices
-          WHERE metal_type = 'gold'
-            AND purity    = p.purity
-          ORDER BY fetched_at DESC
-          LIMIT 1
-        ) mp ON TRUE
-        ORDER BY p.name
-      `);
-  
-      const productsWithFullImgUrl = result.rows.map(product => ({
-        ...product,
-        frontImg: `http://localhost:4998${product.image_url}`,
-        backImg: `http://localhost:4998${product.image_url}` // Optional: update if you want different back image
-      }));
-  
-      res.json(productsWithFullImgUrl);
-    } catch (err) {
-      console.error("Error fetching products:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.*,
+        pt.name                                  AS product_type,           -- ← metal type via FK
+        p.image_urls[1]                          AS image_url,
+        mp.price_inr                             AS metal_rate,
+        (p.net_weight * mp.price_inr)            AS net_price,
+        p.making_charges                         AS making_charges,
+        p.stone_price                            AS stone_price,
+        (p.net_weight * mp.price_inr
+         + p.making_charges
+         + p.stone_price)                        AS final_price
+      FROM products p
+      JOIN product_types pt
+        ON pt.id = p.type_id                     -- ← pull the type (gold/silver/…)
+      LEFT JOIN LATERAL (
+        SELECT price_inr
+        FROM metal_prices
+        WHERE LOWER(metal_type) = LOWER(pt.name) -- ← use product’s type
+          AND purity = p.purity                  -- (keep same purity match as before)
+        ORDER BY fetched_at DESC
+        LIMIT 1
+      ) mp ON TRUE
+      ORDER BY p.name
+    `);
+
+    const productsWithFullImgUrl = result.rows.map(product => ({
+      ...product,
+      frontImg: `http://localhost:4998${product.image_url}`,
+      backImg:  `http://localhost:4998${product.image_url}`, // same as before
+    }));
+
+    res.json(productsWithFullImgUrl);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 
   router.post("/pincode/check", async (req, res) => {
@@ -420,8 +422,349 @@ router.get('/referral-tree', async (req, res) => {
   }
 });
 
+  // GET /api/metal-rate?metal=silver&purity=999
+  router.get("/metal-rate", async (req, res) => {
+    try {
+      const { metal, purity } = req.query;
+  
+      if (!metal) {
+        return res.status(400).json({ error: "Query param 'metal' is required" });
+      }
+  
+      const result = await pool.query(
+        `
+        SELECT price_inr, metal_type, purity, fetched_at
+        FROM metal_prices
+        WHERE LOWER(metal_type) = LOWER($1)
+          AND ($2::text IS NULL OR purity = $2)
+        ORDER BY fetched_at DESC
+        LIMIT 1
+        `,
+        [metal, purity || null]
+      );
+  
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "No metal rate found" });
+      }
+  
+      return res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Error fetching metal rate:", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
 
+  // ------------------------------------------------------------------
+// GET /api/products/taxonomy
+// Returns productTypes, categoriesByType, subCategoriesByCategory,
+// plus distinct purities & stoneTypes from products table.
+// No counts. Safe to call from your Filter component.
+// ------------------------------------------------------------------
+let _taxonomyCache = null;
+let _taxonomyCacheTs = 0;
+const TAXONOMY_TTL_MS = 5 * 60 * 1000; // 5 min cache (optional)
+
+router.get("/taxonomy", async (req, res) => {
+  try {
+    if (_taxonomyCache && Date.now() - _taxonomyCacheTs < TAXONOMY_TTL_MS) {
+      return res.json(_taxonomyCache);
+    }
+
+    const typesQ = await pool.query(`
+      SELECT id, name
+      FROM product_types
+      ORDER BY name
+    `);
+
+    const catsQ = await pool.query(`
+      SELECT pc.id, pc.name, pc.type_id, pt.name AS type_name
+      FROM product_categories pc
+      JOIN product_types pt ON pt.id = pc.type_id
+      ORDER BY pt.name, pc.name
+    `);
+
+    const subsQ = await pool.query(`
+      SELECT spc.id, spc.name, spc.category_id
+      FROM sub_product_categories spc
+      ORDER BY spc.name
+    `);
+
+    // If you keep purities/stone_type on products, expose them too (optional)
+    const puritiesQ = await pool.query(`
+      SELECT DISTINCT TRIM(purity) AS label
+      FROM products
+      WHERE purity IS NOT NULL AND TRIM(purity) <> ''
+      ORDER BY label DESC
+    `);
+
+    const stoneTypesQ = await pool.query(`
+      SELECT DISTINCT TRIM(stone_type) AS label
+      FROM products
+      WHERE stone_type IS NOT NULL AND TRIM(stone_type) <> ''
+      ORDER BY label
+    `);
+
+    // Build productTypes -> [{id,label}]
+    const productTypes = typesQ.rows.map((r) => ({ id: r.id, label: r.name }));
+
+    // Build categoriesByType: { [typeLabel]: [{id,label}] }
+    const categoriesByType = {};
+    for (const t of productTypes) categoriesByType[t.label] = [];
+    for (const c of catsQ.rows) {
+      (categoriesByType[c.type_name] ??= []).push({ id: c.id, label: c.name });
+    }
+
+    // Build subCategoriesByCategory keyed by category label (merge duplicates across types)
+    const subsByCatId = subsQ.rows.reduce((acc, s) => {
+      (acc[s.category_id] ??= []).push({ id: s.id, label: s.name });
+      return acc;
+    }, {});
+    const subCategoriesByCategory = {};
+    for (const c of catsQ.rows) {
+      if (!subCategoriesByCategory[c.name]) {
+        subCategoriesByCategory[c.name] = (subsByCatId[c.id] || []).map((s) => ({
+          label: s.label,
+        }));
+      }
+    }
+
+    const purities = puritiesQ.rows.map((r) => ({ label: r.label }));
+    const stoneTypes = stoneTypesQ.rows.map((r) => ({ label: r.label }));
+
+    const payload = {
+      productTypes,                // [{ id, label }]
+      categoriesByType,            // { [typeLabel]: [{ id, label }] }
+      subCategoriesByCategory,     // { [categoryLabel]: [{ label }] }
+      purities,                    // [{ label }]
+      stoneTypes,                  // [{ label }]
+    };
+
+    _taxonomyCache = payload;
+    _taxonomyCacheTs = Date.now();
+
+    res.json(payload);
+  } catch (err) {
+    console.error("GET /api/products/taxonomy failed:", err);
+    res.status(500).json({ error: "Failed to load taxonomy" });
+  }
+});
 
 
+router.get("/products/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1) Product + joined names
+    const { rows } = await pool.query(
+      `
+      SELECT
+        p.*,
+        pt.name  AS type_name,
+        pc.name  AS category_name,
+        spc.name AS sub_category_name
+      FROM products p
+      LEFT JOIN product_types pt            ON pt.id  = p.type_id
+      LEFT JOIN product_categories pc       ON pc.id  = p.category_id
+      LEFT JOIN sub_product_categories spc  ON spc.id = p.sub_category_id
+      WHERE p.id = $1
+      `,
+      [id]
+    );
+
+    if (!rows.length) return res.status(404).json({ error: "Not found" });
+    const row = rows[0];
+
+    // 2) Price per gram lookup (use metal_type first, then fallback to type_name)
+    const metalTypeRaw = (row.metal_type || row.type_name || "").trim();
+    const purityRaw    = (row.purity || "").trim();
+
+    // Normalize purity "22K" vs "22" vs "999" etc.
+    // We match either exact (case-insensitive) or "remove 'k'" forms.
+    const metalRes = await pool.query(
+      `
+      SELECT price_inr
+      FROM metal_prices
+      WHERE LOWER(metal_type) = LOWER($1)
+        AND (
+             LOWER(purity) = LOWER($2)
+          OR REPLACE(LOWER(purity), 'k', '') = REPLACE(LOWER($2), 'k', '')
+        )
+      ORDER BY fetched_at DESC
+      LIMIT 1
+      `,
+      [metalTypeRaw, purityRaw]
+    );
+
+    const pricePerGram = Number(metalRes.rows[0]?.price_inr || 0);
+
+    // 3) Breakdown (includes making charges)
+    const netWeight      = Number(row.net_weight ?? 0);
+    const stonePrice     = Number(row.stone_price ?? 0);
+    const makingCharges  = Number(row.making_charges ?? row.making_charger ?? 0);
+
+    const metalAmount = netWeight * pricePerGram;
+    const subtotal    = metalAmount + stonePrice + makingCharges;
+    const gst         = subtotal * 0.03;
+    const finalPrice  = subtotal + gst;
+
+    // 4) Attach computed fields to response
+    row.metal_price_per_gram = Number(pricePerGram.toFixed(2));
+    row.metal_amount         = Number(metalAmount.toFixed(2));
+    row.stone_amount         = Number(stonePrice.toFixed(2));
+    row.making_charges_amt   = Number(makingCharges.toFixed(2));
+    row.subtotal             = Number(subtotal.toFixed(2));
+    row.gst_amount           = Number(gst.toFixed(2));
+    row.final_price          = Number(finalPrice.toFixed(2));
+
+    // 5) Normalize image URLs
+    const base = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const toPublic = (u) => {
+      if (!u) return null;
+      if (/^https?:\/\//i.test(u)) return u;
+      return `${base}/${String(u).replace(/^\/+/, "")}`;
+    };
+
+    let images = [];
+    const raw = row.image_urls;
+
+    if (Array.isArray(raw)) {
+      images = raw;
+    } else if (typeof raw === "string" && raw.trim()) {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+        images = trimmed
+          .slice(1, -1)
+          .split(",")
+          .map((s) => s.replace(/^"(.*)"$/, "$1").trim())
+          .filter(Boolean);
+      } else if (trimmed.includes(",")) {
+        images = trimmed.split(",").map((s) => s.trim()).filter(Boolean);
+      } else {
+        images = [trimmed];
+      }
+    }
+
+    row.images = Array.from(new Set(images.map(toPublic).filter(Boolean)));
+
+    res.json(row);
+  } catch (err) {
+    console.error("🔥 GET /api/products/:id failed:", err);
+    res.status(500).json({ error: "Failed to load product" });
+  }
+});
+
+
+// GET /api/products/:id/related?limit=20
+router.get("/products/:id/related", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const limit = Math.min(Number(req.query.limit) || 20, 50);
+
+    const { rows } = await pool.query(
+      `
+      WITH cur AS (
+        SELECT COALESCE(labels, ARRAY[]::text[]) AS labels
+        FROM products
+        WHERE id = $1
+      )
+      SELECT
+        p.id,
+        p.name,
+        p.purity,
+        p.net_weight,
+        p.stone_price,
+        p.making_charges,
+        p.image_urls,
+        pt.name AS type_name,
+
+        /* Count overlap between p.labels and cur.labels */
+        (
+          SELECT COUNT(*)
+          FROM unnest(COALESCE(p.labels, ARRAY[]::text[])) AS l(lbl)
+          WHERE l.lbl = ANY(
+            ARRAY(
+              SELECT unnest(c.labels)
+              FROM cur c
+            )
+          )
+        ) AS label_hits,
+
+        /* Latest metal price per gram for the product's metal+pct */
+        (
+          SELECT mp.price_inr
+          FROM metal_prices mp
+          WHERE LOWER(mp.metal_type) = LOWER(pt.name)
+            AND LOWER(mp.purity)     = LOWER(p.purity)
+          ORDER BY mp.fetched_at DESC
+          LIMIT 1
+        ) AS price_per_gram
+
+      FROM products p
+      LEFT JOIN product_types pt ON pt.id = p.type_id
+      WHERE p.id <> $1
+      ORDER BY label_hits DESC, RANDOM()
+      LIMIT $2
+      `,
+      [id, limit]
+    );
+
+    // Build absolute image URLs + compute price like the PDP route
+    const base =
+      process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const toPublic = (u) => {
+      if (!u) return null;
+      if (/^https?:\/\//i.test(u)) return u;
+      return `${base}/${String(u).replace(/^\/+/, "")}`;
+    };
+
+    const out = rows.map((r) => {
+      // Parse images from text[] or string
+      let images = [];
+      const raw = r.image_urls;
+      if (Array.isArray(raw)) images = raw;
+      else if (typeof raw === "string" && raw.trim()) {
+        const s = raw.trim();
+        if (s.startsWith("{") && s.endsWith("}")) {
+          images = s
+            .slice(1, -1)
+            .split(",")
+            .map((x) => x.replace(/^"(.*)"$/, "$1").trim())
+            .filter(Boolean);
+        } else if (s.includes(",")) {
+          images = s.split(",").map((x) => x.trim()).filter(Boolean);
+        } else {
+          images = [s];
+        }
+      }
+      images = Array.from(new Set(images.map(toPublic).filter(Boolean)));
+
+      const pricePerGram = Number(r.price_per_gram || 0);
+      const netWeight    = Number(r.net_weight || 0);
+      const stonePrice   = Number(r.stone_price || 0);
+      const making       = Number(r.making_charges || 0);
+
+      const subtotal = netWeight * pricePerGram + stonePrice + making;
+      const gst      = subtotal * 0.03;
+      const final    = subtotal + gst;
+
+      return {
+        id: r.id,
+        name: r.name,
+        type_name: r.type_name,
+        final_price: final.toFixed(2),
+        images,
+        frontImg: images[0] || null,
+        backImg: images[1] || images[0] || null,
+      };
+    });
+
+    res.json(out);
+  } catch (err) {
+    console.error("GET /api/products/:id/related failed:", err);
+    res.status(500).json({ error: "Failed to load related products" });
+  }
+});
+
+// ... your existing product routes here (list, details, etc.)
 module.exports = router;

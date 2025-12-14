@@ -1,5 +1,4 @@
 import React from "react";
-import Banner from "../Components/Home/Banner/Banner";
 import CollectionBox from "../Components/Home/Collection/CollectionBox";
 import Services from "../Components/Home/Services/Services";
 import Instagram from "../Components/Home/Instagram/Instagram";
@@ -15,7 +14,7 @@ const Home = () => {
       <CollectionBox />
       <Trendy />
       <DealTimer />
-      <Banner />
+      {/* <Banner /> */}
       <LimitedEdition />
       <Instagram />
       <Services />

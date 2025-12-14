@@ -16,26 +16,41 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 5px;
+  gap: 8px; /* slightly more spacing for breathing room */
 }
 
 .instagramtile {
   transition: 0.3s ease-in-out;
+  border-radius: 6px; /* smoother corners */
+  overflow: hidden;
+  aspect-ratio: 1 / 1; /* makes all tiles square and consistent */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .instagramtile:hover {
-  opacity: 0.4;
+  opacity: 0.85;
+  transform: scale(1.03);
 }
 
 .instagramtile img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* ensures consistent framing */
+  transition: transform 0.4s ease;
+}
+
+.instagramtile:hover img {
+  transform: scale(1.07);
 }
 
 @media screen and (max-width: 1210px) {
   .instagram {
     padding: 0 7%;
+  }
+
+  .instagramTiles {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
   }
 }
 
@@ -43,8 +58,9 @@
   .instagramTiles {
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    gap: 5px;
+    gap: 6px;
   }
+
   .instagram h2 {
     font-size: 26px;
   }
@@ -57,7 +73,11 @@
 
   .instagramTiles {
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    grid-auto-rows: 110px;
+    grid-auto-rows: 100px;
     gap: 5px;
+  }
+
+  .instagramtile {
+    aspect-ratio: 1 / 1;
   }
 }

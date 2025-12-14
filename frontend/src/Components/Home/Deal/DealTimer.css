@@ -4,9 +4,13 @@
 
 .dealTimer {
   background-color: #ebebeb;
-  background-image: url(../../../Assets/Deal/dealbg.jpg);
+  background-image: 
+    url(../../../Assets/Deal/deal_rings-only-hand.png), /* top image */
+    url(../../../Assets/Deal/deal_ring_bg.png); /* base image */
+  background-repeat: no-repeat, no-repeat;
+  background-position: right center, center;
+  background-size: contain, cover;
   height: 500px;
-  background-size: cover;
   padding: 0 160px;
   display: flex;
   flex-direction: column;

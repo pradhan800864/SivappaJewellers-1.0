@@ -15,8 +15,7 @@ const Banner = () => {
     <>
       <div className="banner">
         <div className="bannerLeft">
-          <h6 className="bannerh6">Starting At $19</h6>
-          <h3 className="bannerh3">Women's T-shirts</h3>
+          <h3 className="bannerh3">Bridal Jewellery</h3>
           <h5 className="bannerh5">
             <Link to="/shop" onClick={scrollToTop} style={{ color: "white" }}>
               Shop Now

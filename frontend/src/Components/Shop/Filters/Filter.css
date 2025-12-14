@@ -1,182 +1,88 @@
-.filterSection {
+/* ============ Jewellery Filter Facet Layout ============ */
+
+/* Container */
+.facetPanel {
+  border-right: 1px solid #eee;
+  padding-right: 18px;
+}
+
+/* Header with badge */
+.facetHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
+.facetBadge {
+  background: #edf6ff;
+  color: #2b5dab;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+/* Groups */
+.facetGroup {
+  padding: 16px 0;
+  border-bottom: 1px solid #eee;
+}
+.facetGroup:last-child {
+  border-bottom: none;
+}
+.facetTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3b3552;
+  margin: 0 0 12px;
+}
+
+/* Rows */
+.facetList {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;        /* spacing between options */
 }
-
-.categoryItem {
-  box-shadow: white;
-  border: none;
-}
-
-.filterHeading {
-  font-size: 18px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.filterCategories p {
-  font-size: 14px;
-  padding-bottom: 10px;
-  cursor: pointer;
-}
-
-/* Filter Color */
-
-.filterColorBtn {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 25px;
-}
-
-.filterColorBtn button {
-  background-color: white;
-  border-radius: 50%;
-  padding: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  outline: none;
-  border: none;
-  position: relative;
-}
-
-.filterColorBtn button.selected::after {
-  content: "";
-  position: absolute;
-  box-sizing: border-box;
-  border: 2px solid black;
-  border-radius: 50%;
-  width: calc(100% + 12px);
-  height: calc(100% + 12px);
-  left: -6px;
-  top: -6px;
-  transition: all 0.3s ease;
-}
-
-/* filter Sizes */
-
-.sizeButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.sizeButton {
-  background-color: white;
-  padding: 6px 20px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  border: 1px solid #e4e4e4;
-  outline: none;
-  font-size: 14px;
-}
-
-.sizeButton:hover {
-  background-color: #e4e4e4;
-}
-
-.sizeButton.selected {
-  background-color: #e4e4e4;
-}
-
-/* filter brands */
-
-.searchBar {
-  position: relative;
+.facetRow {
   display: flex;
   align-items: center;
-  margin-bottom: 25px;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  color: #2a2a2a;
 }
-
-.searchIcon {
-  position: absolute;
-  right: 10px;
-}
-
-.searchBar input {
-  width: calc(100% - 30px);
-  padding: 12px 18px 9.6px;
-  padding-right: 30px;
-  border: 2px solid #e4e4e4;
-  outline: none;
-  font-size: 14px;
-  text-transform: uppercase;
-}
-
-.brandList {
-  margin-top: 10px;
-}
-
-.brandItem {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.brandRadio {
-  margin-right: 15px;
-  appearance: none;
+.facetRow input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  border: 2px solid #e4e4e4;
-  position: relative;
-  cursor: pointer;
-  outline: none;
+}
+.facetLabel {
+  flex: 1;
+}
+.facetCount {
+  color: #1790a8; /* teal-ish like the screenshot */
+  font-size: 13px;
 }
 
-.brandRadio:checked {
-  border: 2px solid #000000;
-}
-
-.brandRadio::after {
-  content: "";
-  display: block;
-  width: 8px;
-  height: 8px;
-  background-color: black;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  transition: transform 0.2s ease-in-out;
-}
-
-.brandRadio:checked::after {
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.notFoundMessage {
-  font-size: 14px;
-  color: red;
+/* Show more / less link */
+.facetMore {
   margin-top: 10px;
-}
-
-.brandLabel {
+  background: none;
+  border: 0;
+  color: #2b5dab;
   cursor: pointer;
   font-size: 14px;
-}
-
-.brandCount {
-  margin-left: auto;
-  font-size: 14px;
-  color: #767676;
-}
-
-/* Filter Slider */
-
-.priceRange {
-  display: flex;
-  gap: 20px;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
 }
 
-.priceRange p {
-  font-size: 14px;
-  color: #767676;
-  font-weight: 400;
-}
-
-.priceRange p span {
-  color: black;
+/* Optional: mobile adjustments */
+@media (max-width: 768px) {
+  .facetPanel {
+    border-right: none;
+    padding-right: 0;
+  }
 }

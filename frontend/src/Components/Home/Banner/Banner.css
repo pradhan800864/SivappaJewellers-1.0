@@ -8,15 +8,19 @@
 }
 
 .bannerLeft {
-  background-image: url("../../../Assets/Banner/banner_1.jpg");
-  background-position: center;
-  background-size: cover;
+  background-color: #7b0b0b; /* Maroon background */
+  background-image: url("../../../Assets/Banner/bridal.png");
+  background-repeat: no-repeat;
+  background-position: right center; /* Image stays on the right */
+  background-size: contain; /* Keeps the image ratio */
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 30px;
   gap: 10px;
+  color: white;
 }
+
 
 .bannerRight {
   background-image: url("../../../Assets/Banner/banner_2.jpg");

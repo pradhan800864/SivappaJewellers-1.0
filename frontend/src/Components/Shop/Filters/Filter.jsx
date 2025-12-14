@@ -1,250 +1,297 @@
-import React, { useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import "./Filter.css";
 
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import { IoIosArrowDown } from "react-icons/io";
-import { BiSearch } from "react-icons/bi";
-import Slider from "@mui/material/Slider";
+// shallow set equality to avoid redundant setState calls
+const equalSets = (a, b) => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+};
 
-const Filter = () => {
-  const [value, setValue] = useState([20, 69]);
+const Filter = ({ onFilterChange, facets }) => {
+  const onFilterChangeRef = useRef(onFilterChange);
+  useEffect(() => {
+   onFilterChangeRef.current = onFilterChange;
+ }, [onFilterChange]);
+  // ---- Use server data as-is; keep references stable with useMemo ----
+  const productTypes = useMemo(() => facets?.productTypes ?? [], [facets]);
+  const categoriesByType = useMemo(() => facets?.categoriesByType ?? {}, [facets]);
+  const subCategoriesByCategory = useMemo(
+    () => facets?.subCategoriesByCategory ?? {},
+    [facets]
+  );
+  const purities = useMemo(() => facets?.purities ?? [], [facets]);
+  const stoneTypes = useMemo(() => facets?.stoneTypes ?? [], [facets]);
 
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [selectedSizes, setSelectedSizes] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [brandsData] = useState([
-    { name: "Adidas", count: 2 },
-    { name: "Balmain", count: 7 },
-    { name: "Balenciaga", count: 10 },
-    { name: "Burberry", count: 39 },
-    { name: "Kenzo", count: 95 },
-    { name: "Givenchy", count: 1092 },
-    { name: "Zara", count: 48 },
+  // ----- LOCAL STATE -----
+  const [selectedTypes, setSelectedTypes] = useState(new Set());
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
+  const [selectedSubCats, setSelectedSubCats] = useState(new Set());
+  const [selectedPurities, setSelectedPurities] = useState(new Set());
+  const [hasStones, setHasStones] = useState(false);
+  const [selectedStoneTypes, setSelectedStoneTypes] = useState(new Set());
+  const [inStockOnly, setInStockOnly] = useState(false);
+
+  // show-more toggles
+  const [showMoreType, setShowMoreType] = useState(false);
+  const [showMoreCat, setShowMoreCat] = useState(false);
+  const [showMoreSub, setShowMoreSub] = useState(false);
+  const [showMorePurity, setShowMorePurity] = useState(false);
+  const [showMoreStone, setShowMoreStone] = useState(false);
+
+  const toggleSet = (value, setFn) => {
+    setFn((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  };
+
+  const takeOrAll = (arr, showMore, limit = 4) =>
+    showMore ? arr : arr.slice(0, limit);
+
+  // ----- Derived lists (stable because facets are memoized) -----
+  const visibleCategories = useMemo(() => {
+    const types = Array.from(selectedTypes);
+    if (types.length === 0) return Object.values(categoriesByType).flat();
+    const merged = [];
+    types.forEach((t) => merged.push(...(categoriesByType[t] ?? [])));
+    return merged;
+  }, [selectedTypes, categoriesByType]);
+
+  const visibleSubCats = useMemo(() => {
+    const cats = Array.from(selectedCategories);
+    if (cats.length === 0) return Object.values(subCategoriesByCategory).flat();
+    const merged = [];
+    cats.forEach((c) => merged.push(...(subCategoriesByCategory[c] ?? [])));
+    return merged;
+  }, [selectedCategories, subCategoriesByCategory]);
+
+  // ----- Cleanup invalid selections (guarded to avoid loops) -----
+  useEffect(() => {
+    const valid = new Set(visibleCategories.map((c) => c.label));
+    setSelectedCategories((prev) => {
+      const next = new Set([...prev].filter((c) => valid.has(c)));
+      return equalSets(prev, next) ? prev : next;
+    });
+  }, [visibleCategories]);
+
+  useEffect(() => {
+    const valid = new Set(visibleSubCats.map((s) => s.label));
+    setSelectedSubCats((prev) => {
+      const next = new Set([...prev].filter((s) => valid.has(s)));
+      return equalSets(prev, next) ? prev : next;
+    });
+  }, [visibleSubCats]);
+
+  // ----- Badge count -----
+  const activeCount = useMemo(() => {
+    return (
+      selectedTypes.size +
+      selectedCategories.size +
+      selectedSubCats.size +
+      selectedPurities.size +
+      (hasStones ? 1 : 0) +
+      (hasStones ? selectedStoneTypes.size : 0) +
+      (inStockOnly ? 1 : 0)
+    );
+  }, [
+    selectedTypes,
+    selectedCategories,
+    selectedSubCats,
+    selectedPurities,
+    hasStones,
+    selectedStoneTypes,
+    inStockOnly,
   ]);
 
-  const handleColorChange = (color) => {
-    setSelectedColors((prevColors) =>
-      prevColors.includes(color)
-        ? prevColors.filter((c) => c !== color)
-        : [...prevColors, color]
-    );
-  };
-
-  const handleSizeChange = (size) => {
-    setSelectedSizes((prevSizes) =>
-      prevSizes.includes(size)
-        ? prevSizes.filter((s) => s !== size)
-        : [...prevSizes, size]
-    );
-  };
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
-
-  const filteredBrands = brandsData.filter((brand) =>
-    brand.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filterCategories = [
-    "Dresses",
-    "Shorts",
-    "Sweatshirts",
-    "Swimwear",
-    "Jackets",
-    "T-Shirts & Tops",
-    "Jeans",
-    "Trousers",
-    "Men",
-    "Jumpers & Cardigans",
-  ];
-
-  const filterColors = [
-    "#0B2472",
-    "#D6BB4F",
-    "#282828",
-    "#B0D6E8",
-    "#9C7539",
-    "#D29B47",
-    "#E5AE95",
-    "#D76B67",
-    "#BABABA",
-    "#BFDCC4",
-  ];
-
-  const filterSizes = ["XS", "S", "M", "L", "XL", "XXL"];
+  // ----- Bubble up labels (IMPORTANT: no onFilterChange in deps) -----
+  useEffect(() => {
+    if (!onFilterChangeRef.current) return;
+    const labels = [
+      ...Array.from(selectedTypes).map((t) => `type:${t}`),
+      ...Array.from(selectedCategories).map((c) => `cat:${c}`),
+      ...Array.from(selectedSubCats).map((s) => `sub:${s}`),
+      ...Array.from(selectedPurities).map((p) => `purity:${p}`),
+      ...(hasStones ? ["has-stones"] : []),
+      ...(hasStones ? Array.from(selectedStoneTypes).map((st) => `stone:${st}`) : []),
+      ...(inStockOnly ? ["in-stock"] : []),
+    ];
+    onFilterChangeRef.current(labels);
+  }, [
+    selectedTypes,
+    selectedCategories,
+    selectedSubCats,
+    selectedPurities,
+    hasStones,
+    selectedStoneTypes,
+    inStockOnly,
+  ]);
 
   return (
-    <div>
-      <div className="filterSection">
-        <div className="filterCategories">
-          <Accordion defaultExpanded disableGutters elevation={0}>
-            <AccordionSummary
-              expandIcon={<IoIosArrowDown size={20} />}
-              aria-controls="panel1-content"
-              id="panel1-header"
-              sx={{ padding: 0, marginBottom: 2 }}
-            >
-              <h5 className="filterHeading">Product Categories</h5>
-            </AccordionSummary>
-            <AccordionDetails sx={{ padding: 0 }}>
-              {filterCategories.map((category, index) => (
-                <p key={index}>{category}</p>
-              ))}
-            </AccordionDetails>
-          </Accordion>
-        </div>
-        <div className="filterColors">
-          <Accordion defaultExpanded disableGutters elevation={0}>
-            <AccordionSummary
-              expandIcon={<IoIosArrowDown size={20} />}
-              aria-controls="panel1-content"
-              id="panel1-header"
-              sx={{ padding: 0, marginBottom: 2 }}
-            >
-              <h5 className="filterHeading">Color</h5>
-            </AccordionSummary>
-            <AccordionDetails sx={{ padding: 0 }}>
-              {
-                <div className="filterColorBtn">
-                  {filterColors.map((color, index) => (
-                    <button
-                      key={index}
-                      className={`colorButton ${
-                        selectedColors.includes(color) ? "selected" : ""
-                      }`}
-                      style={{
-                        backgroundColor: color,
-                      }}
-                      onClick={() => handleColorChange(color)}
-                    />
-                  ))}
-                </div>
-              }
-            </AccordionDetails>
-          </Accordion>
-        </div>
-        <div className="filterSizes">
-          <Accordion defaultExpanded disableGutters elevation={0}>
-            <AccordionSummary
-              expandIcon={<IoIosArrowDown size={20} />}
-              aria-controls="panel1-content"
-              id="panel1-header"
-              sx={{ padding: 0, marginBottom: 2 }}
-            >
-              <h5 className="filterHeading">Sizes</h5>
-            </AccordionSummary>
-            <AccordionDetails sx={{ padding: 0 }}>
-              <div className="sizeButtons">
-                {filterSizes.map((size, index) => (
-                  <button
-                    key={index}
-                    className={`sizeButton ${
-                      selectedSizes.includes(size) ? "selected" : ""
-                    }`}
-                    onClick={() => handleSizeChange(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </AccordionDetails>
-          </Accordion>
-        </div>
-        <div className="filterBrands">
-          <Accordion defaultExpanded disableGutters elevation={0}>
-            <AccordionSummary
-              expandIcon={<IoIosArrowDown size={20} />}
-              aria-controls="panel1-content"
-              id="panel1-header"
-              sx={{ padding: 0, marginBottom: 2 }}
-            >
-              <h5 className="filterHeading">Brands</h5>
-            </AccordionSummary>
-            <AccordionDetails sx={{ padding: 0 }}>
-              {/* Search bar */}
-              <div className="searchBar">
-                <BiSearch className="searchIcon" size={20} color={"#767676"} />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-
-              {/* Brand list */}
-              <div className="brandList">
-                {filteredBrands.length > 0 ? (
-                  filteredBrands.map((brand, index) => (
-                    <div className="brandItem" key={index}>
-                      {/* Radio button */}
-                      <input
-                        type="checkbox"
-                        name="brand"
-                        id={`brand-${index}`}
-                        className="brandRadio"
-                      />
-                      {/* Brand name */}
-                      <label htmlFor={`brand-${index}`} className="brandLabel">
-                        {brand.name}
-                      </label>
-                      {/* Brand count */}
-                      <span className="brandCount">{brand.count}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="notFoundMessage">Not found</div>
-                )}
-              </div>
-            </AccordionDetails>
-          </Accordion>
-        </div>
-        <div className="filterPrice">
-          <Accordion defaultExpanded disableGutters elevation={0}>
-            <AccordionSummary
-              expandIcon={<IoIosArrowDown size={20} />}
-              aria-controls="panel1-content"
-              id="panel1-header"
-              sx={{ padding: 0, marginBottom: 2 }}
-            >
-              <h5 className="filterHeading">Price</h5>
-            </AccordionSummary>
-            <AccordionDetails sx={{ padding: 0 }}>
-              <Slider
-                getAriaLabel={() => "Temperature range"}
-                value={value}
-                onChange={handleChange}
-                valueLabelDisplay="auto"
-                valueLabelFormat={(value) => `$${value}`}
-                sx={{
-                  color: "black",
-                  "& .MuiSlider-thumb": {
-                    backgroundColor: "white",
-                    border: "2px solid black",
-                    width: 18,
-                    height: 18,
-                  },
-                }}
-              />
-
-              <div className="filterSliderPrice">
-                <div className="priceRange">
-                  <p>
-                    Min Price: <span>${value[0]}</span>
-                  </p>
-                  <p>
-                    Max Price: <span>${value[1]}</span>
-                  </p>
-                </div>
-              </div>
-            </AccordionDetails>
-          </Accordion>
-        </div>
+    <aside className="facetPanel">
+      <div className="facetHeader">
+        <span>Filters</span>
+        <span className="facetBadge">{activeCount}</span>
       </div>
-    </div>
+
+      {/* Product Type */}
+      <div className="facetGroup">
+        <h5 className="facetTitle">Product Type</h5>
+        <div className="facetList">
+          {takeOrAll(productTypes, showMoreType).map((item) => {
+            const checked = selectedTypes.has(item.label);
+            return (
+              <label key={item.label} className="facetRow">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleSet(item.label, setSelectedTypes)}
+                />
+                <span className="facetLabel">{item.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        {productTypes.length > 4 && (
+          <button className="facetMore" onClick={() => setShowMoreType((s) => !s)}>
+            {showMoreType ? "Show less" : `Show (${productTypes.length - 4}) more`}
+          </button>
+        )}
+      </div>
+
+      {/* Category */}
+      <div className="facetGroup">
+        <h5 className="facetTitle">Category</h5>
+        <div className="facetList">
+          {takeOrAll(visibleCategories, showMoreCat).map((item) => {
+            const checked = selectedCategories.has(item.label);
+            return (
+              <label key={item.label} className="facetRow">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleSet(item.label, setSelectedCategories)}
+                />
+                <span className="facetLabel">{item.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        {visibleCategories.length > 4 && (
+          <button className="facetMore" onClick={() => setShowMoreCat((s) => !s)}>
+            {showMoreCat ? "Show less" : `Show (${visibleCategories.length - 4}) more`}
+          </button>
+        )}
+      </div>
+
+      {/* Sub-Category */}
+      <div className="facetGroup">
+        <h5 className="facetTitle">Sub-Category</h5>
+        <div className="facetList">
+          {takeOrAll(visibleSubCats, showMoreSub).map((item) => {
+            const checked = selectedSubCats.has(item.label);
+            return (
+              <label key={item.label} className="facetRow">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleSet(item.label, setSelectedSubCats)}
+                />
+                <span className="facetLabel">{item.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        {visibleSubCats.length > 4 && (
+          <button className="facetMore" onClick={() => setShowMoreSub((s) => !s)}>
+            {showMoreSub ? "Show less" : `Show (${visibleSubCats.length - 4}) more`}
+          </button>
+        )}
+      </div>
+
+      {/* Purity */}
+      <div className="facetGroup">
+        <h5 className="facetTitle">Purity</h5>
+        <div className="facetList">
+          {takeOrAll(purities, showMorePurity).map((item) => {
+            const checked = selectedPurities.has(item.label);
+            return (
+              <label key={item.label} className="facetRow">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleSet(item.label, setSelectedPurities)}
+                />
+                <span className="facetLabel">{item.label}</span>
+              </label>
+            );
+          })}
+        </div>
+        {purities.length > 4 && (
+          <button className="facetMore" onClick={() => setShowMorePurity((s) => !s)}>
+            {showMorePurity ? "Show less" : `Show (${purities.length - 4}) more`}
+          </button>
+        )}
+      </div>
+
+      {/* Stones */}
+      <div className="facetGroup">
+        <h5 className="facetTitle">Stones</h5>
+        <label className="facetRow">
+          <input
+            type="checkbox"
+            checked={hasStones}
+            onChange={(e) => {
+              setHasStones(e.target.checked);
+              if (!e.target.checked) setSelectedStoneTypes(new Set());
+            }}
+          />
+          <span className="facetLabel">Has Stones</span>
+        </label>
+
+        {hasStones && (
+          <>
+            <div className="facetList">
+              {takeOrAll(stoneTypes, showMoreStone).map((item) => {
+                const checked = selectedStoneTypes.has(item.label);
+                return (
+                  <label key={item.label} className="facetRow">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleSet(item.label, setSelectedStoneTypes)}
+                    />
+                    <span className="facetLabel">{item.label}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {stoneTypes.length > 4 && (
+              <button className="facetMore" onClick={() => setShowMoreStone((s) => !s)}>
+                {showMoreStone ? "Show less" : `Show (${stoneTypes.length - 4}) more`}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* In Stock */}
+      <div className="facetGroup">
+        <h5 className="facetTitle">Availability</h5>
+        <label className="facetRow">
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={(e) => setInStockOnly(e.target.checked)}
+          />
+          <span className="facetLabel">In-Stock</span>
+        </label>
+      </div>
+    </aside>
   );
 };
 

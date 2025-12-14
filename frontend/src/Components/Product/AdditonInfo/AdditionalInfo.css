@@ -350,3 +350,362 @@
     width: 40%;
   }
 }
+
+
+
+/* =========================
+   PRODUCT INFORMATION CARD
+   ========================= */
+
+   .infoHeading {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    color: #222;
+  }
+  
+  .productInfoCard {
+    display: flex;
+    gap: 40px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  
+  /* left column */
+  .infoLeft {
+    flex: 1;
+    border-right: 1px solid #e4e4e4;
+    padding-right: 32px;
+    min-width: 280px;
+  }
+  
+  .infoLeft h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+  
+  .infoRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    padding: 8px 0;
+    font-size: 15px;
+  }
+  
+  .infoLabel {
+    color: #666;
+    font-weight: 500;
+  }
+  
+  .infoValue {
+    color: #111;
+    font-weight: 500;
+  }
+  
+  .infoNote {
+    font-size: 12px;
+    color: #777;
+    margin-top: 10px;
+  }
+  
+  /* helper box */
+  .helpBox {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px solid #e4e4e4;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  .helpButtons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  
+  .helpBtn {
+    background: #f6f6f6;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #000000;
+  }
+  
+  .helpBtn:hover { background: #ececec; }
+  
+  /* right column */
+  .infoRight {
+    flex: 1.2;
+    padding-left: 32px;
+    min-width: 320px;
+  }
+  
+  .infoRight h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+  
+  .priceRow {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 15px;
+    color: #333;
+  }
+  
+  .priceRow.grandTotal {
+    font-weight: 700;
+    font-size: 16px;
+    color: #111;
+  }
+  
+  .priceNote,
+  .priceNote2 {
+    font-size: 12px;
+    color: #777;
+    margin-top: 6px;
+  }
+  
+  .metalDetails,
+  .diamondDetails {
+    margin-top: 20px;
+  }
+  
+  .metalDetails h5,
+  .diamondDetails h5 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+  }
+  
+  /* responsive tweaks for the card */
+  @media (max-width: 1210px) {
+    .productInfoCard {
+      padding: 24px;
+      gap: 28px;
+    }
+    .infoLeft { padding-right: 24px; }
+    .infoRight { padding-left: 24px; }
+  }
+  
+  @media (max-width: 900px) {
+    .productInfoCard {
+      flex-direction: column;
+    }
+    .infoLeft {
+      border-right: 0;
+      border-bottom: 1px solid #e4e4e4;
+      padding-right: 0;
+      padding-bottom: 24px;
+    }
+    .infoRight { padding-left: 0; }
+  }
+  
+  @media (max-width: 500px) {
+    .infoHeading { font-size: 22px; }
+    .priceRow, .infoRow { font-size: 14px; }
+  }
+  /* =========================
+   INFO BADGE ROW BELOW PRICE
+   ========================= */
+.infoBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 25px;
+}
+
+.infoBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff6f6;
+  border: 1px solid #f3dada;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.infoBadge:hover {
+  background: #ffecec;
+  transform: translateY(-2px);
+}
+
+.infoBadgeIcon {
+  font-size: 16px;
+}
+
+@media (max-width: 600px) {
+  .infoBadges {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.priceBreakupAnchor { scroll-margin-top: 100px; }
+
+
+/* Title */
+.aiTitle {
+  text-align: center;
+  margin: 40px 0 25px;
+}
+
+/* 2-column layout */
+.aiInfoGrid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 32px;
+}
+
+/* Cards */
+.aiCard {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+/* LEFT – summary */
+.aiSummary h4 {
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+.aiKV {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 10px 0;
+}
+.aiKV:last-of-type { border-bottom: none; }
+.aiKV span { font-size: 14px; }
+.aiKVValue { font-weight: 500; }
+.aiNote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #747474;
+}
+
+.aiHelp {
+  margin-top: 18px;
+  border: 1px solid #e9eef5;
+  background: #f7fafc;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+}
+.aiHelpTitle { font-size: 14px; margin-bottom: 4px; }
+.aiHelpSub { font-size: 12px; color: #6d7682; }
+.aiHelpBtns {
+  display: flex; gap: 10px; margin-top: 10px; justify-content: center;
+}
+.aiHelpBtns button {
+  padding: 10px 12px; border-radius: 8px; border: 1px solid #e7dada;
+  background: #fff5f5; cursor: pointer; font-size: 13px;
+}
+.aiHelpBtns button:hover { background: #ffecec; }
+
+/* RIGHT – accordion */
+.aiRight { padding: 0; }
+.aiAcc + .aiAcc { margin-top: 10px; }
+
+.aiAccHeader {
+  width: 100%;
+  background: #f8f8fb;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.aiAccTitle { font-weight: 600; font-size: 13px; letter-spacing: .4px; }
+
+.aiAccBody {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .25s ease;
+  background: #fff;
+  border-left: 1px solid #eee;
+  border-right: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  border-radius: 0 0 10px 10px;
+}
+.aiAccBody.open { max-height: 600px; } /* large enough for content */
+
+.aiRows { padding: 10px 14px 14px; }
+
+.aiRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f3f3;
+  font-size: 14px;
+}
+.aiRow:last-child { border-bottom: none; }
+
+.aiRowLabel { color: #2a2a2a; }
+.aiRowValue { font-weight: 500; }
+
+.aiDivider { height: 1px; background: #ececec; margin: 6px 0; }
+
+.aiGrand .aiRowLabel { font-weight: 600; }
+.aiGrand .aiRowValue { font-weight: 700; }
+
+.aiMRP { font-size: 12px; color: #6e6e6e; margin-top: 8px; text-align: right; }
+
+.aiList { padding: 12px 16px 16px; margin: 0; list-style: none; }
+.aiList li { padding: 6px 0; font-size: 14px; border-bottom: 1px dashed #f0f0f0; }
+.aiList li:last-child { border-bottom: none; }
+
+.aiMuted { padding: 12px 16px 16px; color: #777; font-size: 14px; }
+
+.aiFootNote {
+  margin: 12px 8px 0;
+  font-size: 12px;
+  color: #6e6e6e;
+}
+
+/* scroll anchor (no size) */
+.priceBreakupAnchor { scroll-margin-top: 100px; }
+
+/* responsive */
+@media (max-width: 1000px) {
+  .aiInfoGrid { grid-template-columns: 1fr; }
+}
+/* Force all text inside right card to black */
+.aiRight,
+.aiRight * {
+  color: #000 !important;
+}
+
+/* Optional: Make chevron icons slightly darker */
+.aiAccHeader svg {
+  color: #000;
+}
+
+/* Optional: Adjust accordion hover for clarity */
+.aiAccHeader:hover {
+  background: #f2f2f2;
+}
+
+/* Optional: Make left panel text black too */
+.aiSummary,
+.aiSummary * {
+  color: #000 !important;
+}

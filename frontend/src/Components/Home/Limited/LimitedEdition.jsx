@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./LimitedEdition.css";
 
 import { useDispatch, useSelector } from "react-redux";
@@ -7,74 +7,126 @@ import { addToCart } from "../../../Features/Cart/cartSlice";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
-
-import { Navigation } from "swiper/modules";
-import { Autoplay } from "swiper/modules";
+import { Navigation, Autoplay } from "swiper/modules";
 
 import { Link } from "react-router-dom";
-
-import StoreData from "../../../Data/StoreData";
+import axios from "axios";
 
 import { FiHeart } from "react-icons/fi";
 import { FaStar } from "react-icons/fa";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { FaCartPlus } from "react-icons/fa";
-
 import toast from "react-hot-toast";
 
+const API_BASE = "http://localhost:4998";
+
+// ---------- helpers ----------
+const fixUrl = (u) => {
+  if (!u) return "";
+  if (/^https?:\/\//i.test(u)) return u;
+  return u.startsWith("/") ? `${API_BASE}${u}` : `${API_BASE}/${u}`;
+};
+
+const num = (v) => {
+  if (v === null || v === undefined) return 0;
+  const n = Number(String(v).replace(/,/g, "").trim());
+  return Number.isFinite(n) ? n : 0;
+};
+
+// map backend row → UI product shape
+const toUiProduct = (p) => {
+  const imgs = Array.isArray(p.image_urls) ? p.image_urls : [];
+  const front = fixUrl(p.image_url || imgs[0]);
+  const back = fixUrl(imgs[1] || imgs[0] || p.image_url);
+
+  return {
+    id: p.id,
+    productID: p.id,
+    productName: p.name || "Product",
+    productPrice: num(p.final_price) || num(p.net_price) || num(p.making_charges),
+    productReviews: p.reviews || "No reviews",
+    frontImg: front,
+    backImg: back,
+    productType: p.product_type || "Jewellery",
+    labels: Array.isArray(p.labels)
+      ? p.labels
+      : typeof p.labels === "string"
+      ? p.labels.split(",").map((s) => s.trim())
+      : [],
+  };
+};
+
+// ---------- component ----------
 const LimitedEdition = () => {
   const dispatch = useDispatch();
-
   const [wishList, setWishList] = useState({});
-
-  const handleWishlistClick = (productID) => {
-    setWishList((prevWishlist) => ({
-      ...prevWishlist,
-      [productID]: !prevWishlist[productID],
-    }));
-  };
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
 
   const cartItems = useSelector((state) => state.cart.items);
 
-  const handleAddToCart = (product) => {
-    const productInCart = cartItems.find(
-      (item) => item.productID === product.productID
-    );
+  const handleWishlistClick = (productID) =>
+    setWishList((prev) => ({ ...prev, [productID]: !prev[productID] }));
 
-    if (productInCart && productInCart.quantity >= 20) {
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const handleAddToCart = (product) => {
+    const found = cartItems.find((i) => i.productID === product.productID);
+    if (found && found.quantity >= 20) {
       toast.error("Product limit reached", {
         duration: 2000,
-        style: {
-          backgroundColor: "#ff4b4b",
-          color: "white",
-        },
-        iconTheme: {
-          primary: "#fff",
-          secondary: "#ff4b4b",
-        },
+        style: { backgroundColor: "#ff4b4b", color: "white" },
+        iconTheme: { primary: "#fff", secondary: "#ff4b4b" },
       });
     } else {
       dispatch(addToCart(product));
-      toast.success(`Added to cart!`, {
+      toast.success("Added to cart!", {
         duration: 2000,
-        style: {
-          backgroundColor: "#07bc0c",
-          color: "white",
-        },
-        iconTheme: {
-          primary: "#fff",
-          secondary: "#07bc0c",
-        },
+        style: { backgroundColor: "#07bc0c", color: "white" },
+        iconTheme: { primary: "#fff", secondary: "#07bc0c" },
       });
     }
   };
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setErr(null);
+        const { data } = await axios.get(`${API_BASE}/api/products`);
+        const list = Array.isArray(data) ? data : data.rows || data.items || [];
+        const ui = list.map(toUiProduct);
+
+        // filter for label 'limited edition' (case-insensitive)
+        const le = ui.filter((p) =>
+          p.labels.some((lbl) => String(lbl).toLowerCase() === "limited edition")
+        );
+
+        if (alive) setItems(le);
+      } catch (e) {
+        if (alive) setErr(e?.response?.data?.error || e.message || "Failed to load products");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // If there are only a few items, duplicate them so the loop feels continuous
+  const marqueeItems = useMemo(() => {
+    if (items.length >= 8) return items;
+    return Array( Math.ceil(8 / Math.max(items.length || 1, 1)) )
+      .fill(0)
+      .flatMap(() => items);
+  }, [items]);
+
+  if (loading) return <div className="limitedProductSection">Loading limited edition…</div>;
+  if (err) return <div className="limitedProductSection text-red-600">Error: {err}</div>;
+  if (!items.length) return <div className="limitedProductSection">No limited edition products yet.</div>;
 
   return (
     <>
@@ -82,6 +134,7 @@ const LimitedEdition = () => {
         <h2>
           Limited <span>Edition</span>
         </h2>
+
         <div className="limitedProductSlider">
           <div className="swiper-button image-swiper-button-next">
             <IoIosArrowForward />
@@ -89,96 +142,87 @@ const LimitedEdition = () => {
           <div className="swiper-button image-swiper-button-prev">
             <IoIosArrowBack />
           </div>
+
           <Swiper
             slidesPerView={4}
-            slidesPerGroup={4}
+            slidesPerGroup={1}          // smoother continuous scroll
             spaceBetween={30}
             loop={true}
+            speed={5000}                // long duration for continuous feel
+            autoplay={{
+              delay: 0,                 // no pause between transitions
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true,
+            }}
+            freeMode={true}             // continuous glide
+            freeModeMomentum={false}
             navigation={{
               nextEl: ".image-swiper-button-next",
               prevEl: ".image-swiper-button-prev",
             }}
-            autoplay={{
-              delay: 2500,
-              disableOnInteraction: false,
-              pauseOnMouseEnter: true,
-            }}
             modules={[Navigation, Autoplay]}
             breakpoints={{
-              320: {
-                slidesPerView: 2,
-                slidesPerGroup: 1,
-                spaceBetween: 14,
-              },
-              768: {
-                slidesPerView: 3,
-                slidesPerGroup: 1,
-                spaceBetween: 24,
-              },
-              1024: {
-                slidesPerView: 4,
-                slidesPerGroup: 1,
-                spaceBetween: 30,
-              },
+              320:  { slidesPerView: 2, slidesPerGroup: 1, spaceBetween: 14 },
+              768:  { slidesPerView: 3, slidesPerGroup: 1, spaceBetween: 24 },
+              1024: { slidesPerView: 4, slidesPerGroup: 1, spaceBetween: 30 },
             }}
           >
-            {StoreData.slice(8, 13).map((product) => {
-              return (
-                <SwiperSlide key={product.productID}>
-                  <div className="lpContainer">
-                    <div className="lpImageContainer">
-                      <Link to="/Product" onClick={scrollToTop}>
-                        <img
-                          src={product.frontImg}
-                          alt={product.productName}
-                          className="lpImage"
-                        />
-                      </Link>
-                      <h4 onClick={() => handleAddToCart(product)}>
-                        Add to Cart
-                      </h4>
-                    </div>
-                    <div
-                      className="lpProductImagesCart"
-                      onClick={() => handleAddToCart(product)}
-                    >
-                      <FaCartPlus />
-                    </div>
-                    <div className="limitedProductInfo">
-                      <div className="lpCategoryWishlist">
-                        <p>Dresses</p>
-                        <FiHeart
-                          onClick={() => handleWishlistClick(product.productID)}
-                          style={{
-                            color: wishList[product.productID]
-                              ? "red"
-                              : "#767676",
-                            cursor: "pointer",
-                          }}
-                        />
-                      </div>
-                      <div className="productNameInfo">
-                        <Link to="/Product" onClick={scrollToTop}>
-                          <h5>{product.productName}</h5>
-                        </Link>
-                        <p>${product.productPrice}</p>
-                        <div className="productRatingReviews">
-                          <div className="productRatingStar">
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                            <FaStar color="#FEC78A" size={10} />
-                          </div>
+            {marqueeItems.map((product, idx) => (
+              <SwiperSlide key={`${product.productID}-${idx}`}>
+                <div className="lpContainer">
+                  <div className="lpImageContainer">
+                    <Link to="/Product" onClick={scrollToTop}>
+                      <img
+                        src={product.frontImg}
+                        alt={product.productName}
+                        className="lpImage"
+                      />
+                    </Link>
+                    <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>
+                  </div>
 
-                          <span>{product.productReviews}</span>
+                  <div
+                    className="lpProductImagesCart"
+                    onClick={() => handleAddToCart(product)}
+                  >
+                    <FaCartPlus />
+                  </div>
+
+                  <div className="limitedProductInfo">
+                    <div className="lpCategoryWishlist">
+                      <p>{product.productType}</p>
+                      <FiHeart
+                        onClick={() => handleWishlistClick(product.productID)}
+                        style={{
+                          color: wishList[product.productID] ? "red" : "#767676",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </div>
+
+                    <div className="productNameInfo">
+                      <Link to="/Product" onClick={scrollToTop}>
+                        <h5>{product.productName}</h5>
+                      </Link>
+                      <p>
+                        ₹
+                        {product.productPrice?.toLocaleString("en-IN", {
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                      <div className="productRatingReviews">
+                        <div className="productRatingStar">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar key={i} color="#FEC78A" size={10} />
+                          ))}
                         </div>
+                        <span>{product.productReviews}</span>
                       </div>
                     </div>
                   </div>
-                </SwiperSlide>
-              );
-            })}
+                </div>
+              </SwiperSlide>
+            ))}
           </Swiper>
         </div>
       </div>

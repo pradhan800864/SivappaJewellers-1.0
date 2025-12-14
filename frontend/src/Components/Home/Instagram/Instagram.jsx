@@ -1,17 +1,17 @@
 import React from "react";
 import "./Instagram.css";
-import insta1 from "../../../Assets/Instagram/insta1.jpg";
-import insta2 from "../../../Assets/Instagram/insta2.jpg";
-import insta3 from "../../../Assets/Instagram/insta3.jpg";
-import insta4 from "../../../Assets/Instagram/insta4.jpg";
-import insta5 from "../../../Assets/Instagram/insta5.jpg";
-import insta6 from "../../../Assets/Instagram/insta6.jpg";
-import insta7 from "../../../Assets/Instagram/insta7.jpg";
-import insta8 from "../../../Assets/Instagram/insta8.jpg";
-import insta9 from "../../../Assets/Instagram/insta9.jpg";
-import insta10 from "../../../Assets/Instagram/insta10.jpg";
-import insta11 from "../../../Assets/Instagram/insta11.jpg";
-import insta12 from "../../../Assets/Instagram/insta12.jpg";
+import insta1 from "../../../Assets/Instagram/inst1.png";
+import insta2 from "../../../Assets/Instagram/inst2.png";
+import insta3 from "../../../Assets/Instagram/inst3.png";
+import insta4 from "../../../Assets/Instagram/inst4.png";
+import insta5 from "../../../Assets/Instagram/inst5.png";
+import insta6 from "../../../Assets/Instagram/inst6.png";
+import insta7 from "../../../Assets/Instagram/inst7.png";
+import insta8 from "../../../Assets/Instagram/inst8.png";
+import insta9 from "../../../Assets/Instagram/inst9.png";
+import insta10 from "../../../Assets/Instagram/inst10.png";
+import insta11 from "../../../Assets/Instagram/inst11.png";
+import insta12 from "../../../Assets/Instagram/inst12.png";
 
 const Instagram = () => {
   return (
@@ -26,7 +26,7 @@ const Instagram = () => {
             <img src={insta2} alt="" />
           </div>
           <div className="instagramtile">
-            <img src={insta3} alt="" />
+            <img src={insta9} alt="" />
           </div>
           <div className="instagramtile">
             <img src={insta4} alt="" />
@@ -44,16 +44,16 @@ const Instagram = () => {
             <img src={insta8} alt="" />
           </div>
           <div className="instagramtile">
-            <img src={insta9} alt="" />
+            <img src={insta10} alt="" />
           </div>
           <div className="instagramtile">
-            <img src={insta10} alt="" />
+            <img src={insta12} alt="" />
           </div>
           <div className="instagramtile">
             <img src={insta11} alt="" />
           </div>
           <div className="instagramtile">
-            <img src={insta12} alt="" />
+            <img src={insta3} alt="" />
           </div>
         </div>
       </div>

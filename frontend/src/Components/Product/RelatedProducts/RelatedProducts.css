@@ -48,45 +48,44 @@
   position: relative;
 }
 
+/* Ensure every product card has uniform height */
 .rpImages {
   position: relative;
   width: 100%;
-  height: 310px;
+  height: 260px; /* fixed consistent height */
   overflow: hidden;
-  -webkit-transition: all 0.2s cubic-bezier(0.99, 0.99, 0, 0.61);
-  transition: 0.3s linear;
-  -moz-transition: 0.3s linear;
-  -o-transition: 0.3s linear;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #f9f9f9; /* fallback for transparent images */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.rpImages img {
-  position: absolute;
+/* Both front and back images share same behavior */
+.rpFrontImg,
+.rpBackImg {
   width: 100%;
   height: 100%;
+  object-fit: cover;      /* ensures consistent fill without distortion */
+  transition: opacity 0.4s ease;
+  border-radius: 10px;
+  display: block;
+}
+
+/* Back image for hover effect */
+.rpBackImg {
+  position: absolute;
   top: 0;
   left: 0;
-  overflow: hidden;
-  object-fit: cover;
-  transition: opacity 0.3s linear;
-}
-
-.rpImages .rpBackImg {
-  z-index: 1;
   opacity: 0;
-  transition: opacity 0.3s linear;
 }
 
-.rpContainer:hover .rpBackImg {
+.rpImages:hover .rpBackImg {
   opacity: 1;
 }
 
-.rpImages .rpFrontImg {
-  z-index: 2;
-  transition: opacity 0.3s linear;
-  cursor: pointer;
-}
-
-.rpContainer:hover .rpFrontImg {
+.rpImages:hover .rpFrontImg {
   opacity: 0;
 }
 
@@ -229,5 +228,23 @@
     padding: 6px;
     outline: none;
     color: #767676;
+  }
+}
+
+@media (max-width: 1024px) {
+  .rpImages {
+    height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .rpImages {
+    height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rpImages {
+    height: 180px;
   }
 }

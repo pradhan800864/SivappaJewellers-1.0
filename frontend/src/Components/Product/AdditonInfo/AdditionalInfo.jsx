@@ -1,256 +1,197 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { FiChevronUp, FiChevronDown } from "react-icons/fi";
+import axios from "axios";
 import "./AdditionalInfo.css";
 
-import user1 from "../../../Assets/Users/user1.jpeg";
-import user2 from "../../../Assets/Users/user2.jpeg";
-
-import { FaStar } from "react-icons/fa";
-import Rating from "@mui/material/Rating";
+const currency = (n) =>
+  `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
 const AdditionalInfo = () => {
-  const [activeTab, setActiveTab] = useState("aiTab1");
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const handleTabClick = (tab) => {
-    setActiveTab(tab);
-  };
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // accordion open/close
+  const [open, setOpen] = useState({
+    price: true,
+    metal: false,
+    diamond: false,
+  });
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    axios
+      .get(`http://localhost:4998/api/products/${id}`)
+      .then((res) => setProduct(res.data))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const {
+    product_code,
+    purity,
+    type_name,
+    net_weight,
+    gross_weight,
+
+    // server-computed fields (from your /products/:id route)
+    metal_amount,
+    stone_amount,
+    making_charges_amt,
+    gst_amount,
+    final_price,
+  } = product || {};
+
+  const priceRows = useMemo(
+    () => [
+      { label: "Metal", value: metal_amount },
+      { label: "Diamond", value: stone_amount },
+      { label: "Making Charges", value: making_charges_amt },
+      { label: "GST(3%)", value: gst_amount },
+    ],
+    [metal_amount, stone_amount, making_charges_amt, gst_amount]
+  );
+
+  if (loading) return null;
 
   return (
-    <>
+    <div id="priceBreakupSection" className="priceBreakupAnchor">
       <div className="productAdditionalInfo">
-        <div className="productAdditonalInfoContainer">
-          <div className="productAdditionalInfoTabs">
-            <div className="aiTabs">
-              <p
-                onClick={() => handleTabClick("aiTab1")}
-                className={activeTab === "aiTab1" ? "aiActive" : ""}
-              >
-                Description
-              </p>
-              <p
-                onClick={() => handleTabClick("aiTab2")}
-                className={activeTab === "aiTab2" ? "aiActive" : ""}
-              >
-                Additional Information
-              </p>
-              <p
-                onClick={() => handleTabClick("aiTab3")}
-                className={activeTab === "aiTab3" ? "aiActive" : ""}
-              >
-                Reviews (2)
-              </p>
+        <h2 className="aiTitle">Product Information</h2>
+
+        <div className="aiInfoGrid">
+          {/* LEFT – Summary */}
+          <aside className="aiCard aiSummary">
+            <h4>Product Summary</h4>
+
+            <div className="aiKV">
+              <span>Product Code</span>
+              <span className="aiKVValue">{product_code || "—"}</span>
             </div>
-          </div>
-          <div className="productAdditionalInfoContent">
-            {/* Tab1 */}
+            <div className="aiKV">
+              <span>Purity</span>
+              <span className="aiKVValue">{purity || "—"}</span>
+            </div>
+            <div className="aiKV">
+              <span>Metal Type</span>
+              <span className="aiKVValue">{type_name || "—"}</span>
+            </div>
+            <div className="aiKV">
+              <span>Metal Weight</span>
+              <span className="aiKVValue">
+                {net_weight ? `${net_weight} g` : "—"}
+              </span>
+            </div>
+            <div className="aiKV">
+              <span>Gross Weight</span>
+              <span className="aiKVValue">
+                {gross_weight ? `${gross_weight} g` : "—"}
+              </span>
+            </div>
 
-            {activeTab === "aiTab1" && (
-              <div className="aiTabDescription">
-                <div className="descriptionPara">
-                  <h3>Sed do eiusmod tempor incididunt ut labore</h3>
-                  <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit,
-                    sed do eiusmod tempor incididunt ut labore et dolore magna
-                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                    Duis aute irure dolor in reprehenderit in voluptate velit
-                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-                    occaecat cupidatat non proident, sunt in culpa qui officia
-                    deserunt mollit anim id est laborum. Sed ut perspiciatis
-                    unde omnis iste natus error sit voluptatem accusantium
-                    doloremque laudantium, totam rem aperiam, eaque ipsa quae ab
-                    illo inventore veritatis et quasi architecto beatae vitae
-                    dicta sunt explicabo.
-                  </p>
-                </div>
-                <div className="descriptionParaGrid">
-                  <div className="descriptionPara">
-                    <h3>Why choose product?</h3>
-                    <p>
-                      <ul>
-                        <li>Creat by cotton fibric with soft and smooth</li>
-                        <li>
-                          Simple, Configurable (e.g. size, color, etc.), bundled
-                        </li>
-                        <li>Downloadable/Digital Products, Virtual Products</li>
-                      </ul>
-                    </p>
-                  </div>
-                  <div className="descriptionPara">
-                    <h3>Sample Number List</h3>
-                    <p>
-                      <ol>
-                        <li>Creat by cotton fibric with soft and smooth</li>
-                        <li>
-                          Simple, Configurable (e.g. size, color, etc.), bundled
-                        </li>
-                        <li>Downloadable/Digital Products, Virtual Products</li>
-                      </ol>
-                    </p>
-                  </div>
-                </div>
-                <div className="descriptionPara">
-                  <h3>Lining</h3>
-                  <p style={{ marginTop: "-10px" }}>
-                    100% Polyester, Main: 100% Polyester.
-                  </p>
-                </div>
+            <p className="aiNote">
+              *Difference in gold weight may occur & will apply on final price.
+            </p>
+
+            <div className="aiHelp">
+              <p className="aiHelpTitle">
+                Need help to find the best jewellery for you ?
+              </p>
+              <p className="aiHelpSub">We are available for your assistance</p>
+              <div className="aiHelpBtns">
+                <button onClick={() => navigate("/contact")}>📞 Speak with Experts</button>
+                <button onClick={() => navigate("/contact")}>💬 Chat with Experts</button>
               </div>
-            )}
+            </div>
+          </aside>
 
-            {/* Tab2 */}
+          {/* RIGHT – Accordions */}
+          <section className="aiCard aiRight">
 
-            {activeTab === "aiTab2" && (
-              <div className="aiTabAdditionalInfo">
-                <div className="additionalInfoContainer">
-                  <h6>Weight</h6>
-                  <p> 1.25 kg</p>
-                </div>
-                <div className="additionalInfoContainer">
-                  <h6>Dimensions</h6>
-                  <p> 90 x 60 x 90 cm</p>
-                </div>
-                <div className="additionalInfoContainer">
-                  <h6>Size</h6>
-                  <p> XS, S, M, L, XL</p>
-                </div>
-                <div className="additionalInfoContainer">
-                  <h6>Color</h6>
-                  <p> Black, Orange, White</p>
-                </div>
-                <div className="additionalInfoContainer">
-                  <h6>Storage</h6>
-                  <p> Relaxed fit shirt-style dress with a rugged</p>
-                </div>
-              </div>
-            )}
+            {/* PRICE BREAKUP */}
+            <div className="aiAcc">
+              <button
+                className="aiAccHeader"
+                onClick={() => setOpen({ price: !open.price, metal: false, diamond: false })}
+              >
+                <span className="aiAccTitle">PRICE BREAKUP</span>
+                {open.price ? <FiChevronUp /> : <FiChevronDown />}
+              </button>
 
-            {/* Tab3 */}
-
-            {activeTab === "aiTab3" && (
-              <div className="aiTabReview">
-                <div className="aiTabReviewContainer">
-                  <h3>Reviews</h3>
-                  <div className="userReviews">
-                    <div
-                      className="userReview"
-                      style={{ borderBottom: "1px solid #e4e4e4" }}
-                    >
-                      <div className="userReviewImg">
-                        <img src={user1} alt="" />
-                      </div>
-                      <div className="userReviewContent">
-                        <div className="userReviewTopContent">
-                          <div className="userNameRating">
-                            <h6>Janice Miller</h6>
-                            <div className="userRating">
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                            </div>
-                          </div>
-                          <div className="userDate">
-                            <p>April 06, 2023</p>
-                          </div>
-                        </div>
-                        <div
-                          className="userReviewBottomContent"
-                          style={{ marginBottom: "30px" }}
-                        >
-                          <p>
-                            Nam libero tempore, cum soluta nobis est eligendi
-                            optio cumque nihil impedit quo minus id quod maxime
-                            placeat facere possimus, omnis voluptas assumenda
-                            est…
-                          </p>
-                        </div>
-                      </div>
+              <div className={`aiAccBody ${open.price ? "open" : ""}`}>
+                <div className="aiRows">
+                  {priceRows.map((r) => (
+                    <div className="aiRow" key={r.label}>
+                      <span className="aiRowLabel">{r.label}</span>
+                      <span className="aiRowValue">{currency(r.value)}</span>
                     </div>
-                    <div className="userReview">
-                      <div className="userReviewImg">
-                        <img src={user2} alt="" />
-                      </div>
-                      <div className="userReviewContent">
-                        <div className="userReviewTopContent">
-                          <div className="userNameRating">
-                            <h6>Benjam Porter</h6>
-                            <div className="userRating">
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                              <FaStar color="#FEC78A" size={10} />
-                            </div>
-                          </div>
-                          <div className="userDate">
-                            <p>April 12, 2023</p>
-                          </div>
-                        </div>
-                        <div className="userReviewBottomContent">
-                          <p>
-                            Nam libero tempore, cum soluta nobis est eligendi
-                            optio cumque nihil impedit quo minus id quod maxime
-                            placeat facere possimus, omnis voluptas assumenda
-                            est…
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="userNewReview">
-                    <div className="userNewReviewMessage">
-                      <h5>
-                        Be the first to review “Lightweight Puffer Jacket With a
-                        Hood”
-                      </h5>
-                      <p>
-                        Your email address will not be published. Required
-                        fields are marked *
-                      </p>
-                    </div>
-                    <div className="userNewReviewRating">
-                      <label>Your rating *</label>
-                      <Rating name="simple-controlled" size="small" />
-                    </div>
-                    <div className="userNewReviewForm">
-                      <form>
-                        <textarea
-                          cols={30}
-                          rows={8}
-                          placeholder="Your Review"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Name *"
-                          required
-                          className="userNewReviewFormInput"
-                        />
-                        <input
-                          type="email"
-                          placeholder="Email address *"
-                          required
-                          className="userNewReviewFormInput"
-                        />
-                        <div className="userNewReviewFormCheck">
-                          <label>
-                            <input type="checkbox" placeholder="Subject" />
-                            Save my name, email, and website in this browser for
-                            the next time I comment.
-                          </label>
-                        </div>
-
-                        <button type="submit">Submit</button>
-                      </form>
-                    </div>
+                  ))}
+                  <div className="aiDivider" />
+                  <div className="aiRow aiGrand">
+                    <span className="aiRowLabel">Grand Total</span>
+                    <span className="aiRowValue">{currency(final_price)}</span>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+
+            {/* METAL DETAILS */}
+            <div className="aiAcc">
+              <button
+                className="aiAccHeader"
+                onClick={() => setOpen({ price: false, metal: !open.metal, diamond: false })}
+              >
+                <span className="aiAccTitle">METAL DETAILS</span>
+                {open.metal ? <FiChevronUp /> : <FiChevronDown />}
+              </button>
+
+              <div className={`aiAccBody ${open.metal ? "open" : ""}`}>
+                <ul className="aiList">
+                  <li>Metal: {type_name || "—"}</li>
+                  <li>Purity: {purity || "—"}</li>
+                  <li>Net Weight: {net_weight ? `${net_weight} g` : "—"}</li>
+                  <li>Gross Weight: {gross_weight ? `${gross_weight} g` : "—"}</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* DIAMOND DETAILS */}
+            <div className="aiAcc">
+              <button
+                className="aiAccHeader"
+                onClick={() => setOpen({ price: false, metal: false, diamond: !open.diamond })}
+              >
+                <span className="aiAccTitle">DIAMOND DETAILS</span>
+                {open.diamond ? <FiChevronUp /> : <FiChevronDown />}
+              </button>
+
+              <div className={`aiAccBody ${open.diamond ? "open" : ""}`}>
+                {Number(product?.stone_count || 0) > 0 ? (
+                  <ul className="aiList">
+                    <li>Stones: {product.stone_count}</li>
+                    {product.stone_weight && (
+                      <li>Total Stone Weight: {product.stone_weight} ct</li>
+                    )}
+                    {stone_amount != null && (
+                      <li>Stone Value: {currency(stone_amount)}</li>
+                    )}
+                  </ul>
+                ) : (
+                  <p className="aiMuted">No diamond/stone details for this product.</p>
+                )}
+              </div>
+            </div>
+
+            <p className="aiFootNote">
+              *A differential amount will be applicable with difference in weight if any.
+            </p>
+          </section>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
