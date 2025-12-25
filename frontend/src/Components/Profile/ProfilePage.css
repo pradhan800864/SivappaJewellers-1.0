@@ -1,243 +1,368 @@
+/* =========================
+   Profile Layout
+========================= */
 .profileSection {
-    display: flex;
-    gap: 60px;
-    padding: 35px 150px; /* Matches navbar padding */
-    max-width: 2500px;
-    margin: 0 auto;
-  }
-  
-  /* Sidebar on the Left */
-  .profileSidebar {
-    width: 250px;
-    padding: 10px;
-  }
-  
-  .profileHeading {
-    font-size: 18px;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-  
-  .profileCategories p {
-    font-size: 14px;
-    padding: 10px 0;
-    cursor: pointer;
-    transition: color 0.3s ease;
-  }
-  
-  .profileCategories p:hover {
-    color: #c32929;
-  }
-  
-  .logout {
-    color: red;
-    font-weight: bold;
-  }
-  
-  /* Account Details on the Right */
-  .profileDetails {
-    flex: 1;
-    padding: 10px;
-  }
-  
-  .profileDetails p {
-    font-size: 16px;
-    margin: 10px 0;
-  }
-  
-  /* ✅ Responsive Design */
-  @media screen and (max-width: 1210px) {
-    .profileSection {
-      flex-direction: column;
-      padding: 20px 60px; /* Matches mobile navbar */
-    }
-  
-    .profileSidebar {
-      width: 100%;
-    }
-  }
-  
-  @media screen and (max-width: 450px) {
-    .profileSection {
-      padding: 20px 15px; /* Matches mobile navbar */
-    }
-  }
-  
-  .profileCategories p {
-    font-size: 14px;
-    padding: 10px 0;
-    cursor: pointer;
-    transition: color 0.3s ease;
-  }
-  
-  .profileCategories p:hover {
-    color: #c32929;
-  }
-  
-  /* ✅ Highlight Active Tab in Red */
-  .profileCategories p.active {
-    color: #c32929;
-    font-weight: bold;
-  }
+  display: flex;
+  gap: 60px;
+  padding: 35px 150px; /* Matches navbar padding */
+  max-width: 2500px;
+  margin: 0 auto;
+}
 
-  .editButton, .saveButton, .cancelButton {
-    padding: 10px 15px;
-    margin-top: 10px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.3s;
-  }
-  
-  .editButton {
-    background-color: #c32929;
-    color: white;
-  }
-  
-  .saveButton {
-    background-color: green;
-    color: white;
-  }
-  
-  .cancelButton {
-    background-color: gray;
-    color: white;
-  }
-  
-  input {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border: 1px solid #ccc;
-    font-size: 14px;
-  }
+/* Sidebar (Left) */
+.profileSidebar {
+  width: 250px;
+  padding: 10px;
+}
 
-  /* ✅ General Button Styling */
+.profileHeading {
+  font-size: 18px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.profileCategories p {
+  font-size: 14px;
+  padding: 10px 0;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.profileCategories p:hover {
+  color: #c32929;
+}
+
+/* Active tab */
+.profileCategories p.active {
+  color: #c32929;
+  font-weight: bold;
+}
+
+.logout {
+  color: red;
+  font-weight: bold;
+}
+
+/* Details (Right) */
+.profileDetails {
+  flex: 1;
+  padding: 10px;
+}
+
+.profileDetails p {
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+/* =========================
+   Buttons
+========================= */
 .profileButtons {
-    display: flex;
-    gap: 15px; /* Space between buttons */
-    margin-top: 15px;
-  }
-  
-  .editButton,
-  .saveButton,
-  .cancelButton {
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.3s ease-in-out;
-    border-radius: 5px; /* Rounded corners */
-    font-weight: 600;
-  }
-  
-  /* ✅ Edit Button (Red - Primary Action) */
-  .editButton {
-    background-color: #c32929;
-    color: white;
-  }
-  
-  .editButton:hover {
-    background-color: #a02626;
-  }
-  
-  /* ✅ Save Button (Green - Confirm Action) */
-  .saveButton {
-    background-color: green;
-    color: white;
-  }
-  
-  .saveButton:hover {
-    background-color: darkgreen;
-  }
-  
-  /* ✅ Cancel Button (Gray - Secondary Action) */
-  .cancelButton {
-    background-color: gray;
-    color: white;
-  }
-  
-  .cancelButton:hover {
-    background-color: darkgray;
-  }
-  
-  /* ✅ Input Fields Styling */
-  .profileDetails input {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border: 1px solid #ddd;
-    font-size: 14px;
-    border-radius: 5px;
-    outline: none;
-  }
-  
-  .profileDetails input:focus {
-    border-color: #c32929;
-  }
-  .referralList {
-    display: flex;
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.editButton,
+.saveButton,
+.cancelButton {
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.3s ease-in-out;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+.editButton {
+  background-color: #c32929;
+  color: #fff;
+}
+.editButton:hover {
+  background-color: #a02626;
+}
+
+.saveButton {
+  background-color: green;
+  color: #fff;
+}
+.saveButton:hover {
+  background-color: darkgreen;
+}
+
+.cancelButton {
+  background-color: gray;
+  color: #fff;
+}
+.cancelButton:hover {
+  background-color: darkgray;
+}
+
+/* =========================
+   Inputs
+========================= */
+.profileDetails input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  border-radius: 5px;
+  outline: none;
+}
+
+.profileDetails input:focus {
+  border-color: #c32929;
+}
+
+/* =========================
+   Referrals + Wallet
+========================= */
+.referralList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.referralItem {
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.referralItem p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.referralItem strong {
+  font-weight: 600;
+}
+
+.walletHistoryDropdown {
+  margin-top: 10px;
+}
+
+.walletToggle {
+  margin-top: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #007bff;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.walletHistoryList ul {
+  margin: 8px 0;
+  padding-left: 18px;
+}
+
+.text-green {
+  color: green;
+}
+
+.text-red {
+  color: red;
+}
+
+.noTx {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Referral tree wrapper (if used) */
+.referralTreeContainer {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.ref-tree-loading,
+.ref-tree-error,
+.ref-tree-empty {
+  padding: 12px;
+  color: #444;
+}
+
+/* =========================
+   Favorites (Clean + Responsive)
+========================= */
+.favGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+  align-items: start;
+}
+
+.favCard {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fff;
+  padding: 10px;
+  width: 100%;
+  max-width: 360px; /* prevents huge cards on large screens */
+}
+
+.favImgWrap {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f4f4f4;
+  cursor: pointer;
+}
+
+.favImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.favInfo {
+  margin-top: 8px;
+}
+
+.favName {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.favMeta {
+  font-size: 12px;
+  color: #777;
+  margin-top: 4px;
+}
+
+.favRemoveBtn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 9px;
+  border: none;
+  border-radius: 8px;
+  background: #c32929;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.favRemoveBtn:hover {
+  background: #a02626;
+}
+
+/* =========================
+   Responsive (Mobile-first)
+========================= */
+@media screen and (max-width: 1210px) {
+  .profileSection {
     flex-direction: column;
-    gap: 15px;
-  }
-  
-  .referralItem {
-    border: 1px solid #e0e0e0;
-    padding: 15px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-  }
-  
-  .referralItem p {
-    margin: 5px 0;
-    font-size: 14px;
-  }
-  
-  .referralItem strong {
-    font-weight: 600;
+    padding: 20px 60px;
   }
 
-  .walletHistoryDropdown {
-    margin-top: 10px;
-  }
-  
-  .walletToggle {
-    margin-top: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    color: #007bff;
-    background: none;
-    border: none;
-    padding: 0;
-  }
-  
-  .walletHistoryList ul {
-    margin: 8px 0;
-    padding-left: 18px;
-  }
-  
-  .text-green {
-    color: green;
-  }
-  
-  .text-red {
-    color: red;
-  }
-  
-  .noTx {
-    font-size: 12px;
-    color: #888;
-  }
-  .referralTreeContainer {
+  .profileSidebar {
     width: 100%;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 12px;
-    padding: 12px;
-    overflow: hidden;
   }
-  .ref-tree-loading, .ref-tree-error, .ref-tree-empty {
-    padding: 12px;
-    color: #444;
+
+  .favCard {
+    max-width: 100%;
   }
+}
+
+@media screen and (max-width: 450px) {
+  .profileSection {
+    padding: 20px 15px;
+  }
+
+  .profileButtons {
+    flex-direction: column;
+  }
+}
+
+
+/* =========================
+   Orders Table (Responsive)
+========================= */
+.ordersTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ordersTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px; /* enables horizontal scroll on small screens */
+}
+
+.ordersTable th,
+.ordersTable td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.ordersTable th {
+  font-weight: 700;
+  background: #fafafa;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
+/* Pagination */
+.ordersPager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pagerBtn {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pagerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagerInfo {
+  font-size: 14px;
+  color: #444;
+}
+
+/* Mobile */
+@media (max-width: 450px) {
+  .pagerInfo {
+    font-size: 12px;
+  }
+}
+
+.pagerBtn {
+  color: #000;
+}
+
+.pagerBtn:disabled {
+  color: #000; /* keep black even when disabled */
+}

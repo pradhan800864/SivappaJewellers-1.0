@@ -4,7 +4,7 @@ import "./Navbar.css";
 import { useSelector } from "react-redux";
 
 import logo from "../../Assets/logo.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { RiMenu2Line } from "react-icons/ri";
 import { FiSearch } from "react-icons/fi";
@@ -28,6 +28,7 @@ const Navbar = () => {
   const cart = useSelector((state) => state.cart);
   const { user } = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
     document.body.style.overflow = mobileMenuOpen ? "auto" : "hidden";
@@ -100,7 +101,21 @@ const Navbar = () => {
               <RiShoppingBagLine size={22} />
             </Badge>
           </Link>
-          <FiHeart size={22} onClick={scrollToTop} />
+          <FiHeart
+            size={22}
+            style={{ cursor: "pointer" }}
+            onClick={() => {
+              scrollToTop();
+              if (user) {
+                navigate("/profile", {
+                  state: { activeTab: "My Favorites" },
+                });
+              } else {
+                navigate("/loginSignUp");
+              }
+            }}
+          />
+
           {/* <RiMenu2Line size={22} /> */}
         </div>
       </nav>

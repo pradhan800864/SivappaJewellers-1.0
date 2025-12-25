@@ -67,10 +67,18 @@ const cartSlice = createSlice({
 
       updateLocalStorage(state.items, state.totalAmount);
     },
+
+    // ✅ NEW: Clear cart after successful order
+    clearCart(state) {
+      state.items = [];
+      state.totalAmount = 0;
+      updateLocalStorage(state.items, state.totalAmount);
+    },
   },
 });
 
-export const { addToCart, removeFromCart, updateQuantity } = cartSlice.actions;
+export const { addToCart, removeFromCart, updateQuantity, clearCart } =
+  cartSlice.actions;
 
 export const selectCartItems = (state) => state.cart.items;
 export const selectCartTotalAmount = (state) => state.cart.totalAmount;

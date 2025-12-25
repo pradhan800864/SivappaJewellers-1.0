@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./ShoppingCart.css";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  removeFromCart,
-  updateQuantity,
-} from "../../Features/Cart/cartSlice";
 import { toast } from "react-hot-toast";
 import { MdOutlineClose } from "react-icons/md";
 import { loginUser } from "../../utils/auth";
@@ -12,6 +8,7 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext"; // Update the path as per your project
 import { useContext } from "react";
 import success from "../../Assets/success.png";
+import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
 
 const ShoppingCart = () => {
   const cartItems = useSelector((state) => state.cart.items);
@@ -34,6 +31,7 @@ const ShoppingCart = () => {
   };
   const [storeAddress, setStoreAddress] = useState(null);
   const [isReturningUser, setIsReturningUser] = useState(false);
+  const [placedOrderItems, setPlacedOrderItems] = useState([]);
   // eslint-disable-next-line
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
@@ -115,6 +113,8 @@ const ShoppingCart = () => {
   
       if (response.ok) {
         // 🔁 Move to the confirmation tab
+        setPlacedOrderItems(cartItems);
+        dispatch(clearCart());
         handleTabClick("cartTab3");
         window.scrollTo({ top: 0, behavior: "smooth" });
         setPayments(true);
@@ -127,12 +127,19 @@ const ShoppingCart = () => {
     }
   };
 
-  const subtotal = cartItems.reduce(
+  // const subtotal = cartItems.reduce(
+  //   (acc, item) => acc + item.final_price * item.quantity,
+  //   0
+  // );
+  // const gst = subtotal * 0.03;
+  // const total = subtotal + gst;
+
+  const placedSubtotal = placedOrderItems.reduce(
     (acc, item) => acc + item.final_price * item.quantity,
     0
   );
-  const gst = subtotal * 0.03;
-  const total = subtotal + gst;
+  const placedGst = placedSubtotal * 0.03;
+  const placedTotal = placedSubtotal + placedGst;
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -786,7 +793,7 @@ const ShoppingCart = () => {
                     </div>
                     <div className="orderInfoItem">
                       <p>Total</p>
-                      <h4>₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</h4>
+                      <h4>₹{placedTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</h4>
                     </div>
                    
                   </div>
@@ -801,7 +808,7 @@ const ShoppingCart = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {cartItems.map((items) => (
+                          {placedOrderItems.map((items) => (
                             <tr key={items.productID}>
                               <td>{items.name} x {items.quantity}</td>
                               <td>₹{(items.final_price * items.quantity).toLocaleString("en-IN")}</td>
@@ -816,15 +823,15 @@ const ShoppingCart = () => {
                         <tbody>
                           <tr>
                             <th>Subtotal</th>
-                            <td>₹{subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                            <td>₹{placedSubtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                           <tr>
                             <th>GST (3%)</th>
-                            <td>₹{gst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                            <td>₹{placedGst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                           <tr>
                             <th>Total</th>
-                            <td>₹{total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                            <td>₹{placedTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                         </tbody>
                       </table>

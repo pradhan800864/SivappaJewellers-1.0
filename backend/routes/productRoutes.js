@@ -1,6 +1,20 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
+const jwt = require("jsonwebtoken");
+
+const getUserIdFromToken = (req) => {
+  const h = req.headers.authorization || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : null;
+  if (!token) return null;
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    return Number(payload.id ?? payload.user_id ?? payload.sub);
+  } catch (e) {
+    return null;
+  }
+};
 
 router.get("/products", async (req, res) => {
   try {
@@ -653,6 +667,66 @@ router.get("/products/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to load product" });
   }
 });
+
+/**
+ * GET /api/order-history/my?page=&limit=
+ * Returns paginated orders for the logged-in user from order_history
+ */
+router.get("/order-history/my", async (req, res) => {
+  const userId = getUserIdFromToken(req);
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const page = Math.max(1, Number(req.query.page || 1));
+  const limit = Math.max(1, Math.min(50, Number(req.query.limit || 5))); // default 5, max 50
+  const offset = (page - 1) * limit;
+
+  try {
+    const totalRes = await pool.query(
+      `SELECT COUNT(*)::int AS total
+         FROM order_history
+        WHERE user_id = $1`,
+      [userId]
+    );
+    const total = totalRes.rows[0]?.total || 0;
+
+    const ordersRes = await pool.query(
+      `
+      SELECT
+        oh.id,
+        oh.invoice_number,
+        oh.subtotal,
+        oh.created_at,
+        oh.shop_id,
+        (
+          SELECT COUNT(*)::int
+          FROM order_items oi
+          WHERE oi.order_id = oh.id
+        ) AS items_count
+      FROM order_history oh
+      WHERE oh.user_id = $1
+      ORDER BY oh.created_at DESC
+      LIMIT $2 OFFSET $3
+      `,
+      [userId, limit, offset]
+    );
+    
+
+    return res.json({
+      orders: ordersRes.rows,
+      total,
+      page,
+      limit,
+    });
+  } catch (err) {
+    console.error("GET /api/order-history/my error:", err);
+    return res.status(500).json({ error: "Failed to load orders" });
+  }
+});
+
+
 
 
 // GET /api/products/:id/related?limit=20

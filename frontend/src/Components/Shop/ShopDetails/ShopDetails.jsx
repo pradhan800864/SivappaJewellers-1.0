@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../../Features/Cart/cartSlice";
 
 import Filter from "../Filters/Filter";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiHeart } from "react-icons/fi";
 import { IoFilterSharp, IoClose } from "react-icons/io5";
 import { FaCartPlus } from "react-icons/fa";
@@ -13,6 +13,16 @@ import toast from "react-hot-toast";
 import axios from "axios";
 
 const ShopDetails = () => {
+
+  const navigate = useNavigate();
+
+const getToken = () => localStorage.getItem("token"); // change key if you use different one
+
+const authHeaders = () => {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+};
+
   const MAX_PAGES_VISIBLE = 10;
   const dispatch = useDispatch();
   const [products, setProducts] = useState([]);
@@ -44,9 +54,81 @@ const ShopDetails = () => {
       .catch((err) => console.error("Failed to fetch taxonomy:", err));
   }, []);
 
-  const handleWishlistClick = (productID) => {
-    setWishList((prev) => ({ ...prev, [productID]: !prev[productID] }));
+  // Load favorites for logged-in user so hearts are correct
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return; // not logged in, no favorites to load
+
+    axios
+      .get("http://localhost:4998/api/favorites", { headers: authHeaders() })
+      .then((res) => {
+        const favs = res.data?.favorites || [];
+        // convert [{product_id}] -> { [id]: true }
+        const map = {};
+        favs.forEach((f) => {
+          map[Number(f.product_id)] = true;
+        });
+        setWishList(map);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch favorites:", err);
+      });
+      // eslint-disable-next-line
+  }, []);
+
+
+  const handleWishlistClick = async (productID) => {
+    const token = getToken();
+  
+    // If not logged in -> go login, then auto-favorite after login
+    if (!token) {
+      localStorage.setItem("pending_favorite_product_id", String(productID));
+      localStorage.setItem(
+        "post_login_redirect",
+        window.location.pathname + window.location.search
+      );
+      navigate("/loginSignUp");
+      return;
+    }
+  
+    const alreadyFav = !!wishList[productID];
+  
+    try {
+      if (!alreadyFav) {
+        await axios.post(
+          "http://localhost:4998/api/favorites",
+          { product_id: productID },
+          { headers: authHeaders() }
+        );
+        setWishList((prev) => ({ ...prev, [productID]: true }));
+        toast.success("Added to favorites");
+      } else {
+        await axios.delete(`http://localhost:4998/api/favorites/${productID}`, {
+          headers: authHeaders(),
+        });
+        setWishList((prev) => {
+          const copy = { ...prev };
+          delete copy[productID];
+          return copy;
+        });
+        toast.success("Removed from favorites");
+      }
+    } catch (err) {
+      console.error("Favorite toggle failed:", err);
+      if (err?.response?.status === 401) {
+        // token expired etc.
+        localStorage.setItem("pending_favorite_product_id", String(productID));
+        localStorage.setItem(
+          "post_login_redirect",
+          window.location.pathname + window.location.search
+        );
+        navigate("/loginSignUp");
+        return;
+      }
+      toast.error("Failed to update favorite");
+    }
   };
+  
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
