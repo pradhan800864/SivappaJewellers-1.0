@@ -13,21 +13,32 @@ import toast from "react-hot-toast";
 import axios from "axios";
 
 const ShopDetails = () => {
-
   const navigate = useNavigate();
 
-const getToken = () => localStorage.getItem("token"); // change key if you use different one
+  const getToken = () => localStorage.getItem("token"); // change key if you use different one
+  const authHeaders = () => {
+    const t = getToken();
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  };
 
-const authHeaders = () => {
-  const t = getToken();
-  return t ? { Authorization: `Bearer ${t}` } : {};
-};
+  // ✅ show fewer pages on mobile to avoid horizontal scroll
+  const getMaxPagesVisible = () => {
+    if (window.innerWidth <= 360) return 5;
+    if (window.innerWidth <= 480) return 6;
+    return 8;
+  };
+  const [MAX_PAGES_VISIBLE, setMAX_PAGES_VISIBLE] = useState(getMaxPagesVisible());
 
-  const MAX_PAGES_VISIBLE = 10;
+  useEffect(() => {
+    const onResize = () => setMAX_PAGES_VISIBLE(getMaxPagesVisible());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const dispatch = useDispatch();
   const [products, setProducts] = useState([]);
   const [taxonomy, setTaxonomy] = useState(null);
-
+  const [isSortOpen, setIsSortOpen] = useState(false);
   // wishlist + drawer + pagination
   const [wishList, setWishList] = useState({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -35,8 +46,23 @@ const authHeaders = () => {
   const productsPerPage = 12;
 
   // filters & sorting
-  const [filterLabels, setFilterLabels] = useState([]);          // e.g. ['type:Gold','cat:Ring', ...]
+  const [filterLabels, setFilterLabels] = useState([]); // e.g. ['type:Gold','cat:Ring', ...]
   const [sortBy, setSortBy] = useState("default");
+
+  const sortOptions = [
+    { value: "default", label: "Default Sorting" },
+    { value: "Featured", label: "Featured" },
+    { value: "bestSelling", label: "Best Selling" },
+    { value: "a-z", label: "Alphabetically, A-Z" },
+    { value: "z-a", label: "Alphabetically, Z-A" },
+    { value: "lowToHigh", label: "Price, Low to high" },
+    { value: "highToLow", label: "Price, high to low" },
+    { value: "oldToNew", label: "Date, old to new" },
+    { value: "newToOld", label: "Date, new to old" },
+  ];
+  
+  const sortLabel =
+    sortOptions.find((o) => o.value === sortBy)?.label || "Default Sorting";
 
   // Load products
   useEffect(() => {
@@ -46,7 +72,7 @@ const authHeaders = () => {
       .catch((err) => console.error("Failed to fetch products:", err));
   }, []);
 
-  // Load taxonomy (mounted under /api/products/taxonomy per our route)
+  // Load taxonomy
   useEffect(() => {
     axios
       .get("http://localhost:4998/api/taxonomy")
@@ -57,13 +83,12 @@ const authHeaders = () => {
   // Load favorites for logged-in user so hearts are correct
   useEffect(() => {
     const token = getToken();
-    if (!token) return; // not logged in, no favorites to load
+    if (!token) return;
 
     axios
       .get("http://localhost:4998/api/favorites", { headers: authHeaders() })
       .then((res) => {
         const favs = res.data?.favorites || [];
-        // convert [{product_id}] -> { [id]: true }
         const map = {};
         favs.forEach((f) => {
           map[Number(f.product_id)] = true;
@@ -73,14 +98,12 @@ const authHeaders = () => {
       .catch((err) => {
         console.error("Failed to fetch favorites:", err);
       });
-      // eslint-disable-next-line
+    // eslint-disable-next-line
   }, []);
-
 
   const handleWishlistClick = async (productID) => {
     const token = getToken();
-  
-    // If not logged in -> go login, then auto-favorite after login
+
     if (!token) {
       localStorage.setItem("pending_favorite_product_id", String(productID));
       localStorage.setItem(
@@ -90,9 +113,9 @@ const authHeaders = () => {
       navigate("/loginSignUp");
       return;
     }
-  
+
     const alreadyFav = !!wishList[productID];
-  
+
     try {
       if (!alreadyFav) {
         await axios.post(
@@ -116,7 +139,6 @@ const authHeaders = () => {
     } catch (err) {
       console.error("Favorite toggle failed:", err);
       if (err?.response?.status === 401) {
-        // token expired etc.
         localStorage.setItem("pending_favorite_product_id", String(productID));
         localStorage.setItem(
           "post_login_redirect",
@@ -128,7 +150,6 @@ const authHeaders = () => {
       toast.error("Failed to update favorite");
     }
   };
-  
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -156,23 +177,20 @@ const authHeaders = () => {
   };
 
   // ===== Filter hookup =====
-  // Stable identity + guard to avoid redundant state churn when labels didn't change
   const handleFilterChange = useCallback((labels = [], structured = null) => {
     setFilterLabels((prev) => {
       const sameLength = prev.length === labels.length;
       const sameOrder = sameLength && prev.every((v, i) => v === labels[i]);
-      if (sameOrder) return prev; // no-op; prevents unnecessary rerenders
+      if (sameOrder) return prev;
       setCurrentPage(1);
       return labels;
     });
   }, []);
 
-  // ---- Helper: normalize & tokens from product ----
   const norm = (v) => (v == null ? "" : String(v).trim());
   const toTokens = (product) => {
     const tokens = new Set();
 
-    // try common field names
     const type =
       product.type_name || product.type || product.product_type || product.typeName;
     const category =
@@ -191,13 +209,11 @@ const authHeaders = () => {
     if (hasStones) tokens.add("has-stones");
     if (stoneType) tokens.add(`stone:${norm(stoneType)}`);
 
-    // Availability (best-effort)
     const qty = product.quantity ?? product.stock ?? product.qty;
     const inStockFlag =
       product.in_stock ?? product.inStock ?? (typeof qty === "number" ? qty > 0 : null);
     if (inStockFlag) tokens.add("in-stock");
 
-    // Labels array from DB (text[])
     if (Array.isArray(product.labels)) {
       product.labels.forEach((l) => {
         const label = norm(l);
@@ -208,7 +224,6 @@ const authHeaders = () => {
     return tokens;
   };
 
-  // ---- Score a product against current filters ----
   const scoreProduct = (product) => {
     if (!filterLabels?.length) return 0;
     const tokens = toTokens(product);
@@ -236,7 +251,6 @@ const authHeaders = () => {
         else if (lbl === "in-stock") score += weights["in-stock"];
         else score += weights.default;
       } else {
-        // loose match fallback for raw, non-prefixed labels
         const plain = lbl.split(":").pop();
         if (tokens.has(plain)) score += 1;
       }
@@ -245,7 +259,6 @@ const authHeaders = () => {
     return score;
   };
 
-  // ---- Sort inside same score bucket by chosen sort ----
   const secondaryCompare = (a, b) => {
     const ap = a;
     const bp = b;
@@ -277,7 +290,6 @@ const authHeaders = () => {
     }
   };
 
-  // ---- Prioritized, then paginated list ----
   const prioritizedProducts = useMemo(() => {
     if (!products?.length) return [];
     const withScore = products.map((p) => ({ p, s: scoreProduct(p) }));
@@ -289,26 +301,19 @@ const authHeaders = () => {
     // eslint-disable-next-line
   }, [products, filterLabels, sortBy]);
 
-  // Pagination on prioritized list
   const totalPages = Math.ceil(prioritizedProducts.length / productsPerPage);
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = prioritizedProducts.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
+  const currentProducts = prioritizedProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
-
-  // compute which page numbers to show (a bucket of 10)
+  // ✅ visible pages bucket based on MAX_PAGES_VISIBLE
   const visiblePages = useMemo(() => {
     if (!totalPages || totalPages <= 1) return [1];
-
-    // 1–10, 11–20, 21–30, ...
-    const start = Math.floor((currentPage - 1) / MAX_PAGES_VISIBLE) * MAX_PAGES_VISIBLE + 1;
+    const start =
+      Math.floor((currentPage - 1) / MAX_PAGES_VISIBLE) * MAX_PAGES_VISIBLE + 1;
     const end = Math.min(start + MAX_PAGES_VISIBLE - 1, totalPages);
-
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, MAX_PAGES_VISIBLE]);
 
   return (
     <>
@@ -332,7 +337,9 @@ const authHeaders = () => {
               </div>
 
               <div className="shopDetailsSort">
+                {/* ✅ Desktop/Web: keep native select (unchanged behavior) */}
                 <select
+                  className="sortSelectDesktop"
                   name="sort"
                   id="sort"
                   value={sortBy}
@@ -341,16 +348,44 @@ const authHeaders = () => {
                     setCurrentPage(1);
                   }}
                 >
-                  <option value="default">Default Sorting</option>
-                  <option value="Featured">Featured</option>
-                  <option value="bestSelling">Best Selling</option>
-                  <option value="a-z">Alphabetically, A-Z</option>
-                  <option value="z-a">Alphabetically, Z-A</option>
-                  <option value="lowToHigh">Price, Low to high</option>
-                  <option value="highToLow">Price, high to low</option>
-                  <option value="oldToNew">Date, old to new</option>
-                  <option value="newToOld">Date, new to old</option>
+                  {sortOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </select>
+
+                {/* ✅ Mobile: custom dropdown (opens under button, not top-left) */}
+                <div className="sortSelectMobile">
+                  <button
+                    type="button"
+                    className="sortTrigger"
+                    onClick={() => setIsSortOpen((s) => !s)}
+                    aria-expanded={isSortOpen}
+                  >
+                    {sortLabel} <span className="sortChevron">▾</span>
+                  </button>
+
+                  {isSortOpen && (
+                    <div className="sortMenu">
+                      {sortOptions.map((o) => (
+                        <button
+                          type="button"
+                          key={o.value}
+                          className={`sortItem ${sortBy === o.value ? "active" : ""}`}
+                          onClick={() => {
+                            setSortBy(o.value);
+                            setCurrentPage(1);
+                            setIsSortOpen(false);
+                          }}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
 
                 <div className="filterRight" onClick={toggleDrawer}>
                   <div className="filterSeprator"></div>
@@ -372,20 +407,17 @@ const authHeaders = () => {
                       <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>
                     </div>
 
-                    <div
-                      className="sdProductImagesCart"
-                      onClick={() => handleAddToCart(product)}
-                    >
+                    <div className="sdProductImagesCart" onClick={() => handleAddToCart(product)}>
                       <FaCartPlus />
                     </div>
 
                     <div className="sdProductInfo">
-                        <div className="sdProductCategoryWishlist">
+                      <div className="sdProductCategoryWishlist">
                         <p>
                           {product.product_type ||
-                          product.type_name ||
-                          product.type ||
-                          "Jewellery"}
+                            product.type_name ||
+                            product.type ||
+                            "Jewellery"}
                         </p>
                         <FiHeart
                           onClick={() => handleWishlistClick(product.id)}
@@ -401,9 +433,7 @@ const authHeaders = () => {
                           <h5>{product.name}</h5>
                         </Link>
                         <p>
-                          ₹{Number(
-                            product.final_price ?? product.price ?? 0
-                          ).toLocaleString("en-IN")}
+                          ₹{Number(product.final_price ?? product.price ?? 0).toLocaleString("en-IN")}
                         </p>
                         <div className="sdProductRatingReviews"></div>
                       </div>
@@ -413,7 +443,7 @@ const authHeaders = () => {
               </div>
             </div>
 
-            {/* Pagination */}
+            {/* ✅ Pagination (mobile-safe) */}
             <div className="shopDetailsPagination">
               <div className="sdPaginationPrev">
                 <p
@@ -423,7 +453,7 @@ const authHeaders = () => {
                       scrollToTop();
                     }
                   }}
-                  style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
+                  className={currentPage === 1 ? "disabled" : ""}
                 >
                   <GoChevronLeft /> Prev
                 </p>
@@ -444,7 +474,6 @@ const authHeaders = () => {
                     </p>
                   ))}
 
-                  {/* optional ellipsis when more pages exist */}
                   {visiblePages[visiblePages.length - 1] < totalPages && (
                     <span className="ellipsis">…</span>
                   )}
@@ -459,13 +488,12 @@ const authHeaders = () => {
                       scrollToTop();
                     }
                   }}
-                  style={{ opacity: currentPage === totalPages ? 0.5 : 1 }}
+                  className={currentPage === totalPages ? "disabled" : ""}
                 >
                   Next <GoChevronRight />
                 </p>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -477,7 +505,7 @@ const authHeaders = () => {
           <IoClose onClick={closeDrawer} className="closeButton" size={26} />
         </div>
         <div className="drawerContent">
-          <Filter onFilterChange={handleFilterChange} facets={taxonomy} />
+          <Filter onFilterChange={handleFilterChange} facets={taxonomy} onClose={closeDrawer}/>
         </div>
       </div>
     </>

@@ -1064,3 +1064,19 @@
   margin-bottom: 20px;
   width: fit-content;
 }
+
+@media screen and (max-width: 450px) {
+
+  /* ✅ Update Cart button */
+  .shopCartFooterbutton {
+    padding: 10px 14px;     /* smaller height */
+    font-size: 12px;        /* smaller text */
+    width: auto;            /* remove 50% bulk feel */
+  }
+
+  /* ✅ Proceed to Checkout button */
+  .shoppingBagTotal button {
+    padding: 12px 10px;     /* reduce vertical size */
+    font-size: 13px;
+  }
+}

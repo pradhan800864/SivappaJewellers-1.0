@@ -499,3 +499,97 @@
   color: #999;
   user-select: none;
 }
+
+/* ✅ MOBILE: hide the desktop left filter column */
+@media (max-width: 768px) {
+  .shopDetails__left {
+    display: none !important;
+  }
+}
+
+/* ✅ Drawer should overlay */
+.filterDrawer {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  max-width: 420px; /* optional */
+  height: 100vh;
+  background: #fff;
+  z-index: 2000;
+  transition: right 0.25s ease;
+  overflow-y: auto;
+}
+
+.filterDrawer.open {
+  right: 0;
+}
+
+/* ✅ Backdrop behind drawer */
+.filterBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1999;
+}
+
+/* ===== Mobile sort dropdown (keep web untouched) ===== */
+.sortSelectMobile { display: none; }
+
+@media (max-width: 768px) {
+  .sortSelectDesktop { display: none; }
+  .sortSelectMobile { display: block; position: relative; min-width: 170px; }
+
+  .sortTrigger {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background: #fff;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .sortMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 4000;
+    overflow: hidden;
+  }
+
+  .sortItem {
+    width: 100%;
+    text-align: left;
+    padding: 12px 12px;
+    border: 0;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .sortItem.active {
+    font-weight: 700;
+  }
+    /* Ensure sort text is clearly visible */
+    .sortTrigger {
+      color: #000;              /* ✅ BLACK text */
+    }
+  
+    .sortTrigger span,
+    .sortChevron {
+      color: #000;              /* ✅ BLACK arrow */
+    }
+  
+    .sortItem {
+      color: #000;              /* ✅ Dropdown options text */
+    }
+}

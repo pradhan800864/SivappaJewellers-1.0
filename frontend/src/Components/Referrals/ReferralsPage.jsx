@@ -13,6 +13,7 @@ const ReferralsPage = ({ user }) => {
   useEffect(() => {
     if (!user) return;
     fetchReferrer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchReferrer = async () => {
@@ -48,7 +49,7 @@ const ReferralsPage = ({ user }) => {
         toast.success("Referrer added successfully!", { duration: 3000 });
         setReferralCodeInput("");
         setIsAddingReferrer(false);
-        fetchReferrer(); // parent will now appear above you in the tree
+        fetchReferrer();
       } else {
         toast.error(data.error || "Invalid referral code. Please try again!", {
           duration: 3000,
@@ -69,7 +70,7 @@ const ReferralsPage = ({ user }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ referral_code: null }), // assign Company
+        body: JSON.stringify({ referral_code: null }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -115,18 +116,29 @@ const ReferralsPage = ({ user }) => {
           <h4 style={{ marginTop: 0 }}>Add Your Referrer</h4>
 
           {isAddingReferrer ? (
-            <div className="addReferrerForm" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div
+              className="addReferrerForm"
+              style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
+            >
               <input
                 type="text"
                 placeholder="Enter Referrer’s Code"
                 value={referralCodeInput}
                 onChange={(e) => setReferralCodeInput(e.target.value)}
-                style={{ padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: 8, minWidth: 260 }}
+                style={{
+                  padding: "10px 12px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 8,
+                  minWidth: 260,
+                }}
               />
               <button className="primaryButton" onClick={handleAddReferrer}>
                 Submit
               </button>
-              <button className="secondaryButton" onClick={() => setIsAddingReferrer(false)}>
+              <button
+                className="secondaryButton"
+                onClick={() => setIsAddingReferrer(false)}
+              >
                 Cancel
               </button>
               <button className="secondaryButton" onClick={handleJoinCompany}>
@@ -135,7 +147,10 @@ const ReferralsPage = ({ user }) => {
             </div>
           ) : (
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button className="primaryButton" onClick={() => setIsAddingReferrer(true)}>
+              <button
+                className="primaryButton"
+                onClick={() => setIsAddingReferrer(true)}
+              >
                 Enter Referral Code
               </button>
               <button className="secondaryButton" onClick={handleJoinCompany}>
@@ -146,7 +161,7 @@ const ReferralsPage = ({ user }) => {
         </div>
       )}
 
-      {/* (Optional) When there is a parent, you can show who referred you */}
+      {/* When there is a parent, show who referred you */}
       {referrer && (
         <div
           className="referrerSection"
@@ -164,14 +179,19 @@ const ReferralsPage = ({ user }) => {
 
       {/* 3) Tree view */}
       <div
+        className="referralTreeCard"
         style={{
           borderRadius: 12,
           border: "1px solid #e5e7eb",
           background: "#fff",
           padding: 12,
+          width: '100%'
         }}
       >
-        <ReferralTree userId={user?.id} />
+        {/* ✅ this wrapper forces the graph to use the full available width */}
+        {/* <div className="referralTreeWrapper" style={{width: '500px'}}> */}
+          <ReferralTree userId={user?.id} />
+        {/* </div> */}
       </div>
     </div>
   );

@@ -86,3 +86,144 @@
     padding-right: 0;
   }
 }
+
+/* Sticky top bar for mobile filter panel */
+.facetTopBar {
+  display: none; /* only show on mobile */
+}
+
+@media (max-width: 768px) {
+  .facetTopBar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+
+    position: sticky;
+    top: 0;
+    z-index: 50;
+
+    background: #fff;
+    padding: 12px 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .facetBackBtn,
+  .facetCloseBtn {
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+
+  .facetTopTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Old header can be hidden on mobile to avoid duplicate title */
+  .facetHeader {
+    display: none;
+  }
+}
+
+/* ✅ When Filter is inside the mobile drawer, ALWAYS show the top bar */
+.filterDrawer .facetTopBar {
+  display: grid !important;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  background: #fff;
+  padding: 12px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+/* ✅ Hide the old header inside drawer to avoid duplicate "FILTERS 0" */
+.filterDrawer .facetHeader {
+  display: none !important;
+}
+
+.filterDrawer .facetBackBtn,
+.filterDrawer .facetCloseBtn {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.filterDrawer .facetTopTitle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ✅ MOBILE ONLY: Make back & close clearly visible */
+@media (max-width: 768px) {
+  .filterDrawer .facetBackBtn,
+  .filterDrawer .facetCloseBtn {
+    color: #000;            /* solid black */
+    font-weight: 700;
+  }
+
+  .filterDrawer .facetBackBtn {
+    font-size: 14px;
+  }
+
+  .filterDrawer .facetCloseBtn {
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
+/* ✅ Mobile: make sorting dropdown readable and tappable */
+@media (max-width: 768px) {
+  .shopDetailsSort select {
+    font-size: 10px;          /* important for iOS readability */
+    padding: 10px 12px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    height: 40px;
+    line-height: 40px;
+    background-color: #fff;
+    max-width: 55vw;          /* prevents overflow */
+  }
+
+  .shopDetailsSort {
+    gap: 8px;
+  }
+}
+
+/* ✅ MOBILE DRAWER: force back + close to be visible in black */
+.filterDrawer .facetBackBtn,
+.filterDrawer .facetCloseBtn {
+  color: #000 !important;
+}
+
+.filterDrawer .facetBackBtn {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.filterDrawer .facetCloseBtn {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}

@@ -225,7 +225,7 @@ const ProfilePage = () => {
       if (u.startsWith("/")) return `${API_BASE}${u}`;
       return u;
     };
-  
+
     if (Array.isArray(urls)) {
       return firstFromArray(urls) || "/images/placeholder.png";
     }
@@ -285,6 +285,38 @@ const ProfilePage = () => {
   };
 
   if (!user) return <p className="loading">Loading...</p>;
+
+  const formatWalletMessage = (tx) => {
+    const source = (tx.source || "").toLowerCase();
+    const who = tx.invoice_user || "";
+    const inv = tx.invoice_number ? `${tx.invoice_number}` : "";
+
+    if (source === "referral")
+      return who ? `Referral Bonus • ${who}` : "Referral Bonus";
+  
+    if (source === "referral-edit")
+      return who ? `Billed Invoice Edited • ${who}` : "Billed Invoice Edited";
+  
+    if (source === "redemption")
+      return inv ? `Redeemed for Invoice - ${inv}` : "Coins Redeemed";
+  
+    if (source === "order")
+      return who ? `Order Reward • ${who}` : "Order Reward";
+  
+    if (source === "order-cancel")
+      return who ? `Order Reversed • ${who}` : "Order Reversed";
+
+    if (source === "return-recalc")
+      return who ? `Return Recalculated • ${who}` : "Return Recalculated";
+  
+    if (source === "admin")
+      return "Admin Adjustment";
+  
+    return "Wallet Update";
+  };
+  
+  
+  
 
   return (
     <div className="profileSection">
@@ -524,8 +556,9 @@ const ProfilePage = () => {
 
             <div className="walletSection" style={{ marginTop: "1.5rem" }}>
               <p>
-                <strong>Wallet:</strong> {user.wallet ?? 0} coins
+                <strong>Wallet:</strong> {Math.floor(Number(user.wallet ?? 0))} coins
               </p>
+
 
               <div className="walletHistoryDropdown">
                 <button
@@ -543,16 +576,14 @@ const ProfilePage = () => {
                       <ul>
                         {transactions.map((tx, idx) => (
                           <li key={idx}>
-                            <span
-                              className={
-                                tx.type === "credit" ? "text-green" : "text-red"
-                              }
-                            >
-                              {tx.type === "credit" ? "+" : "-"}
-                              {tx.coins} coins
-                            </span>{" "}
-                            ({tx.source}) –{" "}
-                            {new Date(tx.created_at).toLocaleDateString()}
+                          <span
+                            className={tx.type === "credit" ? "text-green" : "text-red"}
+                          >
+                            {tx.type === "credit" ? "+" : "-"}
+                            {tx.coins} coins
+                          </span>{" "}
+                          — {formatWalletMessage(tx)} —{" "}
+                          {new Date(tx.created_at).toLocaleDateString()}
                           </li>
                         ))}
                       </ul>

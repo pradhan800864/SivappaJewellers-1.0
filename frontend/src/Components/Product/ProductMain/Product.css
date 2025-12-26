@@ -1,18 +1,41 @@
+/* Product.css (mobile-safe, no horizontal scroll) */
+
+/* Always prevent accidental horizontal scroll */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 .productSection {
-  padding: 0 160px;
+  /* Instead of fixed 160px padding */
+  padding: 0 clamp(12px, 4vw, 160px);
   margin-top: 30px;
+  max-width: 100%;
 }
 
 .productShowCase {
   display: flex;
-  gap: 60px;
+  gap: 0px;
+  /* ✅ ADD THESE */
+  max-width: 1500px;     /* match your site container */
+  margin: 0 auto;        /* center like header & sections */
+  padding: 0 24px;       /* breathing space on smaller screens */
+
+  align-items: flex-start;
 }
 
+/* Gallery */
 .productGallery {
   display: flex;
-  flex-direction: row;       /* horizontal layout for thumbs + big image */
+  flex-direction: row;
   align-items: flex-start;
   gap: 20px;
+  max-width: 100%;
 }
 
 .productThumb {
@@ -24,16 +47,24 @@
 .productThumb img {
   width: 80px;
   height: 80px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  cursor: pointer;
+  border-radius: 8px;
 }
 
+/* Big image box */
 .productFullImg {
   position: relative;
-  width: 480px;
-  height: 480px;
+  width: min(560px, 100%);
+  height: 560px;            /* ✅ fixed height for desktop */
+  max-height: 70vh;         /* ✅ prevents too tall on large screens */
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #f6f6f6;
+  overflow: hidden; /* ✅ prevents image overflow */
+  border-radius: 10px;
 }
 
 .productFullImg img {
@@ -41,24 +72,27 @@
   height: 100%;
   object-fit: contain;
   background-color: #f6f6f6;
+  display: block;
+  max-width: 100%;
 }
 
+/* arrows */
 .buttonsGroup {
   display: flex;
   justify-content: space-between;
   position: absolute;
   top: 50%;
+  left: 0;
   width: 100%;
   transform: translateY(-50%);
   padding: 0 10px;
-  pointer-events: none; /* allows clicks to pass through except buttons */
+  pointer-events: none;
 }
 
-
 .directionBtn {
-  background-color: rgba(255, 255, 255, 0.7); /* light transparent white */
+  background-color: rgba(255, 255, 255, 0.7);
   border: none;
-  color: #000; /* black icons */
+  color: #000;
   font-size: 18px;
   width: 36px;
   height: 36px;
@@ -67,24 +101,24 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  pointer-events: all; /* enables click */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* subtle depth */
+  pointer-events: all;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .directionBtn:hover {
-  background-color: rgba(255, 255, 255, 0.9); /* slightly brighter on hover */
+  background-color: rgba(255, 255, 255, 0.9);
   transform: scale(1.05);
 }
 
-/* Product Details CSS */
-
+/* Details */
 .productDetails {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   width: 41%;
   gap: 10px;
+  max-width: 100%;
 }
 
 .productBreadcrumb {
@@ -97,6 +131,8 @@
 .breadcrumbLink {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .breadcrumbLink a {
@@ -159,6 +195,7 @@
   font-weight: 500;
   color: black;
   line-height: 35px;
+  word-break: break-word;
 }
 
 .productRating {
@@ -185,6 +222,54 @@
   margin-bottom: 20px;
 }
 
+/* ✅ INFO BADGES (Made to Order / Insurance / Price Breakup) */
+.infoBadges {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap; /* ✅ wraps on mobile */
+  align-items: center;
+  margin: 10px 0 18px;
+  max-width: 100%;
+}
+
+.featureItem,
+.infoBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e7e7e7; /* ✅ gives border */
+  background: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+.featureIcon,
+.infoBadgeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.featureText,
+.infoBadgeText {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: #111;
+  font-weight: 500;
+}
+
+.infoBadge:hover {
+  border-color: #cfcfcf;
+}
+
 .productSizeColor {
   display: flex;
   flex-direction: column;
@@ -208,6 +293,7 @@
 .sizeBtn {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .sizeBtn button {
@@ -228,6 +314,7 @@
 .colorBtn {
   display: flex;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 .colorBtn button {
@@ -264,13 +351,14 @@
   gap: 20px;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap; /* ✅ prevents overflow on small screens */
 }
 
 .productQuantity {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100px;             /* adjust to your old size */
+  width: 110px;
   border: 1px solid #e4e4e4;
   border-radius: 4px;
   overflow: hidden;
@@ -281,17 +369,17 @@
   background: transparent;
   border: none;
   font-size: 18px;
-  color: #000;              /* make + and − black */
+  color: #000;
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .productQuantity button:hover {
-  color: #555;              /* subtle hover */
+  color: #555;
 }
 
 .productQuantity input {
-  width: 10px;
+  width: 24px;
   text-align: center;
   border: none;
   font-size: 16px;
@@ -301,7 +389,7 @@
 }
 
 .productCartBtn button {
-  padding: 20px 110px;
+  padding: 16px 42px;
   background-color: black;
   color: white;
   font-weight: 600;
@@ -309,12 +397,14 @@
   border: none;
   cursor: pointer;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 .productWishShare {
   display: flex;
   gap: 30px;
   margin-bottom: 25px;
+  flex-wrap: wrap;
 }
 
 .productWishList button {
@@ -325,6 +415,8 @@
   gap: 10px;
   outline: none;
   position: relative;
+  padding: 10px 14px;
+  border-radius: 6px;
 }
 
 .productWishList button::after {
@@ -344,6 +436,8 @@
 .productWishList button p {
   text-transform: uppercase;
   font-weight: 500;
+  color: #fff;
+  margin: 0;
 }
 
 .productShare {
@@ -386,64 +480,62 @@
   color: #767676;
 }
 
-/* Responsive CSS */
-
-@media screen and (max-width: 1250px) {
-  .productCartBtn button {
-    padding: 20px 40px;
-  }
-  .productFullImg img {
-    width: 450px;
-    height: 450px;
-  }
-}
+/* =======================
+   Responsive
+======================= */
 
 @media screen and (max-width: 1210px) {
   .productSection {
-    padding: 0 60px;
+    padding: 0 20px;
     margin-top: 0;
   }
 
   .productShowCase {
-    display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 60px;
-  }
-
-  .productFullImg img {
-    width: 420px;
-    height: 420px;
-    pointer-events: none;
+    gap: 40px;
   }
 
   .productCartBtn button {
-    padding: 20px 80px;
+    padding: 16px 36px;
   }
 }
 
 @media screen and (max-width: 991px) {
   .productShowCase {
     flex-direction: column;
-    gap: 30px;
+    gap: 24px;
   }
 
+  /* ✅ On mobile: big image first, thumbs below */
   .productGallery {
-    flex-direction: column-reverse;
+    flex-direction: column;
+    width: 100%;
   }
 
   .productThumb {
     flex-direction: row;
+    gap: 10px;
+    overflow-x: auto; /* ✅ thumbs scroll instead of page */
+    padding-bottom: 4px;
+    max-width: 100%;
   }
 
-  .buttonsGroup {
-    top: 47%;
-    left: 50%;
+  .productThumb img {
+    width: 64px;
+    height: 64px;
+  }
+
+  /* ✅ big image never overflows */
+  .productFullImg {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1; /* keep a nice square */
   }
 
   .productFullImg img {
     width: 100%;
-    height: auto;
+    height: 100%;
   }
 
   .productDetails {
@@ -453,98 +545,26 @@
 
 @media screen and (max-width: 450px) {
   .productSection {
-    padding: 0 15px;
+    padding: 0 12px;
   }
 
-  .productGallery {
-    gap: 5px;
+  .productCartBtn button {
+    width: 100%;
+    padding: 16px 18px;
   }
 
-  .productThumb img {
-    width: 75px;
-    height: 75px;
-    object-fit: cover;
-    border: 1px solid #e0e0e0;
-    cursor: pointer;
-    transition: border-color 0.3s ease;
-  }
-  .productThumb img:hover {
-    border-color: #000;
+  .infoBadges {
+    gap: 10px;
   }
 
-  .buttonsGroup {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
+  .featureItem,
+  .infoBadge {
+    width: 100%;
     justify-content: space-between;
-    width: 90%;
-  }
-
-  .directionBtn {
-    padding: 10px;
-  }
-
-  .productCartBtn button {
-    padding: 20px 50px;
   }
 }
 
-@media screen and (max-width: 320px) {
-  .productThumb img {
-    width: 65px;
-    height: 65px;
-  }
-
-  .productCartBtn button {
-    padding: 20px 30px;
-  }
-
-  .sizeBtn button {
-    padding: 5px 12px;
-  }
-}
-
-/* === Feature Buttons (Made to Order, Transit Insurance, Price Break-Up) === */
-.productFeature {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.featureItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #fff5f5; /* same soft pink */
-  border: 1px solid #f4dede;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: default;
-  font-size: 14px;
-  color: #222;
-  transition: all 0.2s ease;
-}
-
-.featureItem:hover {
-  background-color: #ffecec;
-  border-color: #f1caca;
-}
-
-.featureIcon {
-  font-size: 16px;
-}
-
-.featureText {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  position: relative;
-}
-
-/* Tooltip inside feature button */
+/* Tooltip */
 .tooltipContainer {
   position: relative;
   display: inline-block;

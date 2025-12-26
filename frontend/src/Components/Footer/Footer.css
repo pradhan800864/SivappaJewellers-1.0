@@ -156,12 +156,13 @@
 .footer_bottom {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-top: 20px;
   border-top: 1px solid #cfcdcd;
   padding-top: 30px;
   gap: 20px;
+  text-align: center;
 }
 
 .footerLangCurrency {
@@ -222,30 +223,37 @@
     padding: 20px 15px;
     gap: 30px;
   }
+
   .footer__container {
     grid-template-columns: 1fr;
     gap: 30px;
   }
-  .footer_left {
-    gap: 10px;
+
+  /* ✅ Make subscribe form smaller on mobile */
+  .footer_right form {
+    flex-direction: row;
   }
-  .footer_content {
-    gap: 20px;
+
+  .footer_right form input {
+    padding: 12px 14px;     /* ⬅ reduced from 19px */
+    font-size: 13px;
   }
-  .footer_right {
-    gap: 20px;
+
+  .footer_right form button {
+    padding: 12px 14px;     /* ⬅ reduced */
+    font-size: 12px;
+    white-space: nowrap;
   }
+
   .paymentIconContainer {
     width: 150px;
   }
-  .paymentIconContainer img {
-    height: 40px;
-    width: 320px;
-  }
+
   .footerLangCurrency {
     gap: 10px;
   }
 }
+
 
 @media screen and (max-width: 320px) {
   .paymentIconContainer img {

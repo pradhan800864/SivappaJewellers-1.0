@@ -9,7 +9,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation, Autoplay } from "swiper/modules";
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import { FiHeart } from "react-icons/fi";
@@ -43,7 +43,8 @@ const toUiProduct = (p) => {
     id: p.id,
     productID: p.id,
     productName: p.name || "Product",
-    productPrice: num(p.final_price) || num(p.net_price) || num(p.making_charges),
+    productPrice:
+      num(p.final_price) || num(p.net_price) || num(p.making_charges),
     productReviews: p.reviews || "No reviews",
     frontImg: front,
     backImg: back,
@@ -59,20 +60,119 @@ const toUiProduct = (p) => {
 // ---------- component ----------
 const LimitedEdition = () => {
   const dispatch = useDispatch();
-  const [wishList, setWishList] = useState({});
+  const navigate = useNavigate();
+
+  // ✅ hooks must be at top (before any useEffect that uses them)
+  const [wishList, setWishList] = useState({}); // { [productId]: true }
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
   const cartItems = useSelector((state) => state.cart.items);
 
-  const handleWishlistClick = (productID) =>
-    setWishList((prev) => ({ ...prev, [productID]: !prev[productID] }));
+  const getAuthToken = () =>
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("accessToken") ||
+    "";
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
+  // ✅ Add/remove favorite (persist to DB)
+  const toggleFavorite = async (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("Please login to add favorites");
+      setTimeout(() => navigate("/loginSignUp"), 0); // ✅ reliable redirect
+      return;
+    }
+
+    const alreadyFav = !!wishList[productId];
+
+    // optimistic UI
+    setWishList((prev) => ({ ...prev, [productId]: !alreadyFav }));
+
+    try {
+      if (!alreadyFav) {
+        const r = await fetch(`${API_BASE}/api/favorites`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ product_id: productId }),
+        });
+
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data?.error || "Failed to add favorite");
+
+        toast.success("Added to favorites");
+      } else {
+        const r = await fetch(`${API_BASE}/api/favorites/${productId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data?.error || "Failed to remove favorite");
+
+        toast.success("Removed from favorites");
+      }
+    } catch (err2) {
+      // rollback
+      setWishList((prev) => ({ ...prev, [productId]: alreadyFav }));
+      toast.error(err2?.message || "Failed to update favorite");
+    }
+  };
+
+  // ✅ Fetch favorites (so heart shows correct state)
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+
+    let alive = true;
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/favorites`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json().catch(() => ({}));
+
+        const rows = data?.favorites || data || [];
+        const map = {};
+        rows.forEach((r) => {
+          const pid = Number(r.product_id ?? r.productID ?? r.id);
+          if (Number.isFinite(pid)) map[pid] = true;
+        });
+
+        if (alive) setWishList(map);
+      } catch {
+        // ignore
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ✅ Normalize cart payload so ShoppingCart doesn't show NaN
   const handleAddToCart = (product) => {
-    const found = cartItems.find((i) => i.productID === product.productID);
+    const normalized = {
+      ...product,
+      productID: product.productID ?? product.id,
+      name: product.name ?? product.productName,
+      productName: product.productName ?? product.name,
+      final_price: product.final_price ?? product.productPrice ?? 0,
+    };
+
+    const found = cartItems.find((i) => i.productID === normalized.productID);
+
     if (found && found.quantity >= 20) {
       toast.error("Product limit reached", {
         duration: 2000,
@@ -80,7 +180,7 @@ const LimitedEdition = () => {
         iconTheme: { primary: "#fff", secondary: "#ff4b4b" },
       });
     } else {
-      dispatch(addToCart(product));
+      dispatch(addToCart(normalized));
       toast.success("Added to cart!", {
         duration: 2000,
         style: { backgroundColor: "#07bc0c", color: "white" },
@@ -89,28 +189,34 @@ const LimitedEdition = () => {
     }
   };
 
+  // ✅ Fetch products and filter limited edition label
   useEffect(() => {
     let alive = true;
+
     (async () => {
       try {
         setLoading(true);
         setErr(null);
+
         const { data } = await axios.get(`${API_BASE}/api/products`);
         const list = Array.isArray(data) ? data : data.rows || data.items || [];
         const ui = list.map(toUiProduct);
 
-        // filter for label 'limited edition' (case-insensitive)
         const le = ui.filter((p) =>
           p.labels.some((lbl) => String(lbl).toLowerCase() === "limited edition")
         );
 
         if (alive) setItems(le);
       } catch (e) {
-        if (alive) setErr(e?.response?.data?.error || e.message || "Failed to load products");
+        if (alive)
+          setErr(
+            e?.response?.data?.error || e.message || "Failed to load products"
+          );
       } finally {
         if (alive) setLoading(false);
       }
     })();
+
     return () => {
       alive = false;
     };
@@ -119,14 +225,25 @@ const LimitedEdition = () => {
   // If there are only a few items, duplicate them so the loop feels continuous
   const marqueeItems = useMemo(() => {
     if (items.length >= 8) return items;
-    return Array( Math.ceil(8 / Math.max(items.length || 1, 1)) )
+    return Array(Math.ceil(8 / Math.max(items.length || 1, 1)))
       .fill(0)
       .flatMap(() => items);
   }, [items]);
 
-  if (loading) return <div className="limitedProductSection">Loading limited edition…</div>;
-  if (err) return <div className="limitedProductSection text-red-600">Error: {err}</div>;
-  if (!items.length) return <div className="limitedProductSection">No limited edition products yet.</div>;
+  if (loading)
+    return (
+      <div className="limitedProductSection">Loading limited edition…</div>
+    );
+  if (err)
+    return (
+      <div className="limitedProductSection text-red-600">Error: {err}</div>
+    );
+  if (!items.length)
+    return (
+      <div className="limitedProductSection">
+        No limited edition products yet.
+      </div>
+    );
 
   return (
     <>
@@ -145,16 +262,16 @@ const LimitedEdition = () => {
 
           <Swiper
             slidesPerView={4}
-            slidesPerGroup={1}          // smoother continuous scroll
+            slidesPerGroup={1}
             spaceBetween={30}
             loop={true}
-            speed={5000}                // long duration for continuous feel
+            speed={5000}
             autoplay={{
-              delay: 0,                 // no pause between transitions
+              delay: 0,
               disableOnInteraction: false,
               pauseOnMouseEnter: true,
             }}
-            freeMode={true}             // continuous glide
+            freeMode={true}
             freeModeMomentum={false}
             navigation={{
               nextEl: ".image-swiper-button-next",
@@ -162,8 +279,8 @@ const LimitedEdition = () => {
             }}
             modules={[Navigation, Autoplay]}
             breakpoints={{
-              320:  { slidesPerView: 2, slidesPerGroup: 1, spaceBetween: 14 },
-              768:  { slidesPerView: 3, slidesPerGroup: 1, spaceBetween: 24 },
+              320: { slidesPerView: 2, slidesPerGroup: 1, spaceBetween: 14 },
+              768: { slidesPerView: 3, slidesPerGroup: 1, spaceBetween: 24 },
               1024: { slidesPerView: 4, slidesPerGroup: 1, spaceBetween: 30 },
             }}
           >
@@ -171,13 +288,17 @@ const LimitedEdition = () => {
               <SwiperSlide key={`${product.productID}-${idx}`}>
                 <div className="lpContainer">
                   <div className="lpImageContainer">
-                    <Link to="/Product" onClick={scrollToTop}>
+                    <Link
+                      to={`/product/${product.productID}`}
+                      onClick={scrollToTop}
+                    >
                       <img
                         src={product.frontImg}
                         alt={product.productName}
                         className="lpImage"
                       />
                     </Link>
+
                     <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>
                   </div>
 
@@ -192,7 +313,7 @@ const LimitedEdition = () => {
                     <div className="lpCategoryWishlist">
                       <p>{product.productType}</p>
                       <FiHeart
-                        onClick={() => handleWishlistClick(product.productID)}
+                        onClick={(e) => toggleFavorite(e, product.productID)}
                         style={{
                           color: wishList[product.productID] ? "red" : "#767676",
                           cursor: "pointer",
@@ -201,15 +322,21 @@ const LimitedEdition = () => {
                     </div>
 
                     <div className="productNameInfo">
-                      <Link to="/Product" onClick={scrollToTop}>
+                      <Link
+                        to={`/product/${product.productID}`}
+                        onClick={scrollToTop}
+                      >
                         <h5>{product.productName}</h5>
                       </Link>
+
                       <p>
                         ₹
-                        {product.productPrice?.toLocaleString("en-IN", {
-                          maximumFractionDigits: 2,
-                        })}
+                        {Number(product.productPrice || 0).toLocaleString(
+                          "en-IN",
+                          { maximumFractionDigits: 2 }
+                        )}
                       </p>
+
                       <div className="productRatingReviews">
                         <div className="productRatingStar">
                           {[...Array(5)].map((_, i) => (

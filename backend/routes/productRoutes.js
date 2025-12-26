@@ -169,16 +169,29 @@ router.get("/products", async (req, res) => {
 
 
   router.get('/wallet/history/:userId', async (req, res) => {
-    const userId = req.params.userId;
-    const limit = req.query.limit || 5;
+    const userId = Number(req.params.userId);
+    const limit = Math.min(Number(req.query.limit || 5), 50);
   
     try {
       const result = await pool.query(
-        `SELECT coins, type, source, note, created_at 
-         FROM wallet_transactions 
-         WHERE user_id = $1 
-         ORDER BY created_at DESC 
-         LIMIT $2`,
+        `
+        SELECT 
+          wt.coins,
+          wt.type,
+          wt.source,
+          wt.note,
+          wt.created_at,
+          wt.invoice_number,
+          u.username AS invoice_user
+        FROM wallet_transactions wt
+        LEFT JOIN order_history oh
+          ON oh.invoice_number = wt.invoice_number
+        LEFT JOIN users u
+          ON u.id = oh.user_id
+        WHERE wt.user_id = $1
+        ORDER BY wt.created_at DESC
+        LIMIT $2
+        `,
         [userId, limit]
       );
   
@@ -188,6 +201,8 @@ router.get("/products", async (req, res) => {
       res.status(500).json({ error: 'Server error' });
     }
   });
+  
+  
 
   // server/routes/referrals.js
 router.get("/tree", async (req, res) => {

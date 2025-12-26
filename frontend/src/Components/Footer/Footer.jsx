@@ -138,28 +138,8 @@ const Footer = () => {
         </div>
         <div className="footer_bottom">
           <p>
-            © {getCurrentYear()} Sivappa Jewellers | All Rights Reserved 
+            © {getCurrentYear()} Sai Surya Jewellers | All Rights Reserved 
           </p>
-          <div className="footerLangCurrency">
-            <div className="footerLang">
-              <p>Language</p>
-              <select name="language" id="language">
-                <option value="english">India | English</option>
-                <option value="Hindi">Hindi</option>
-                <option value="Germany">Germany</option>
-                <option value="French">French</option>
-              </select>
-            </div>
-            <div className="footerCurrency">
-              <p>Currency</p>
-              <select name="currency" id="currency">
-                <option value="USD">$ USD</option>
-                <option value="INR">₹ INR</option>
-                <option value="EUR">€ EUR</option>
-                <option value="GBP">£ GBP</option>
-              </select>
-            </div>
-          </div>
         </div>
       </footer>
     </>

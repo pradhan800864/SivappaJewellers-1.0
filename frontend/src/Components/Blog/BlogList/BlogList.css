@@ -148,21 +148,45 @@
 }
 
 @media screen and (max-width: 450px) {
-  .blogListHeaderContainer {
-    margin-bottom: 20px;
-  }
 
-  .blogListHeader {
-    height: 240px;
-    padding-left: 35px;
-  }
-
-  .blogPostListContainer {
-    padding: 0 15px;
-    grid-template-columns: repeat(1, 1fr);
-  }
-
+  /* Header area (already good, keep minimal) */
   .blogListHeader h2 {
-    font-size: 37px;
+    font-size: 28px;
+  }
+
+  .blogListHeaderCategories p {
+    font-size: 12px;
+  }
+
+  /* === Blog cards text only === */
+
+  /* BY ADMIN / DATE */
+  .blogPostContentDate p {
+    font-size: 11px;
+  }
+
+  /* Blog title */
+  .blogPostContentHeading a {
+    font-size: 14px;      /* ⬅ smaller, layout unchanged */
+    line-height: 1.35;
+  }
+
+  /* Blog description */
+  .blogPostContentDescription p {
+    font-size: 12px;      /* ⬅ smaller only */
+    line-height: 1.5;
+  }
+
+  /* Continue reading */
+  .blogPostContentReadMore a {
+    font-size: 12px;
+  }
+
+  /* Show more */
+  .blogListShowMore {
+    font-size: 12px;
   }
 }
+
+
+

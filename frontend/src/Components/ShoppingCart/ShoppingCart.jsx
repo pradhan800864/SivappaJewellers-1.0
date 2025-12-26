@@ -295,14 +295,14 @@ const ShoppingCart = () => {
                           <tr key={item.productID}>
                             <td data-label="Product">
                               <div className="shoppingBagTableImg">
-                                <Link to="/product" onClick={scrollToTop}>
+                                <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
                                   <img src={item.frontImg} alt="" />
                                 </Link>
                               </div>
                             </td>
                             <td data-label="">
                               <div className="shoppingBagTableProductDetail">
-                                <Link to="/product" onClick={scrollToTop}>
+                                <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
                                   <h4>{item.name}</h4>
                                 </Link>
                                 <p>{item.productReviews}</p>
@@ -406,14 +406,14 @@ const ShoppingCart = () => {
                                Apply Coupon
                               </button>
                             </form>
-                            <button
+                            {/* <button
                               onClick={(e) => {
                                 e.preventDefault();
                               }}
                               className="shopCartFooterbutton"
                             >
                               Update Cart
-                            </button>
+                            </button> */}
                           </div>
                         )}
                       </td>
@@ -503,14 +503,14 @@ const ShoppingCart = () => {
                                 Apply Coupon
                               </button>
                             </form>
-                            <button
+                            {/* <button
                               onClick={(e) => {
                                 e.preventDefault();
                               }}
                               className="shopCartFooterbutton"
                             >
                               Update Cart
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </>

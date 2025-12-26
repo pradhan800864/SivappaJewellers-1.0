@@ -258,3 +258,11 @@
   font-weight: 500;
   color: #333;
 }
+.mobile-logo-text span {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #1b1b1b;
+  white-space: nowrap;
+}

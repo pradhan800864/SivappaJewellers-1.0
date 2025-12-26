@@ -198,3 +198,26 @@
   align-items: flex-start;
   text-align: left;
 }
+@media screen and (max-width: 450px) {
+  /* Men collection box: keep text inside */
+  .collectionTop {
+    padding: 8px;             /* reduce padding from 30px */
+    background-position: center;
+    overflow: hidden;          /* prevents spill outside */
+  }
+
+  /* reduce heading size on mobile */
+  .collectionTop .col-h3 {
+    font-size: 18px;
+    line-height: 1.15;
+    max-width: 100%;
+    word-break: break-word;    /* safe wrap */
+  }
+
+  /* If you have any extra text like "FOR MENS" as a <p> or <h5>, keep it small */
+  .collectionTop p,
+  .collectionTop h5 {
+    font-size: 12px;
+    max-width: 100%;
+  }
+}

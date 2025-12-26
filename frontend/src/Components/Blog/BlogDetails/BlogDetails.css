@@ -336,4 +336,35 @@
   .blogDetailsNextPrevContainer {
     align-items: flex-start;
   }
+  /* === Share buttons: smaller on mobile === */
+  .share-button {
+    padding: 10px 12px;      /* smaller height */
+    font-size: 12px;         /* smaller text */
+  }
+
+  .share-button svg {
+    margin-right: 8px;
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Plus button */
+  .share-button.more {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
+  .share-button.more svg {
+    width: 14px;
+    height: 14px;
+  }
+  /* Center the + button exactly */
+  .share-button.more {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }

@@ -62,7 +62,7 @@ export default function ReferralTree({ userId }) {
   return (
     <div
       ref={containerRef}
-      style={{ width: '50vw', height: '50vh', position: 'relative', background: '#f9f9f9', overflow: 'hidden' }}
+      style={{ width: '82vw', height: '50vh', position: 'relative', background: '#f9f9f9', overflow: 'hidden' }}
     >
       <style>{`.rd3t-node, .rd3t-leaf-node, .rd3t-link, .rd3t-g, .rd3t-tree-container svg { cursor: default !important; }`}</style>
       {tree ? (

@@ -27,15 +27,50 @@ const Product = () => {
 
   // Data
   const [product, setProduct] = useState(null);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // UI State (kept as-is to preserve styles)
-  const [currentImg, setCurrentImg]   = useState(0);
-  const [quantity, setQuantity]       = useState(1);
-  const [clicked, setClicked]         = useState(false);
-
+  // UI State
+  const [currentImg, setCurrentImg] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [wishList, setWishList] = useState({}); // { [productId]: true }
+    const getAuthToken = () =>
+    localStorage.getItem("token") ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("accessToken") ||
+    "";
+  
   const cartItems = useSelector((state) => state.cart.items);
+
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+  
+    let alive = true;
+    (async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE}/api/favorites`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        const favRows = data?.favorites || [];
+        const map = {};
+        favRows.forEach((r) => {
+          const pid = Number(r.product_id);
+          if (Number.isFinite(pid)) map[pid] = true;
+        });
+  
+        if (alive) setWishList(map);
+      } catch {
+        // ignore
+      }
+    })();
+  
+    return () => {
+      alive = false;
+    };
+  }, []);
+  
 
   // Fetch product by id
   useEffect(() => {
@@ -56,7 +91,7 @@ const Product = () => {
       });
   }, [id]);
 
-  // Build image list: prefer product.images from API; fall back to product.image_urls; last resort: try legacy fields
+  // Build image list
   const images = useMemo(() => {
     if (!product) return [];
 
@@ -67,21 +102,21 @@ const Product = () => {
       list = product.image_urls;
     } else {
       list = [
-        product.frontImg, product.backImg,
-        product.image1, product.image2, product.image3, product.image4,
+        product.frontImg,
+        product.backImg,
+        product.image1,
+        product.image2,
+        product.image3,
+        product.image4,
       ].filter(Boolean);
     }
 
     // normalize to absolute URLs and dedupe
-    const normalized = Array.from(
-      new Set(list.map(toPublicUrl).filter(Boolean))
-    );
-
+    const normalized = Array.from(new Set(list.map(toPublicUrl).filter(Boolean)));
     return normalized.length ? normalized : [PLACEHOLDER];
   }, [product]);
 
   const handleImgError = (e) => {
-    // Stop loops & set local placeholder that actually exists
     if (e.currentTarget.src.includes(PLACEHOLDER)) return;
     e.currentTarget.onerror = null;
     e.currentTarget.src = PLACEHOLDER;
@@ -99,10 +134,45 @@ const Product = () => {
     if (!Number.isNaN(val) && val > 0) setQuantity(val);
   };
 
-  const handleWishClick = () => setClicked((c) => !c);
+  const toggleFavorite = async (e, productId) => {
+    e.preventDefault();
+  
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("Please login to add favorites");
+      // optionally navigate("/loginSignUp")
+      return;
+    }
+  
+    const alreadyFav = !!wishList[productId];
+  
+    // optimistic
+    setWishList((prev) => ({ ...prev, [productId]: !alreadyFav }));
+  
+    try {
+      if (!alreadyFav) {
+        await axios.post(
+          `${API_BASE}/api/favorites`,
+          { product_id: productId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Added to favorites");
+      } else {
+        await axios.delete(`${API_BASE}/api/favorites/${productId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success("Removed from favorites");
+      }
+    } catch (err) {
+      // rollback
+      setWishList((prev) => ({ ...prev, [productId]: alreadyFav }));
+      toast.error(err?.response?.data?.error || "Failed to update favorite");
+    }
+  };
+  
 
   const priceNumber = Number(product?.final_price ?? product?.price ?? 0);
-  const priceLabel  = `₹${priceNumber.toLocaleString("en-IN")}`;
+  const priceLabel = `₹${priceNumber.toLocaleString("en-IN")}`;
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -116,7 +186,9 @@ const Product = () => {
       quantity,
     };
 
-    const productInCart = cartItems.find((item) => item.productID === payload.productID);
+    const productInCart = cartItems.find(
+      (item) => item.productID === payload.productID
+    );
 
     if (productInCart && productInCart.quantity >= 20) {
       toast.error("Product limit reached", {
@@ -134,25 +206,31 @@ const Product = () => {
     }
   };
 
-  // Loading / Error states (kept very light to preserve layout)
   if (loading) {
     return (
       <div className="productSection">
         <div className="productShowCase">
           <div className="productDetails">
-            <div className="productName"><h1>Loading...</h1></div>
+            <div className="productName">
+              <h1>Loading...</h1>
+            </div>
           </div>
         </div>
       </div>
     );
   }
+
   if (error || !product) {
     return (
       <div className="productSection">
         <div className="productShowCase">
           <div className="productDetails">
-            <div className="productName"><h1>{error || "Product not found"}</h1></div>
-            <Link to="/shop" className="backLink">← Back to Shop</Link>
+            <div className="productName">
+              <h1>{error || "Product not found"}</h1>
+            </div>
+            <Link to="/shop" className="backLink">
+              ← Back to Shop
+            </Link>
           </div>
         </div>
       </div>
@@ -176,17 +254,19 @@ const Product = () => {
                 />
               ))}
             </div>
+
             <div className="productFullImg">
               <img
                 src={images[currentImg]}
                 alt={product.name || "Product"}
                 onError={handleImgError}
               />
+
               <div className="buttonsGroup">
-                <button onClick={prevImg} className="directionBtn">
+                <button type="button" onClick={prevImg} className="directionBtn">
                   <GoChevronLeft size={18} />
                 </button>
-                <button onClick={nextImg} className="directionBtn">
+                <button type="button" onClick={nextImg} className="directionBtn">
                   <GoChevronRight size={18} />
                 </button>
               </div>
@@ -212,10 +292,13 @@ const Product = () => {
 
             <div className="productDescription">
               <p>
-                {product.full_description || product.short_description ||
+                {product.full_description ||
+                  product.short_description ||
                   "Product description will appear here. Update 'description' field in your products table to override this placeholder."}
               </p>
             </div>
+
+            {/* ✅ These now get borders from Product.css */}
             <div className="infoBadges">
               <div className="featureItem">
                 <span className="featureIcon">🛠️</span>
@@ -224,9 +307,9 @@ const Product = () => {
                   <span className="tooltipContainer">
                     <span className="tooltipIcon">?</span>
                     <span className="tooltipText">
-                      This product will be exclusively made once we receive your order.
-                      Hence, additional time is taken for delivery. Weight and prices are
-                      subject to minor changes.
+                      This product will be exclusively made once we receive your
+                      order. Hence, additional time is taken for delivery. Weight
+                      and prices are subject to minor changes.
                     </span>
                   </span>
                 </span>
@@ -250,29 +333,31 @@ const Product = () => {
               </div>
             </div>
 
-
-
             <div className="productCartQuantity">
               <div className="productQuantity">
-                <button onClick={decrement}>-</button>
+                <button type="button" onClick={decrement}>
+                  -
+                </button>
                 <input type="text" value={quantity} onChange={handleQtyInput} />
-                <button onClick={increment}>+</button>
+                <button type="button" onClick={increment}>
+                  +
+                </button>
               </div>
               <div className="productCartBtn">
-                <button onClick={handleAddToCart}>Add to Cart</button>
+                <button type="button" onClick={handleAddToCart}>
+                  Add to Cart
+                </button>
               </div>
             </div>
 
             <div className="productWishShare">
               <div className="productWishList">
-                <button onClick={handleWishClick}>
-                  <FiHeart color={clicked ? "red" : ""} size={17} />
-                  <p>Add to Wishlist</p>
+                <button type="button" onClick={(e) => toggleFavorite(e, product.id)}>
+                  <FiHeart color={wishList[product.id] ? "red" : "#fff"} size={17} />
+                  <p>{wishList[product.id] ? "Wishlisted" : "Add to Wishlist"}</p>
                 </button>
               </div>
             </div>
-
-            
           </div>
         </div>
       </div>

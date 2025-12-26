@@ -10,7 +10,7 @@ const equalSets = (a, b) => {
   return true;
 };
 
-const Filter = ({ onFilterChange, facets }) => {
+const Filter = ({ onFilterChange, facets, onClose }) => {
   const onFilterChangeRef = useRef(onFilterChange);
   useEffect(() => {
    onFilterChangeRef.current = onFilterChange;
@@ -133,10 +133,31 @@ const Filter = ({ onFilterChange, facets }) => {
 
   return (
     <aside className="facetPanel">
-      <div className="facetHeader">
-        <span>Filters</span>
-        <span className="facetBadge">{activeCount}</span>
+      <div className="facetTopBar">
+        <button
+          type="button"
+          className="facetBackBtn"
+          onClick={() => onClose?.()}
+          aria-label="Back to shop"
+        >
+          ← Back
+        </button>
+
+        <div className="facetTopTitle">
+          <span>Filters</span>
+          <span className="facetBadge">{activeCount}</span>
+        </div>
+
+        <button
+          type="button"
+          className="facetCloseBtn"
+          onClick={() => onClose?.()}
+          aria-label="Close filters"
+        >
+          ✕
+        </button>
       </div>
+
 
       {/* Product Type */}
       <div className="facetGroup">

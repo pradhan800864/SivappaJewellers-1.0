@@ -39,9 +39,10 @@ const App = () => {
       {/* <Popup /> */}
       <ScrollToTop />
       <AuthProvider>
-      <BrowserRouter>
-      {isiOS && !isStandalone && <OpenInAppBanner />}
-        <Header />
+      <div className={isiOS && !isStandalone ? "hasOpenInAppBanner" : ""}>
+        <BrowserRouter>
+          {isiOS && !isStandalone && <OpenInAppBanner />}
+          <Header />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -60,6 +61,7 @@ const App = () => {
         <Footer />
         <Toaster />
       </BrowserRouter>
+      </div>
       </AuthProvider>
     </>
   );

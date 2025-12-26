@@ -160,10 +160,11 @@
     background-position: center right 40%;
   }
   .dealTimerMainContent {
-    padding: 40px 0;
+    padding: 40px 20px;
   }
   .dealTimeContent h3 {
-    font-size: 40px;
+    font-size: 30px;     /* ✅ smaller */
+    line-height: 1.1;    /* ✅ tighter */
   }
   .dealTimeContent a:hover::after {
     width: 25%;

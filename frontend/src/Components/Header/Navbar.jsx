@@ -3,7 +3,6 @@ import "./Navbar.css";
 
 import { useSelector } from "react-redux";
 
-import logo from "../../Assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 
 import { RiMenu2Line } from "react-icons/ri";
@@ -128,9 +127,9 @@ const Navbar = () => {
           ) : (
             <RiMenu2Line size={22} onClick={toggleMobileMenu} />
           )}
-          <div className="logoContainer">
-            <Link to="/">
-              <img src={logo} alt="Logo" />
+          <div className="logoContainer mobile-logo-text">
+            <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+              <span>Sai Surya Jewellers</span>
             </Link>
           </div>
           <Link to="/cart">
@@ -189,31 +188,18 @@ const Navbar = () => {
 
           <div className="mobile-menuFooter">
             <div className="mobile-menuFooterLogin">
-              <Link to="/loginSignUp" onClick={toggleMobileMenu}>
+              <Link
+                to={user ? "/profile" : "/loginSignUp"}
+                onClick={() => {
+                  toggleMobileMenu();
+                  scrollToTop();
+                }}
+              >
                 <FaRegUser />
                 <p>My Account</p>
               </Link>
             </div>
-            <div className="mobile-menuFooterLangCurrency">
-              <div className="mobile-menuFooterLang">
-                <p>Language</p>
-                <select name="language" id="language">
-                  <option value="english">United States | English</option>
-                  <option value="Hindi">Hindi</option>
-                  <option value="Germany">Germany</option>
-                  <option value="French">French</option>
-                </select>
-              </div>
-              <div className="mobile-menuFooterCurrency">
-                <p>Currency</p>
-                <select name="currency" id="currency">
-                  <option value="USD">$ USD</option>
-                  <option value="INR">₹ INR</option>
-                  <option value="EUR">€ EUR</option>
-                  <option value="GBP">£ GBP</option>
-                </select>
-              </div>
-            </div>
+
             <div className="mobile-menuSocial_links">
               <FaFacebookF />
               <FaXTwitter />

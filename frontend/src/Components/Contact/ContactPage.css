@@ -107,6 +107,7 @@
   }
 
   .contactForm form button {
-    width: 50%;
+    padding: 12px 5px;     /* ⬅ smaller height */
+    font-size: 12px;       /* ⬅ smaller text */
   }
 }
