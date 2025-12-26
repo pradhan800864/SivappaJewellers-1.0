@@ -22,14 +22,25 @@ import ShoppingCart from "./Components/ShoppingCart/ShoppingCart";
 // import Popup from "./Components/PopupBanner/Popup";
 import { AuthProvider } from "./Context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import OpenInAppBanner from "./Components/OpenInAppBanner/OpenInAppBanner";
 
 const App = () => {
+  const isiOS =
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+  const isStandalone =
+  (typeof window !== "undefined" && window.navigator.standalone === true) ||
+  (typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(display-mode: standalone)").matches);
+
   return (
     <>
       {/* <Popup /> */}
       <ScrollToTop />
       <AuthProvider>
       <BrowserRouter>
+      {isiOS && !isStandalone && <OpenInAppBanner />}
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />

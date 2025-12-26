@@ -1,0 +1,102 @@
+.openInAppBannerWrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    pointer-events: none; /* ✅ prevents blocking Safari UI taps */
+  }
+  
+  .openInAppBanner {
+    pointer-events: auto; /* ✅ banner itself clickable */
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .openInAppLeft {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+  }
+  
+  .openInAppTitle {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  
+  .openInAppSub {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .openInAppBtn {
+    font-size: 12px;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    background: #f8f8f8;
+    border-radius: 8px;
+  }
+  
+  .openInAppClose {
+    font-size: 16px;
+    background: transparent;
+    border: none;
+    padding: 6px;
+  }
+  
+  /* Modal */
+  .openInAppModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 10000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 72px 12px 12px;
+  }
+  
+  .openInAppModal {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+  }
+  
+  .openInAppModalTitle {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+  
+  .openInAppSteps {
+    margin: 0 0 12px 18px;
+    padding: 0;
+    font-size: 14px;
+  }
+  
+  .openInAppPrimary {
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 10px;
+    background: #000;
+    color: #fff;
+    font-weight: 700;
+  }
+  
+  /* Small devices */
+  @media (max-width: 480px) {
+    .openInAppBanner {
+      padding: 9px 10px;
+    }
+    .openInAppBtn {
+      padding: 7px 9px;
+    }
+  }
+  
