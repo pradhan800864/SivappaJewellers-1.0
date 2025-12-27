@@ -12,7 +12,7 @@ import axios from "axios";
 
 import "./Product.css";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:4998";
+const API_BASE = process.env.REACT_APP_API_BASE;
 const PLACEHOLDER = "/images/placeholder.png"; // ensure this file exists in public/images/
 
 const toPublicUrl = (u) => {

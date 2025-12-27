@@ -18,7 +18,7 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 
-const API_BASE = "http://localhost:4998";
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 // ---------- helpers ----------
 const fixUrl = (u) => {

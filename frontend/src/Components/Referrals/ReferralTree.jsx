@@ -3,7 +3,7 @@ import Tree from 'react-d3-tree';
 import axios from 'axios';
 import officeManIcon from '../../Assets/office-man.png';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4998';
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 export default function ReferralTree({ userId }) {
   const [tree, setTree] = useState(null);

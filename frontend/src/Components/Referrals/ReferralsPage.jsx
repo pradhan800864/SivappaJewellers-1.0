@@ -3,7 +3,7 @@ import "./ReferralsPage.css";
 import { toast } from "react-hot-toast";
 import ReferralTree from "./ReferralTree";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:4998";
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 const ReferralsPage = ({ user }) => {
   const [referrer, setReferrer] = useState(null);

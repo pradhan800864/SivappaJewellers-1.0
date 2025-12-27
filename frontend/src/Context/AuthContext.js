@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   // ✅ Fetch user details using token
   const fetchUser = async (token) => {
     try {
-      const response = await fetch("http://localhost:4998/api/users/me", {
+      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/users/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
 

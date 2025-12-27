@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Tree from "react-d3-tree";
 
-const DEFAULT_API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:4998";
+const DEFAULT_API_BASE = process.env.REACT_APP_API_BASE;
 
 /** Find a node and its parent in a generic tree */
 function findNodeAndParent(root, targetId, parent = null) {

@@ -46,8 +46,8 @@ router.get("/products", async (req, res) => {
 
     const productsWithFullImgUrl = result.rows.map(product => ({
       ...product,
-      frontImg: `http://localhost:4998${product.image_url}`,
-      backImg:  `http://localhost:4998${product.image_url}`, // same as before
+      frontImg: `${process.env.REACT_APP_API_BASE}${product.image_url}`,
+      backImg:  `${process.env.REACT_APP_API_BASE}${product.image_url}`, // same as before
     }));
 
     res.json(productsWithFullImgUrl);

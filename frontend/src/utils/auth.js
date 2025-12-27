@@ -2,7 +2,7 @@ import { toast } from "react-hot-toast";
 
 export const loginUser = async (email, password) => {
     try {
-      const response = await fetch("http://localhost:4998/api/users/login", {
+      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

@@ -54,7 +54,7 @@ const LoginSignUp = () => {
       if (activeTab === "tabButton1") {
         // ✅ LOGIN
         // eslint-disable-next-line no-unused-vars
-        url = "http://localhost:4998/api/users/login";
+        url = process.env.REACT_APP_API_BASE + "/api/users/login";
         payload = { email: formData.email, password: formData.password };
       } else {
         // ✅ REGISTER
@@ -78,8 +78,8 @@ const LoginSignUp = () => {
 
       const response = await fetch(
         activeTab === "tabButton1"
-          ? "http://localhost:4998/api/users/login"
-          : "http://localhost:4998/api/users/register",
+          ? process.env.REACT_APP_API_BASE + "/api/users/login"
+          : process.env.REACT_APP_API_BASE + "/api/users/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

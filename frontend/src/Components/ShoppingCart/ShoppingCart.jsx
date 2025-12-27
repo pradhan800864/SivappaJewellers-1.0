@@ -60,7 +60,7 @@ const ShoppingCart = () => {
     }
   
     try {
-      const response = await fetch("http://localhost:4998/api/pincode/check", {
+      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/pincode/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pincode }),
@@ -92,7 +92,7 @@ const ShoppingCart = () => {
     }
   
     try {
-      const response = await fetch("http://localhost:4998/api/place-order", {
+      const response = await fetch("/api/place-order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -174,7 +174,7 @@ const ShoppingCart = () => {
         referral_code: null,
       };
   
-      const response = await fetch("http://localhost:4998/api/users/register", {
+      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

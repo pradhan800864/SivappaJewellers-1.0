@@ -67,7 +67,7 @@ const ShopDetails = () => {
   // Load products
   useEffect(() => {
     axios
-      .get("http://localhost:4998/api/products")
+      .get(process.env.REACT_APP_API_BASE + "/api/products")
       .then((res) => setProducts(res.data))
       .catch((err) => console.error("Failed to fetch products:", err));
   }, []);
@@ -75,7 +75,7 @@ const ShopDetails = () => {
   // Load taxonomy
   useEffect(() => {
     axios
-      .get("http://localhost:4998/api/taxonomy")
+      .get(process.env.REACT_APP_API_BASE + "/api/taxonomy")
       .then((res) => setTaxonomy(res.data))
       .catch((err) => console.error("Failed to fetch taxonomy:", err));
   }, []);
@@ -86,7 +86,7 @@ const ShopDetails = () => {
     if (!token) return;
 
     axios
-      .get("http://localhost:4998/api/favorites", { headers: authHeaders() })
+      .get(process.env.REACT_APP_API_BASE + "/api/favorites", { headers: authHeaders() })
       .then((res) => {
         const favs = res.data?.favorites || [];
         const map = {};
@@ -119,14 +119,14 @@ const ShopDetails = () => {
     try {
       if (!alreadyFav) {
         await axios.post(
-          "http://localhost:4998/api/favorites",
+          process.env.REACT_APP_API_BASE + "/api/favorites",
           { product_id: productID },
           { headers: authHeaders() }
         );
         setWishList((prev) => ({ ...prev, [productID]: true }));
         toast.success("Added to favorites");
       } else {
-        await axios.delete(`http://localhost:4998/api/favorites/${productID}`, {
+        await axios.delete(`${process.env.REACT_APP_API_BASE}/api/favorites/${productID}`, {
           headers: authHeaders(),
         });
         setWishList((prev) => {

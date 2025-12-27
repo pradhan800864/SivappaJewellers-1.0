@@ -25,7 +25,7 @@ const AdditionalInfo = () => {
     if (!id) return;
     setLoading(true);
     axios
-      .get(`http://localhost:4998/api/products/${id}`)
+      .get(`${process.env.REACT_APP_API_BASE}/api/products/${id}`)
       .then((res) => setProduct(res.data))
       .finally(() => setLoading(false));
   }, [id]);

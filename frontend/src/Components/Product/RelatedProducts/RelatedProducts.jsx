@@ -24,7 +24,7 @@ const RelatedProducts = () => {
   useEffect(() => {
     if (!id) return;
     axios
-      .get(`http://localhost:4998/api/products/${id}/related?limit=20`)
+      .get(`${process.env.REACT_APP_API_BASE}/api/products/${id}/related?limit=20`)
       .then((res) => setItems(res.data || []))
       .catch((e) => {
         console.error("Failed to load related products:", e);

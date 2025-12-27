@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import ReferralsPage from "../Referrals/ReferralsPage";
 import { AuthContext } from "../../Context/AuthContext";
 
-const API_BASE = "http://localhost:4998";
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
