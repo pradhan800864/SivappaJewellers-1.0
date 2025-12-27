@@ -10,7 +10,7 @@ import { useContext } from "react";
 import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "";
+const API_BASE = process.env.REACT_APP_API_BASE;
 
 // same helper as Trendy
 const fixUrl = (u) => {
@@ -445,9 +445,9 @@ const ShoppingCart = () => {
                               </div>
                               <div className="shoppingBagTableMobileItemsDetail">
                                 <div className="shoppingBagTableMobileItemsDetailMain">
-                                  <Link to="/product" onClick={scrollToTop}>
-                                    <h4>{item.productName}</h4>
-                                  </Link>
+                                <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
+                                  <h4>{item.productName || item.name}</h4>
+                                </Link>
                                   <p>{item.productReviews}</p>
                                   <div className="shoppingBagTableMobileQuantity">
                                     <button
