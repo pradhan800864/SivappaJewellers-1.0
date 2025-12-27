@@ -10,6 +10,16 @@ import { useContext } from "react";
 import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
 
+const API_BASE = process.env.REACT_APP_API_BASE || "";
+
+// same helper as Trendy
+const fixUrl = (u) => {
+  if (!u) return "";
+  if (/^https?:\/\//i.test(u)) return u;          // already absolute
+  if (u.startsWith("/")) return API_BASE + u;     // "/uploads/.."
+  return `${API_BASE}/${u}`;                      // "uploads/.."
+};
+
 const ShoppingCart = () => {
   const cartItems = useSelector((state) => state.cart.items);
   const dispatch = useDispatch();
@@ -296,7 +306,7 @@ const ShoppingCart = () => {
                             <td data-label="Product">
                               <div className="shoppingBagTableImg">
                                 <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
-                                  <img src={item.frontImg} alt="" />
+                                  <img src={fixUrl(item.frontImg)} alt="" />
                                 </Link>
                               </div>
                             </td>

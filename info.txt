@@ -59,3 +59,7 @@ npm start
 ---
 
 Let me know if you want me to generate the `.patch` file or test it against your specific package version.
+
+
+
+PGPASSWORD=BZdvgbyZOuxLBzMMunVqvNtLaRXruXWc psql -h yamanote.proxy.rlwy.net -U postgres -p 27223 -d railway -f gold_ecommerce_full.sql
