@@ -202,7 +202,9 @@ router.get("/products", async (req, res) => {
     }
   });
   
-  
+router.get('/health', async(req, res) => {
+  res.status(200).json({message: "success"})
+});
 
   // server/routes/referrals.js
 router.get("/tree", async (req, res) => {
