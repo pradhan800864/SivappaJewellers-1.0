@@ -14,12 +14,22 @@ import axios from "axios";
 
 const fixUrl = (u) => {
   if (!u) return "";
-  if (/^https?:\/\//i.test(u)) return u;
+
+  let s = String(u).trim();
+
+  // If backend/frontend accidentally stored "undefined/..."
+  s = s.replace(/^undefined\/+/, "/");
+
+  // If already absolute URL, return
+  if (/^https?:\/\//i.test(s)) return s;
+
   const base = (process.env.REACT_APP_API_BASE || "").replace(/\/$/, "");
-  const path = String(u).startsWith("/") ? u : `/${u}`;
+  if (!base) return s.startsWith("/") ? s : `/${s}`; // fallback
+
+  // Ensure path starts with /
+  const path = s.startsWith("/") ? s : `/${s}`;
   return `${base}${path}`;
 };
-
 const ShopDetails = () => {
   const navigate = useNavigate();
 
@@ -76,7 +86,10 @@ const ShopDetails = () => {
   useEffect(() => {
     axios
       .get(process.env.REACT_APP_API_BASE + "/api/products")
-      .then((res) => setProducts(res.data))
+      .then((res) => {
+        console.log("SAMPLE PRODUCT:", res.data?.[0]);
+        setProducts(res.data);
+      })
       .catch((err) => console.error("Failed to fetch products:", err));
   }, []);
 
