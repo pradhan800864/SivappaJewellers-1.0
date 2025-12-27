@@ -92,7 +92,7 @@ const ShoppingCart = () => {
     }
   
     try {
-      const response = await fetch("/api/place-order", {
+      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/place-order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
