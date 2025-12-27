@@ -10,7 +10,6 @@ import { useContext } from "react";
 import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
 
-const API_BASE = process.env.REACT_APP_API_BASE;
 
 const fixUrl = (u) => {
   if (!u) return "";
