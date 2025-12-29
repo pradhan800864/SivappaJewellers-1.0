@@ -36,7 +36,7 @@ const Footer = () => {
             <p>Shop No:4, Police Quarters, Kurnool, Andhra Pradesh 518001</p>
 
             <div className="footer_address">
-              <strong> sivappajeweller@gmail.com </strong>
+              <strong> saisuryajewellers@gmail.com </strong>
               <strong> +91 94402557666 </strong>
             </div>
 

@@ -13,6 +13,7 @@ app.use("/api", require("./routes/productRoutes"));
 // Serve images if needed
 app.use("/uploads", express.static("uploads"));
 app.use("/api/favorites", require("./routes/favoritesRoutes"));
+app.use("/api/auth", require("./routes/passwordResetRoutes"));
 
 // Sample route
 app.get("/", (req, res) => {

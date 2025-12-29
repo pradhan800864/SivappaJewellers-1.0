@@ -40,7 +40,7 @@ const ContactPage = () => {
                 <br /> Andhra Pradesh
               </p>
               <p>
-                sivappajeweller@gmail.com
+                saisuryajewellers@gmail.com
                 <br />
                 +91 94402557666
               </p>

@@ -81,7 +81,7 @@ const Navbar = () => {
           </div>
         </div>
         <div className="iconContainer">
-          <FiSearch size={22} onClick={scrollToTop} />
+          {/* <FiSearch size={22} onClick={scrollToTop} /> */}
           
           <Link to={user ? "/profile" : "/loginSignUp"} onClick={scrollToTop} className="userContainer">
             <FaRegUser size={22} />

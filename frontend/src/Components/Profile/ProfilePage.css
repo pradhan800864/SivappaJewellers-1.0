@@ -287,7 +287,6 @@
   }
 }
 
-
 /* =========================
    Orders Table (Responsive)
 ========================= */
@@ -340,11 +339,13 @@
   background: #fff;
   cursor: pointer;
   font-weight: 600;
+  color: #000;
 }
 
 .pagerBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  color: #000; /* keep black even when disabled */
 }
 
 .pagerInfo {
@@ -359,10 +360,129 @@
   }
 }
 
-.pagerBtn {
-  color: #000;
+/* =========================
+   Level-wise Commission Report (Compact - Web + Mobile)
+   ✅ Compact layout on desktop too (same as your mobile look)
+========================= */
+
+.levelReportCard {
+  max-width: 620px;        /* reduce visual size on web */
+  margin: 10px auto;       /* center horizontally */
+  padding: 8px 10px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: #fff;
 }
 
-.pagerBtn:disabled {
-  color: #000; /* keep black even when disabled */
+.levelReportHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.levelReportHeader h4 {
+  align-items: center;
+  margin: 0;
+  font-size: 18px;   /* ✅ increased */
+  font-weight: 600;
+  }
+
+.levelReportRefresh {
+  border: 1px solid #ddd;
+  background: #fafafa;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Table base */
+.levelReportTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+/* ✅ Use compact “mobile style” rows on ALL screens */
+.levelReportTable thead {
+  display: none;
+}
+
+.levelReportTable tbody tr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;                 /* compact height */
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.levelReportTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.levelReportTable tbody td {
+  border: none;
+  padding: 0;
+}
+
+/* left label */
+.levelReportTable tbody td:first-child {
+  font-weight: 600;
+  min-width: 90px;
+}
+
+/* coins column */
+.levelReportTable tbody td:nth-child(2) {
+  text-align: right;
+  flex: 1;
+}
+
+/* tx column */
+.levelReportTable tbody td:nth-child(3) {
+  text-align: right;
+  min-width: 40px;
+}
+
+/* best row highlight */
+.bestRow {
+  background: #f3fff5;
+  font-weight: 600;
+  border-radius: 6px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* helper texts */
+.levelReportHint,
+.levelReportError {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.levelReportError {
+  color: #d93025;
+}
+
+/* Very small screens: slightly tighter */
+@media (max-width: 450px) {
+  .levelReportCard {
+    max-width: 100%;
+  }
+
+  .levelReportHeader h4 {
+    margin: 0;
+    font-size: 15px;   /* ✅ increased */
+    font-weight: 600;
+    }
+
+  .levelReportTable {
+    font-size: 12px;
+  }
+
+  .levelReportTable tbody tr {
+    padding: 6px 0;
+  }
 }

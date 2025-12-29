@@ -62,3 +62,52 @@
     width: 90%;
   }
 }
+
+
+/* Base input styling */
+.resetPasswordContainer input {
+  font-size: 22px;          /* BIG text when user types */
+  letter-spacing: 2px;      /* helps count characters */
+}
+
+/* Placeholder text should be smaller */
+.resetPasswordContainer input::placeholder {
+  font-size: 14px;          /* smaller placeholder */
+  letter-spacing: normal;
+  color: #9a9a9a;           /* softer grey */
+}
+
+/* Extra clarity specifically for password dots */
+.resetPasswordContainer input[type="password"] {
+  font-size: 24px;          /* even bigger bullets */
+  letter-spacing: 3px;
+}
+
+/* On focus (optional but looks premium) */
+.resetPasswordContainer input:focus {
+  outline: none;
+  border-color: #000;
+}
+
+/* OTP input: slightly smaller text */
+.resetPasswordContainer input[type="text"] {
+  font-size: 18px;       /* balanced size */
+  letter-spacing: 4px;   /* keeps OTP readable */
+}
+
+/* Keep password dots large */
+.resetPasswordContainer input[type="password"] {
+  font-size: 24px;
+  letter-spacing: 3px;
+}
+/* Email input: slightly smaller text */
+.resetPasswordContainer input[type="email"] {
+  font-size: 18px;       /* balanced, not too big */
+  letter-spacing: 1px;  /* keeps email readable */
+}
+
+/* Keep placeholder smaller */
+.resetPasswordContainer input[type="email"]::placeholder {
+  font-size: 14px;
+  letter-spacing: normal;
+}

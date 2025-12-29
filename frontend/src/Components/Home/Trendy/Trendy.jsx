@@ -38,6 +38,28 @@ const fetchMetalRate = async (metal, purity) => {
   return parseNum(data?.price_inr ?? data?.price ?? data);
 };
 
+/**
+ * ✅ Latest price calculation:
+ * metal_amount = weight * metal_rate
+ * final_price  = metal_amount + (metal_amount * vadd/100) + stone_price(optional)
+ * Rounded to whole rupees.
+ */
+const computeVaddPrice = ({
+  weight,
+  metalRate,
+  vaddPct,
+  stonePrice = 0,
+}) => {
+  const w = parseNum(weight);
+  const r = parseNum(metalRate);
+  const v = parseNum(vaddPct);
+  const s = parseNum(stonePrice);
+
+  const metalAmount = w * r;
+  const vaddAmount = (metalAmount * v) / 100;
+  return Math.round(metalAmount + vaddAmount + s);
+};
+
 const toUiProduct = (p) => {
   let imgs = [];
   if (Array.isArray(p.image_urls)) imgs = p.image_urls;
@@ -57,32 +79,63 @@ const toUiProduct = (p) => {
   const back = fixUrl(imgs[1] || imgs[0] || p.image_url);
 
   const isGroup = !!p.is_group;
+
+  // inputs we may need for calculation
   const avgPieceWeight = parseNum(p.avg_piece_weight);
-  const metalRate = parseNum(p.metal_rate); // may be null
-  const finalPrice = parseNum(p.final_price);
-  const netPrice = parseNum(p.net_price);
-  const makingCharges = parseNum(p.making_charges);
+  const netWeight = parseNum(p.net_weight);
+  const metalRate = parseNum(p.metal_rate); // may be present from /api/products
+  const finalPriceFromApi = parseNum(p.final_price); // should already be computed in backend (rounded)
+  const stonePrice = parseNum(p.stone_price);
+  const vaddPct = parseNum(p.vadd);
 
   let productPrice = 0;
+
   if (isGroup) {
+    // group → compute using avg piece weight + rate + vadd
+    // (rate might be missing; we will fetch later in useEffect)
     productPrice =
-      avgPieceWeight > 0 && metalRate > 0 ? Math.round(avgPieceWeight * metalRate) : 0;
+      avgPieceWeight > 0 && metalRate > 0
+        ? computeVaddPrice({
+            weight: avgPieceWeight,
+            metalRate,
+            vaddPct,
+            stonePrice, // keep if you want stones in group price too
+          })
+        : 0;
   } else {
-    productPrice = finalPrice || netPrice || makingCharges || 0;
+    // non-group → prefer backend final_price (already correct)
+    if (finalPriceFromApi > 0) {
+      productPrice = Math.round(finalPriceFromApi);
+    } else if (netWeight > 0 && metalRate > 0) {
+      // fallback calculation if API didn't send final_price
+      productPrice = computeVaddPrice({
+        weight: netWeight,
+        metalRate,
+        vaddPct,
+        stonePrice,
+      });
+    } else {
+      productPrice = 0;
+    }
   }
 
   return {
     id: p.id,
     productID: p.id,
     productName: p.name || "Product",
-    productPrice,
+    productPrice, // ✅ whole rupees
     productReviews: p.reviews || "No reviews",
     frontImg: front,
     backImg: back,
-    productType: p.product_type || "Jewellery",
+    productType: p.product_type || p.product_type_name || "Jewellery",
     isGroup,
     avgPieceWeight,
+    netWeight,
     purity: p.purity,
+    vadd: vaddPct,
+    stone_price: stonePrice,
+    metal_rate: metalRate,
+    final_price: Math.round(finalPriceFromApi || 0),
   };
 };
 
@@ -121,21 +174,20 @@ const Trendy = () => {
   const handleAddToCart = (product) => {
     const normalized = {
       ...product,
-  
+
       // Cart expects these fields
       productID: product.productID ?? product.id,
       name: product.name ?? product.productName,
       productName: product.productName ?? product.name,
-  
+
       // ✅ IMPORTANT: cart reads final_price everywhere
-      final_price:
-        product.final_price ??
-        product.productPrice ??
-        0,
+      final_price: Math.round(parseNum(product.productPrice ?? product.final_price ?? 0)),
     };
-  
-    const productInCart = cartItems.find((item) => item.productID === normalized.productID);
-  
+
+    const productInCart = cartItems.find(
+      (item) => item.productID === normalized.productID
+    );
+
     if (productInCart && productInCart.quantity >= 20) {
       toast.error("Product limit reached", {
         duration: 2000,
@@ -151,9 +203,8 @@ const Trendy = () => {
       });
     }
   };
-  
 
-  // ✅ Load products + compute group prices (existing logic)
+  // ✅ Load products + compute group prices with VADD (latest logic)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -165,6 +216,7 @@ const Trendy = () => {
         const list = Array.isArray(data) ? data : data.rows || data.items || [];
         const ui = list.map(toUiProduct);
 
+        // for groups: if metal_rate missing, fetch it and recompute with vadd
         const needRateKeys = new Set();
         ui.forEach((p) => {
           if (p.isGroup && p.avgPieceWeight > 0) {
@@ -190,8 +242,15 @@ const Trendy = () => {
           if (p.isGroup) {
             const key = `${(p.productType || "").toLowerCase()}|${p.purity || ""}`;
             const rate = parseNum(rateMap[key]);
+
             if (rate > 0 && p.avgPieceWeight > 0) {
-              return { ...p, productPrice: Math.round(p.avgPieceWeight * rate) };
+              const newPrice = computeVaddPrice({
+                weight: p.avgPieceWeight,
+                metalRate: rate,
+                vaddPct: p.vadd,
+                stonePrice: p.stone_price,
+              });
+              return { ...p, metal_rate: rate, productPrice: newPrice, final_price: newPrice };
             }
           }
           return p;
@@ -231,7 +290,7 @@ const Trendy = () => {
 
         if (alive) setWishList(map);
       } catch (e) {
-        // If token expired, don't block UI; just ignore
+        // ignore
       }
     })();
 
@@ -240,12 +299,12 @@ const Trendy = () => {
     };
   }, []);
 
+  // ✅ INR formatter without decimals
   const formatINR = (value) => {
-    const num = Number(value);
-    if (!Number.isFinite(num)) return "0";
+    const num = Math.round(parseNum(value));
     return num.toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     });
   };
 
@@ -287,7 +346,6 @@ const Trendy = () => {
       const msg = err?.response?.data?.error || err.message || "Failed to update favorite";
       toast.error(msg);
 
-      // If unauthorized, push to login
       if (err?.response?.status === 401) navigate("/loginSignUp");
     }
   };
@@ -302,7 +360,6 @@ const Trendy = () => {
       {items.map((product) => (
         <div className="trendyProductContainer" key={product.id}>
           <div className="trendyProductImages">
-            {/* ✅ FIX: correct route with id */}
             <Link to={`/product/${product.id}`} onClick={scrollToTop}>
               <img
                 src={product.frontImg}
@@ -326,7 +383,6 @@ const Trendy = () => {
             <div className="trendyProductCategoryWishlist">
               <p>{product.productType}</p>
 
-              {/* ✅ DB Persist Favorite */}
               <FiHeart
                 onClick={(e) => toggleFavorite(e, product.productID)}
                 style={{
@@ -337,11 +393,11 @@ const Trendy = () => {
             </div>
 
             <div className="trendyProductNameInfo">
-              {/* ✅ FIX: correct route with id */}
               <Link to={`/product/${product.id}`} onClick={scrollToTop}>
                 <h5>{product.productName}</h5>
               </Link>
 
+              {/* ✅ no decimals */}
               <p>₹{formatINR(product.productPrice)}</p>
 
               <div className="trendyProductRatingReviews">

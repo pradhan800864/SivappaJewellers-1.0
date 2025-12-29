@@ -66,6 +66,7 @@ const ShopDetails = () => {
   // filters & sorting
   const [filterLabels, setFilterLabels] = useState([]); // e.g. ['type:Gold','cat:Ring', ...]
   const [sortBy, setSortBy] = useState("default");
+  const [searchText, setSearchText] = useState("");
 
   const sortOptions = [
     { value: "default", label: "Default Sorting" },
@@ -280,6 +281,57 @@ const ShopDetails = () => {
     return score;
   };
 
+  const tokenize = (s) =>
+    (s || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, " ")   // remove symbols
+      .replace(/-/g, " ")             // treat "-" like space
+      .split(/\s+/)
+      .filter(Boolean);
+  
+  const tokenMatchScore = (text, query) => {
+    const qTokens = tokenize(query);
+    if (!qTokens.length) return 0;
+  
+    const tTokens = tokenize(text);
+    if (!tTokens.length) return 0;
+  
+    // ✅ if every query token matches the start of SOME text token => match
+    // ex: "coin" matches "coins" because "coins".startsWith("coin")
+    const allMatch = qTokens.every((qt) =>
+      tTokens.some((tt) => tt.startsWith(qt) || qt.startsWith(tt))
+    );
+  
+    if (!allMatch) return 0;
+  
+    // scoring: prefer stronger/earlier matches
+    // (more matches => higher)
+    let score = 0;
+    qTokens.forEach((qt) => {
+      if (tTokens.some((tt) => tt === qt)) score += 3;          // exact token
+      else if (tTokens.some((tt) => tt.startsWith(qt))) score += 2; // prefix
+      else if (tTokens.some((tt) => qt.startsWith(tt))) score += 1; // query longer than token
+    });
+  
+    return score;
+  };
+  
+  const searchRank = (product, q) => {
+    const query = (q || "").trim();
+    if (!query) return 0;
+  
+    const name = product?.name || "";
+    const labels = Array.isArray(product?.labels) ? product.labels.join(" ") : "";
+  
+    const nameScore = tokenMatchScore(name, query);
+    if (nameScore > 0) return 200 + nameScore; // ✅ name always highest priority
+  
+    const labelScore = tokenMatchScore(labels, query);
+    if (labelScore > 0) return 100 + labelScore; // ✅ labels next
+  
+    return 0;
+  };
+  
   const secondaryCompare = (a, b) => {
     const ap = a;
     const bp = b;
@@ -311,16 +363,35 @@ const ShopDetails = () => {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText]);
+
   const prioritizedProducts = useMemo(() => {
     if (!products?.length) return [];
-    const withScore = products.map((p) => ({ p, s: scoreProduct(p) }));
-    withScore.sort((A, B) => {
-      if (B.s !== A.s) return B.s - A.s;
+  
+    const q = searchText.trim();
+    const withMeta = products.map((p) => ({
+      p,
+      filterScore: scoreProduct(p),
+      searchScore: searchRank(p, q),
+    }));
+  
+    withMeta.sort((A, B) => {
+      // ✅ 1) Search priority first (name > labels > others)
+      if (B.searchScore !== A.searchScore) return B.searchScore - A.searchScore;
+  
+      // ✅ 2) Then your existing filter scoring
+      if (B.filterScore !== A.filterScore) return B.filterScore - A.filterScore;
+  
+      // ✅ 3) Then your existing dropdown sort (price/date/a-z...)
       return secondaryCompare(A.p, B.p);
     });
-    return withScore.map(({ p }) => p);
+  
+    return withMeta.map(({ p }) => p);
     // eslint-disable-next-line
-  }, [products, filterLabels, sortBy]);
+  }, [products, filterLabels, sortBy, searchText]);
+  
 
   const totalPages = Math.ceil(prioritizedProducts.length / productsPerPage);
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -346,19 +417,45 @@ const ShopDetails = () => {
 
           <div className="shopDetails__right">
             <div className="shopDetailsSorting">
+              {/* ✅ Left-most: Breadcrumb */}
               <div className="shopDetailsBreadcrumbLink">
                 <Link to="/" onClick={scrollToTop}>Home</Link>
                 &nbsp;/&nbsp;
                 <Link to="/shop">The Shop</Link>
               </div>
 
+              {/* ✅ Search icon + input */}
+              <div className="shopSearchWrap">
+                <span className="shopSearchIcon">🔍</span>
+
+                <input
+                  type="text"
+                  placeholder="Search products or labels..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="shopSearchInput"
+                />
+
+                {searchText && (
+                  <button
+                    type="button"
+                    className="shopSearchClear"
+                    onClick={() => setSearchText("")}
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+
+              {/* ✅ Optional: Filter (left) */}
               <div className="filterLeft" onClick={toggleDrawer}>
                 <IoFilterSharp />
                 <p>Filter</p>
               </div>
 
+              {/* ✅ Right-most: Sorting */}
               <div className="shopDetailsSort">
-                {/* ✅ Desktop/Web: keep native select (unchanged behavior) */}
+                {/* ✅ Desktop/Web */}
                 <select
                   className="sortSelectDesktop"
                   name="sort"
@@ -376,7 +473,7 @@ const ShopDetails = () => {
                   ))}
                 </select>
 
-                {/* ✅ Mobile: custom dropdown (opens under button, not top-left) */}
+                {/* ✅ Mobile dropdown */}
                 <div className="sortSelectMobile">
                   <button
                     type="button"
@@ -407,7 +504,7 @@ const ShopDetails = () => {
                   )}
                 </div>
 
-
+                {/* ✅ Optional: Filter (right) */}
                 <div className="filterRight" onClick={toggleDrawer}>
                   <div className="filterSeprator"></div>
                   <IoFilterSharp />
@@ -415,6 +512,7 @@ const ShopDetails = () => {
                 </div>
               </div>
             </div>
+
 
             <div className="shopDetailsProducts">
               <div className="shopDetailsProductsContainer">

@@ -34,43 +34,43 @@ const Product = () => {
   const [currentImg, setCurrentImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [wishList, setWishList] = useState({}); // { [productId]: true }
-    const getAuthToken = () =>
+
+  const getAuthToken = () =>
     localStorage.getItem("token") ||
     localStorage.getItem("authToken") ||
     localStorage.getItem("accessToken") ||
     "";
-  
+
   const cartItems = useSelector((state) => state.cart.items);
 
   useEffect(() => {
     const token = getAuthToken();
     if (!token) return;
-  
+
     let alive = true;
     (async () => {
       try {
         const { data } = await axios.get(`${API_BASE}/api/favorites`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
+
         const favRows = data?.favorites || [];
         const map = {};
         favRows.forEach((r) => {
           const pid = Number(r.product_id);
           if (Number.isFinite(pid)) map[pid] = true;
         });
-  
+
         if (alive) setWishList(map);
       } catch {
         // ignore
       }
     })();
-  
+
     return () => {
       alive = false;
     };
   }, []);
-  
 
   // Fetch product by id
   useEffect(() => {
@@ -136,19 +136,18 @@ const Product = () => {
 
   const toggleFavorite = async (e, productId) => {
     e.preventDefault();
-  
+
     const token = getAuthToken();
     if (!token) {
       toast.error("Please login to add favorites");
-      // optionally navigate("/loginSignUp")
       return;
     }
-  
+
     const alreadyFav = !!wishList[productId];
-  
+
     // optimistic
     setWishList((prev) => ({ ...prev, [productId]: !alreadyFav }));
-  
+
     try {
       if (!alreadyFav) {
         await axios.post(
@@ -169,10 +168,18 @@ const Product = () => {
       toast.error(err?.response?.data?.error || "Failed to update favorite");
     }
   };
-  
 
-  const priceNumber = Number(product?.final_price ?? product?.price ?? 0);
+  /**
+   * ✅ Latest price alignment:
+   * final_price should already come from backend as:
+   * metal_value + (metal_value * vadd/100) (+ stone_price if backend includes it)
+   *
+   * We still guard + force whole rupees (no decimals).
+   */
+  const finalPriceRaw = Number(product?.final_price ?? product?.price ?? 0);
+  const priceNumber = Number.isFinite(finalPriceRaw) ? Math.round(finalPriceRaw) : 0;
   const priceLabel = `₹${priceNumber.toLocaleString("en-IN")}`;
+
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -181,7 +188,7 @@ const Product = () => {
       ...product,
       productID: product.id,
       productName: product.name,
-      productPrice: priceNumber,
+      productPrice: priceNumber, // ✅ whole rupees
       frontImg: images[0],
       quantity,
     };
@@ -352,12 +359,23 @@ const Product = () => {
 
             <div className="productWishShare">
               <div className="productWishList">
-                <button type="button" onClick={(e) => toggleFavorite(e, product.id)}>
-                  <FiHeart color={wishList[product.id] ? "red" : "#fff"} size={17} />
+                <button
+                  type="button"
+                  onClick={(e) => toggleFavorite(e, product.id)}
+                >
+                  <FiHeart
+                    color={wishList[product.id] ? "red" : "#fff"}
+                    size={17}
+                  />
                   <p>{wishList[product.id] ? "Wishlisted" : "Add to Wishlist"}</p>
                 </button>
               </div>
             </div>
+
+            {/* If you have a breakup section in this page, these computed values can be used:
+                metalValue, vaddAmount, stonePrice, and final rupee priceNumber */}
+            {/* Example ids are kept compatible with your scroll behavior */}
+            {/* <div id="priceBreakupSection">...</div> */}
           </div>
         </div>
       </div>

@@ -4,8 +4,16 @@ import { FiChevronUp, FiChevronDown } from "react-icons/fi";
 import axios from "axios";
 import "./AdditionalInfo.css";
 
+// ✅ INR formatter (no decimals)
 const currency = (n) =>
-  `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  `₹${Math.round(Number(n || 0)).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+
+// ✅ Metal rate formatter (keep 2 decimals for per-gram rate)
+const rateINR = (n) =>
+  `₹${Math.round(Number(n || 0)).toLocaleString("en-IN")}/g`;
 
 const AdditionalInfo = () => {
   const { id } = useParams();
@@ -27,6 +35,10 @@ const AdditionalInfo = () => {
     axios
       .get(`${process.env.REACT_APP_API_BASE}/api/products/${id}`)
       .then((res) => setProduct(res.data))
+      .catch((e) => {
+        console.error("Failed to load product additional info:", e);
+        setProduct(null);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -37,25 +49,35 @@ const AdditionalInfo = () => {
     net_weight,
     gross_weight,
 
-    // server-computed fields (from your /products/:id route)
+    // ✅ metal rate fields from backend
+    metal_rate,
+    metal_price_per_gram,
+
+    // server-computed fields
     metal_amount,
     stone_amount,
-    making_charges_amt,
-    gst_amount,
+    vadd_amount,
     final_price,
   } = product || {};
+
+  // Prefer metal_rate; fallback to metal_price_per_gram
+  const metalRatePerGram = Number(metal_rate ?? metal_price_per_gram ?? 0);
+
+  // ✅ Show VADD instead of Making Charges
+  const vaddPct = Number(product?.vadd || 0);
+  const vaddLabel = vaddPct ? `VADD (${vaddPct}%)` : "VADD";
 
   const priceRows = useMemo(
     () => [
       { label: "Metal", value: metal_amount },
       { label: "Diamond", value: stone_amount },
-      { label: "Making Charges", value: making_charges_amt },
-      { label: "GST(3%)", value: gst_amount },
+      { label: vaddLabel, value: vadd_amount },
     ],
-    [metal_amount, stone_amount, making_charges_amt, gst_amount]
+    [metal_amount, stone_amount, vadd_amount, vaddLabel]
   );
 
   if (loading) return null;
+  if (!product) return null;
 
   return (
     <div id="priceBreakupSection" className="priceBreakupAnchor">
@@ -71,20 +93,32 @@ const AdditionalInfo = () => {
               <span>Product Code</span>
               <span className="aiKVValue">{product_code || "—"}</span>
             </div>
+
             <div className="aiKV">
               <span>Purity</span>
               <span className="aiKVValue">{purity || "—"}</span>
             </div>
+
             <div className="aiKV">
               <span>Metal Type</span>
               <span className="aiKVValue">{type_name || "—"}</span>
             </div>
+
+            {/* ✅ NEW: Metal Rate */}
+            <div className="aiKV">
+              <span>Metal Rate</span>
+              <span className="aiKVValue">
+                {metalRatePerGram > 0 ? rateINR(metalRatePerGram) : "—"}
+              </span>
+            </div>
+
             <div className="aiKV">
               <span>Metal Weight</span>
               <span className="aiKVValue">
                 {net_weight ? `${net_weight} g` : "—"}
               </span>
             </div>
+
             <div className="aiKV">
               <span>Gross Weight</span>
               <span className="aiKVValue">
@@ -102,20 +136,25 @@ const AdditionalInfo = () => {
               </p>
               <p className="aiHelpSub">We are available for your assistance</p>
               <div className="aiHelpBtns">
-                <button onClick={() => navigate("/contact")}>📞 Speak with Experts</button>
-                <button onClick={() => navigate("/contact")}>💬 Chat with Experts</button>
+                <button onClick={() => navigate("/contact")}>
+                  📞 Speak with Experts
+                </button>
+                <button onClick={() => navigate("/contact")}>
+                  💬 Chat with Experts
+                </button>
               </div>
             </div>
           </aside>
 
           {/* RIGHT – Accordions */}
           <section className="aiCard aiRight">
-
             {/* PRICE BREAKUP */}
             <div className="aiAcc">
               <button
                 className="aiAccHeader"
-                onClick={() => setOpen({ price: !open.price, metal: false, diamond: false })}
+                onClick={() =>
+                  setOpen({ price: !open.price, metal: false, diamond: false })
+                }
               >
                 <span className="aiAccTitle">PRICE BREAKUP</span>
                 {open.price ? <FiChevronUp /> : <FiChevronDown />}
@@ -129,7 +168,9 @@ const AdditionalInfo = () => {
                       <span className="aiRowValue">{currency(r.value)}</span>
                     </div>
                   ))}
+
                   <div className="aiDivider" />
+
                   <div className="aiRow aiGrand">
                     <span className="aiRowLabel">Grand Total</span>
                     <span className="aiRowValue">{currency(final_price)}</span>
@@ -142,7 +183,9 @@ const AdditionalInfo = () => {
             <div className="aiAcc">
               <button
                 className="aiAccHeader"
-                onClick={() => setOpen({ price: false, metal: !open.metal, diamond: false })}
+                onClick={() =>
+                  setOpen({ price: false, metal: !open.metal, diamond: false })
+                }
               >
                 <span className="aiAccTitle">METAL DETAILS</span>
                 {open.metal ? <FiChevronUp /> : <FiChevronDown />}
@@ -152,8 +195,17 @@ const AdditionalInfo = () => {
                 <ul className="aiList">
                   <li>Metal: {type_name || "—"}</li>
                   <li>Purity: {purity || "—"}</li>
+
+                  {/* ✅ NEW: Metal Rate */}
+                  <li>
+                    Metal Rate:{" "}
+                    {metalRatePerGram > 0 ? rateINR(metalRatePerGram) : "—"}
+                  </li>
+
                   <li>Net Weight: {net_weight ? `${net_weight} g` : "—"}</li>
-                  <li>Gross Weight: {gross_weight ? `${gross_weight} g` : "—"}</li>
+                  <li>
+                    Gross Weight: {gross_weight ? `${gross_weight} g` : "—"}
+                  </li>
                 </ul>
               </div>
             </div>
@@ -162,7 +214,13 @@ const AdditionalInfo = () => {
             <div className="aiAcc">
               <button
                 className="aiAccHeader"
-                onClick={() => setOpen({ price: false, metal: false, diamond: !open.diamond })}
+                onClick={() =>
+                  setOpen({
+                    price: false,
+                    metal: false,
+                    diamond: !open.diamond,
+                  })
+                }
               >
                 <span className="aiAccTitle">DIAMOND DETAILS</span>
                 {open.diamond ? <FiChevronUp /> : <FiChevronDown />}

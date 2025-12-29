@@ -13,7 +13,11 @@ import { FiHeart } from "react-icons/fi";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
 const currencyIN = (n) =>
-  `₹${Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  `₹${Math.round(Number(n || 0)).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+
 
 const RelatedProducts = () => {
   const navigate = useNavigate();

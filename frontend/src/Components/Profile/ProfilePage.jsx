@@ -33,6 +33,10 @@ const ProfilePage = () => {
   const [ordersError, setOrdersError] = useState("");
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersTotal, setOrdersTotal] = useState(0);
+  const [levelReport, setLevelReport] = useState([]);
+  const [bestLevel, setBestLevel] = useState(null);
+  const [levelReportLoading, setLevelReportLoading] = useState(false);
+  const [levelReportError, setLevelReportError] = useState("");
   const ORDERS_LIMIT = 5;
 
   const { logout } = useContext(AuthContext);
@@ -44,6 +48,39 @@ const ProfilePage = () => {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state]);
+
+  useEffect(() => {
+    const run = async () => {
+      if (!user?.id) return;
+      if (activeTab !== "Referrals") return;
+  
+      setLevelReportLoading(true);
+      setLevelReportError("");
+  
+      try {
+        const res = await fetch(`${API_BASE}/api/referrals/level-commission/${user.id}`);
+        const data = await res.json().catch(() => ({}));
+  
+        if (!res.ok) {
+          setLevelReportError(data.error || "Failed to load level report");
+          setLevelReport([]);
+          setBestLevel(null);
+          return;
+        }
+  
+        setLevelReport(Array.isArray(data.levels) ? data.levels : []);
+        setBestLevel(data.best_level ?? null);
+      } catch (e) {
+        setLevelReportError("Failed to load level report");
+        setLevelReport([]);
+        setBestLevel(null);
+      } finally {
+        setLevelReportLoading(false);
+      }
+    };
+  
+    run();
+  }, [activeTab, user?.id]);  
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -567,6 +604,78 @@ const ProfilePage = () => {
                 >
                   {showWalletHistory ? "Hide Wallet History" : "Show Wallet History"}
                 </button>
+
+                {/* ✅ Level-wise Commission Report (placed right after wallet history button) */}
+                <div className="levelReportCard">
+                  <div className="levelReportHeader">
+                    <h4>Level-wise Commission Report</h4>
+
+                    <button
+                      type="button"
+                      className="levelReportRefresh"
+                      onClick={async () => {
+                        if (!user?.id) return;
+                        setLevelReportLoading(true);
+                        setLevelReportError("");
+                        try {
+                          const res = await fetch(`${API_BASE}/api/referrals/level-commission/${user.id}`);
+                          const data = await res.json().catch(() => ({}));
+                          if (!res.ok) {
+                            setLevelReportError(data.error || "Failed to load level report");
+                            setLevelReport([]);
+                            setBestLevel(null);
+                            return;
+                          }
+                          setLevelReport(Array.isArray(data.levels) ? data.levels : []);
+                          setBestLevel(data.best_level ?? null);
+                        } catch (e) {
+                          setLevelReportError("Failed to load level report");
+                          setLevelReport([]);
+                          setBestLevel(null);
+                        } finally {
+                          setLevelReportLoading(false);
+                        }
+                      }}
+                      disabled={levelReportLoading}
+                    >
+                      {levelReportLoading ? "Loading..." : "Refresh"}
+                    </button>
+                  </div>
+
+                  {levelReportError ? (
+                    <p className="levelReportError">{levelReportError}</p>
+                  ) : levelReportLoading ? (
+                    <p className="levelReportHint">Loading level report...</p>
+                  ) : levelReport.length === 0 ? (
+                    <p className="levelReportHint">No referral commissions yet.</p>
+                  ) : (
+                    <table className="levelReportTable">
+                      <thead>
+                        <tr>
+                          <th>Level</th>
+                          <th style={{ textAlign: "right" }}>Coins</th>
+                          <th style={{ textAlign: "right" }}>Tx</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {levelReport.map((r) => {
+                          const lvl = Number(r.level || 0);
+                          const coins = Number(r.coins || 0);
+                          const txc = Number(r.tx_count || 0);
+
+                          return (
+                            <tr key={lvl} className={bestLevel === lvl ? "bestRow" : ""}>
+                              <td>Level {lvl}</td>
+                              <td style={{ textAlign: "right" }}>{coins}</td>
+                              <td style={{ textAlign: "right" }}>{txc}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
 
                 {showWalletHistory && (
                   <div className="walletHistoryList">

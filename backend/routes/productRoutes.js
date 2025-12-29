@@ -21,33 +21,54 @@ router.get("/products", async (req, res) => {
     const result = await pool.query(`
       SELECT
         p.*,
-        pt.name                                  AS product_type,           -- ← metal type via FK
+        pt.name                                  AS product_type,
         p.image_urls[1]                          AS image_url,
-        mp.price_inr                             AS metal_rate,
-        (p.net_weight * mp.price_inr)            AS net_price,
-        p.making_charges                         AS making_charges,
-        p.stone_price                            AS stone_price,
-        (p.net_weight * mp.price_inr
-         + p.making_charges
-         + p.stone_price)                        AS final_price
+
+        COALESCE(mp.price_inr, 0)                AS metal_rate,
+
+        -- metal value (based on purity + latest rate)
+        (COALESCE(p.net_weight, 0) * COALESCE(mp.price_inr, 0)) AS metal_value,
+
+        -- vadd amount = metal_value * (vadd%)
+        (
+          (COALESCE(p.net_weight, 0) * COALESCE(mp.price_inr, 0))
+          * (COALESCE(p.vadd, 0) / 100.0)
+        ) AS vadd_amount,
+
+        -- ✅ final price rounded to whole rupees (no decimals)
+        ROUND(
+          (COALESCE(p.net_weight, 0) * COALESCE(mp.price_inr, 0))
+          + (
+              (COALESCE(p.net_weight, 0) * COALESCE(mp.price_inr, 0))
+              * (COALESCE(p.vadd, 0) / 100.0)
+            )
+          + COALESCE(p.stone_price, 0)
+        ) AS final_price
+
       FROM products p
       JOIN product_types pt
-        ON pt.id = p.type_id                     -- ← pull the type (gold/silver/…)
+        ON pt.id = p.type_id
+
       LEFT JOIN LATERAL (
         SELECT price_inr
         FROM metal_prices
-        WHERE LOWER(metal_type) = LOWER(pt.name) -- ← use product’s type
-          AND purity = p.purity                  -- (keep same purity match as before)
+        WHERE LOWER(metal_type) = LOWER(pt.name)
+          AND purity = p.purity
         ORDER BY fetched_at DESC
         LIMIT 1
       ) mp ON TRUE
+
       ORDER BY p.name
     `);
 
-    const productsWithFullImgUrl = result.rows.map(product => ({
+    const productsWithFullImgUrl = result.rows.map((product) => ({
       ...product,
-      frontImg: `${process.env.REACT_APP_API_BASE}${product.image_url}`,
-      backImg:  `${process.env.REACT_APP_API_BASE}${product.image_url}`, // same as before
+      frontImg: product.image_url
+        ? `${process.env.REACT_APP_API_BASE}${product.image_url}`
+        : null,
+      backImg: product.image_url
+        ? `${process.env.REACT_APP_API_BASE}${product.image_url}`
+        : null,
     }));
 
     res.json(productsWithFullImgUrl);
@@ -606,12 +627,10 @@ router.get("/products/:id", async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: "Not found" });
     const row = rows[0];
 
-    // 2) Price per gram lookup (use metal_type first, then fallback to type_name)
+    // 2) Latest metal rate lookup (same matching logic)
     const metalTypeRaw = (row.metal_type || row.type_name || "").trim();
-    const purityRaw    = (row.purity || "").trim();
+    const purityRaw = (row.purity || "").trim();
 
-    // Normalize purity "22K" vs "22" vs "999" etc.
-    // We match either exact (case-insensitive) or "remove 'k'" forms.
     const metalRes = await pool.query(
       `
       SELECT price_inr
@@ -629,27 +648,37 @@ router.get("/products/:id", async (req, res) => {
 
     const pricePerGram = Number(metalRes.rows[0]?.price_inr || 0);
 
-    // 3) Breakdown (includes making charges)
-    const netWeight      = Number(row.net_weight ?? 0);
-    const stonePrice     = Number(row.stone_price ?? 0);
-    const makingCharges  = Number(row.making_charges ?? row.making_charger ?? 0);
+    // 3) ✅ Latest breakdown (VADD only)
+    const netWeight = Number(row.net_weight ?? 0);
+    const stonePrice = Number(row.stone_price ?? 0);
+    const vaddPct = Number(row.vadd ?? 0);
 
     const metalAmount = netWeight * pricePerGram;
-    const subtotal    = metalAmount + stonePrice + makingCharges;
-    const gst         = subtotal * 0.03;
-    const finalPrice  = subtotal + gst;
+    const vaddAmount = (metalAmount * vaddPct) / 100;
 
-    // 4) Attach computed fields to response
-    row.metal_price_per_gram = Number(pricePerGram.toFixed(2));
-    row.metal_amount         = Number(metalAmount.toFixed(2));
-    row.stone_amount         = Number(stonePrice.toFixed(2));
-    row.making_charges_amt   = Number(makingCharges.toFixed(2));
-    row.subtotal             = Number(subtotal.toFixed(2));
-    row.gst_amount           = Number(gst.toFixed(2));
-    row.final_price          = Number(finalPrice.toFixed(2));
+    // ✅ final = metal + vadd (+ stone if you want it included)
+    const subtotal = metalAmount + vaddAmount + stonePrice;
+
+    // ✅ Rounded to whole rupees (no decimals anywhere)
+    const finalPrice = Math.round(subtotal);
+
+    // 4) Attach computed fields to response (keep names consistent)
+    row.metal_rate = pricePerGram;                 // to match /products route naming
+    row.metal_price_per_gram = pricePerGram;       // keep old field too if UI uses it
+    row.metal_amount = metalAmount;
+    row.vadd_amount = vaddAmount;
+    row.stone_amount = stonePrice;
+    row.subtotal = subtotal;
+    row.final_price = finalPrice;
+
+    // old fields set to 0 to avoid UI confusion if referenced
+    row.making_charges_amt = 0;
+    row.gst_amount = 0;
 
     // 5) Normalize image URLs
-    const base = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const base =
+      process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+
     const toPublic = (u) => {
       if (!u) return null;
       if (/^https?:\/\//i.test(u)) return u;
@@ -684,6 +713,7 @@ router.get("/products/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to load product" });
   }
 });
+
 
 /**
  * GET /api/order-history/my?page=&limit=
@@ -765,11 +795,10 @@ router.get("/products/:id/related", async (req, res) => {
         p.purity,
         p.net_weight,
         p.stone_price,
-        p.making_charges,
+        p.vadd,
         p.image_urls,
         pt.name AS type_name,
 
-        /* Count overlap between p.labels and cur.labels */
         (
           SELECT COUNT(*)
           FROM unnest(COALESCE(p.labels, ARRAY[]::text[])) AS l(lbl)
@@ -781,12 +810,14 @@ router.get("/products/:id/related", async (req, res) => {
           )
         ) AS label_hits,
 
-        /* Latest metal price per gram for the product's metal+pct */
         (
           SELECT mp.price_inr
           FROM metal_prices mp
           WHERE LOWER(mp.metal_type) = LOWER(pt.name)
-            AND LOWER(mp.purity)     = LOWER(p.purity)
+            AND (
+                 LOWER(mp.purity) = LOWER(p.purity)
+              OR REPLACE(LOWER(mp.purity), 'k', '') = REPLACE(LOWER(p.purity), 'k', '')
+            )
           ORDER BY mp.fetched_at DESC
           LIMIT 1
         ) AS price_per_gram
@@ -800,9 +831,9 @@ router.get("/products/:id/related", async (req, res) => {
       [id, limit]
     );
 
-    // Build absolute image URLs + compute price like the PDP route
     const base =
       process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+
     const toPublic = (u) => {
       if (!u) return null;
       if (/^https?:\/\//i.test(u)) return u;
@@ -831,19 +862,21 @@ router.get("/products/:id/related", async (req, res) => {
       images = Array.from(new Set(images.map(toPublic).filter(Boolean)));
 
       const pricePerGram = Number(r.price_per_gram || 0);
-      const netWeight    = Number(r.net_weight || 0);
-      const stonePrice   = Number(r.stone_price || 0);
-      const making       = Number(r.making_charges || 0);
+      const netWeight = Number(r.net_weight || 0);
+      const stonePrice = Number(r.stone_price || 0);
+      const vaddPct = Number(r.vadd || 0);
 
-      const subtotal = netWeight * pricePerGram + stonePrice + making;
-      const gst      = subtotal * 0.03;
-      const final    = subtotal + gst;
+      const metalAmount = netWeight * pricePerGram;
+      const vaddAmount = (metalAmount * vaddPct) / 100;
+
+      // ✅ latest formula (NO GST, NO making charges) + whole rupees
+      const final = Math.round(metalAmount + stonePrice + vaddAmount);
 
       return {
         id: r.id,
         name: r.name,
         type_name: r.type_name,
-        final_price: final.toFixed(2),
+        final_price: final, // ✅ number, no decimals
         images,
         frontImg: images[0] || null,
         backImg: images[1] || images[0] || null,
@@ -856,6 +889,67 @@ router.get("/products/:id/related", async (req, res) => {
     res.status(500).json({ error: "Failed to load related products" });
   }
 });
+
+// GET /api/referrals/level-commission/:userId
+// returns: [{ level: 1, coins: 200, tx_count: 3 }, ...]
+// GET /api/referrals/level-commission/:userId
+router.get("/referrals/level-commission/:userId", async (req, res) => {
+  const userId = Number(req.params.userId);
+  if (!userId) return res.status(400).json({ error: "Invalid userId" });
+
+  const client = await pool.connect();
+  try {
+    const sql = `
+      WITH RECURSIVE downline AS (
+        SELECT id, username, 1 AS level
+        FROM users
+        WHERE referrer_id = $1
+
+        UNION ALL
+
+        SELECT u.id, u.username, d.level + 1
+        FROM users u
+        JOIN downline d ON u.referrer_id = d.id
+        WHERE d.level < 20
+      )
+      SELECT
+        d.level,
+        COALESCE(SUM(wt.coins), 0) AS coins,
+        COUNT(*) AS tx_count
+      FROM wallet_transactions wt
+      JOIN order_history oh
+        ON oh.invoice_number = wt.invoice_number
+      JOIN downline d
+        ON d.id = oh.user_id
+      WHERE wt.user_id = $1
+        AND COALESCE(wt.coins, 0) > 0
+        AND LOWER(COALESCE(wt.source, '')) IN ('referral', 'referral-edit', 'return-recalc')
+      GROUP BY d.level
+      ORDER BY d.level;
+    `;
+
+    const { rows } = await client.query(sql, [userId]);
+
+    let best = null;
+    for (const r of rows) {
+      const c = Number(r.coins || 0);
+      if (!best || c > Number(best.coins || 0)) best = r;
+    }
+
+    res.json({
+      levels: rows,
+      best_level: best?.level ?? null,
+      best_coins: best?.coins ?? 0,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to fetch level-wise commissions" });
+  } finally {
+    client.release();
+  }
+});
+
+
 
 // ... your existing product routes here (list, details, etc.)
 module.exports = router;
