@@ -21,12 +21,6 @@ import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
-// ---------- helpers ----------
-const fixUrl = (u) => {
-  if (!u) return null;
-  return resolveImageUrl(u);
-};
-
 const num = (v) => {
   if (v === null || v === undefined) return 0;
   const n = Number(String(v).replace(/,/g, "").trim());
@@ -36,8 +30,8 @@ const num = (v) => {
 // map backend row → UI product shape
 const toUiProduct = (p) => {
   const imgs = Array.isArray(p.image_urls) ? p.image_urls : [];
-  const front = fixUrl(p.image_url || imgs[0]);
-  const back = fixUrl(imgs[1] || imgs[0] || p.image_url);
+  const front = resolveImageUrl(p.image_url || imgs[0]);
+  const back = resolveImageUrl(imgs[1] || imgs[0] || p.image_url);
 
   return {
     id: p.id,

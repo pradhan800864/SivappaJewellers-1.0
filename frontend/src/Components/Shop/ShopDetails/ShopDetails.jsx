@@ -13,10 +13,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 
-const fixUrl = (u) => {
-  if (!u) return null;
-  return resolveImageUrl(u);
-};
+
 const ShopDetails = () => {
   const navigate = useNavigate();
 
@@ -507,8 +504,8 @@ const ShopDetails = () => {
                   <div className="sdProductContainer" key={product.id}>
                     <div className="sdProductImages">
                       <Link to={`/product/${product.id}`} onClick={scrollToTop}>
-                        <img src={resolveImageUrl(fixUrl(product.frontImg))} alt="" className="sdProduct_front" />
-                        <img src={resolveImageUrl(fixUrl(product.backImg))} alt="" className="sdProduct_back" />
+                        <img src={resolveImageUrl(product.frontImg)} alt="" className="sdProduct_front" />
+                        <img src={resolveImageUrl(product.backImg)} alt="" className="sdProduct_back" />
                       </Link>
                       <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>
                     </div>

@@ -11,12 +11,6 @@ import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
 import { resolveImageUrl } from "../../utils/resolveImageUrl";
 
-
-const fixUrl = (u) => {
-  if (!u) return null;
-  return resolveImageUrl(u);
-};
-
 const ShoppingCart = () => {
   const cartItems = useSelector((state) => state.cart.items);
   const dispatch = useDispatch();
@@ -303,7 +297,7 @@ const ShoppingCart = () => {
                             <td data-label="Product">
                               <div className="shoppingBagTableImg">
                                 <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
-                                  <img src={resolveImageUrl(fixUrl(item.frontImg))} alt="" />
+                                  <img src={resolveImageUrl(item.frontImg)} alt="" />
                                 </Link>
                               </div>
                             </td>

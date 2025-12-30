@@ -11,11 +11,6 @@ import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
-const fixUrl = (u) => {
-  if (!u) return null;
-  return resolveImageUrl(u);
-};
-
 const parseNum = (v) => {
   if (v === null || v === undefined) return 0;
   const n = Number(String(v).replace(/,/g, "").trim());
@@ -74,8 +69,8 @@ const toUiProduct = (p) => {
     }
   }
 
-  const front = fixUrl(p.image_url || imgs[0]);
-  const back = fixUrl(imgs[1] || imgs[0] || p.image_url);
+  const front = resolveImageUrl(p.image_url || imgs[0]);
+  const back = resolveImageUrl(imgs[1] || imgs[0] || p.image_url);
 
   const isGroup = !!p.is_group;
 
