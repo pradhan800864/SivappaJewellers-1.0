@@ -17,9 +17,9 @@ const PLACEHOLDER = "/images/placeholder.png"; // ensure this file exists in pub
 
 const toPublicUrl = (u) => {
   if (!u) return null;
-  if (/^https?:\/\//i.test(u)) return u;
-  return `${API_BASE}/${String(u).replace(/^\/+/, "")}`;
+  return resolveImageUrl(u); // ✅ uses REACT_APP_UPLOADS_BASE
 };
+
 
 const Product = () => {
   const { id } = useParams();

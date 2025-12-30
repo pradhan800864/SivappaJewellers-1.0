@@ -23,9 +23,8 @@ const API_BASE = process.env.REACT_APP_API_BASE;
 
 // ---------- helpers ----------
 const fixUrl = (u) => {
-  if (!u) return "";
-  if (/^https?:\/\//i.test(u)) return u;
-  return u.startsWith("/") ? `${API_BASE}${u}` : `${API_BASE}/${u}`;
+  if (!u) return null;
+  return resolveImageUrl(u);
 };
 
 const num = (v) => {

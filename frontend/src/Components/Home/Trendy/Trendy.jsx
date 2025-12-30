@@ -13,9 +13,7 @@ const API_BASE = process.env.REACT_APP_API_BASE;
 
 const fixUrl = (u) => {
   if (!u) return null;
-  if (/^https?:\/\//i.test(u)) return u; // already absolute
-  if (u.startsWith("/")) return API_BASE + u;
-  return `${API_BASE}/${u}`;
+  return resolveImageUrl(u);
 };
 
 const parseNum = (v) => {

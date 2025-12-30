@@ -14,22 +14,8 @@ import axios from "axios";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 
 const fixUrl = (u) => {
-  if (!u) return "";
-
-  let s = String(u).trim();
-
-  // If backend/frontend accidentally stored "undefined/..."
-  s = s.replace(/^undefined\/+/, "/");
-
-  // If already absolute URL, return
-  if (/^https?:\/\//i.test(s)) return s;
-
-  const base = (process.env.REACT_APP_API_BASE || "").replace(/\/$/, "");
-  if (!base) return s.startsWith("/") ? s : `/${s}`; // fallback
-
-  // Ensure path starts with /
-  const path = s.startsWith("/") ? s : `/${s}`;
-  return `${base}${path}`;
+  if (!u) return null;
+  return resolveImageUrl(u);
 };
 const ShopDetails = () => {
   const navigate = useNavigate();
