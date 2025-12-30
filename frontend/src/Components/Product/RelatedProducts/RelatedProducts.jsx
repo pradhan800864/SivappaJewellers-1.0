@@ -11,6 +11,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 
 import { FiHeart } from "react-icons/fi";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { resolveImageUrl } from "../utils/resolveImageUrl";
 
 const currencyIN = (n) =>
   `₹${Math.round(Number(n || 0)).toLocaleString("en-IN", {
@@ -96,8 +97,8 @@ const RelatedProducts = () => {
                         navigate(`/product/${productID}`);
                       }}
                     >
-                      <img src={front} alt={p.name} className="rpFrontImg" />
-                      <img src={back} alt={p.name} className="rpBackImg" />
+                      <img src={resolveImageUrl(front)} alt={p.name} className="rpFrontImg" />
+                      <img src={resolveImageUrl(back)} alt={p.name} className="rpBackImg" />
                       <h4>Add to Cart</h4>
                     </div>
 

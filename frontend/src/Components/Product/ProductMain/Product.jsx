@@ -9,7 +9,7 @@ import { FiHeart } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
-
+import { resolveImageUrl } from "../utils/resolveImageUrl";
 import "./Product.css";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
@@ -254,7 +254,7 @@ const Product = () => {
               {images.map((src, idx) => (
                 <img
                   key={idx}
-                  src={src}
+                  src={resolveImageUrl(src)}
                   onError={handleImgError}
                   onClick={() => setCurrentImg(idx)}
                   alt={product.name || `image-${idx}`}
@@ -264,7 +264,7 @@ const Product = () => {
 
             <div className="productFullImg">
               <img
-                src={images[currentImg]}
+                src={resolveImageUrl(images[currentImg])}
                 alt={product.name || "Product"}
                 onError={handleImgError}
               />

@@ -9,6 +9,7 @@ import { AuthContext } from "../../Context/AuthContext"; // Update the path as p
 import { useContext } from "react";
 import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
+import { resolveImageUrl } from "../utils/resolveImageUrl";
 
 
 const fixUrl = (u) => {
@@ -316,7 +317,7 @@ const ShoppingCart = () => {
                             <td data-label="Product">
                               <div className="shoppingBagTableImg">
                                 <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
-                                  <img src={fixUrl(item.frontImg)} alt="" />
+                                  <img src={resolveImageUrl(fixUrl(item.frontImg))} alt="" />
                                 </Link>
                               </div>
                             </td>
@@ -450,7 +451,7 @@ const ShoppingCart = () => {
                             <div className="shoppingBagTableMobileItems">
                               <div className="shoppingBagTableMobileItemsImg">
                                 <Link to="/product" onClick={scrollToTop}>
-                                  <img src={item.frontImg} alt="" />
+                                  <img src={resolveImageUrl(item.frontImg)} alt="" />
                                 </Link>
                               </div>
                               <div className="shoppingBagTableMobileItemsDetail">
@@ -791,7 +792,7 @@ const ShoppingCart = () => {
                 <div className="orderComplete">
                   <div className="orderCompleteMessage">
                     <div className="orderCompleteMessageImg">
-                      <img src={success} alt="" />
+                      <img src={resolveImageUrl(success)} alt="" />
                     </div>
                     <h3>Your order is completed!</h3>
                     <p>Thank you. Your order has been received.</p>

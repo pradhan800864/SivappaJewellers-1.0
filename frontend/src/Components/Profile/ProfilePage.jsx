@@ -4,6 +4,7 @@ import "./ProfilePage.css";
 import { toast } from "react-hot-toast";
 import ReferralsPage from "../Referrals/ReferralsPage";
 import { AuthContext } from "../../Context/AuthContext";
+import { resolveImageUrl } from "../utils/resolveImageUrl";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -496,7 +497,7 @@ const ProfilePage = () => {
                     >
                       <img
                         className="favImg"
-                        src={normalizeFirstImage(p)}
+                        src={resolveImageUrl(normalizeFirstImage(p))}
                         alt={p.name || "Product"}
                         onError={(e) => {
                           e.currentTarget.src = "/images/placeholder.png";

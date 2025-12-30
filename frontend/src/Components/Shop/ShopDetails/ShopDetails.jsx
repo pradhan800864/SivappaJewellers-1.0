@@ -11,6 +11,7 @@ import { IoFilterSharp, IoClose } from "react-icons/io5";
 import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { resolveImageUrl } from "../utils/resolveImageUrl";
 
 const fixUrl = (u) => {
   if (!u) return "";
@@ -520,8 +521,8 @@ const ShopDetails = () => {
                   <div className="sdProductContainer" key={product.id}>
                     <div className="sdProductImages">
                       <Link to={`/product/${product.id}`} onClick={scrollToTop}>
-                        <img src={fixUrl(product.frontImg)} alt="" className="sdProduct_front" />
-                        <img src={fixUrl(product.backImg)} alt="" className="sdProduct_back" />
+                        <img src={resolveImageUrl(fixUrl(product.frontImg))} alt="" className="sdProduct_front" />
+                        <img src={resolveImageUrl(fixUrl(product.backImg))} alt="" className="sdProduct_back" />
                       </Link>
                       <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>
                     </div>

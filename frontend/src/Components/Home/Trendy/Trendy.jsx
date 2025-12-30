@@ -7,6 +7,7 @@ import axios from "axios";
 import { FiHeart } from "react-icons/fi";
 import { FaStar, FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { resolveImageUrl } from "../utils/resolveImageUrl";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -362,12 +363,12 @@ const Trendy = () => {
           <div className="trendyProductImages">
             <Link to={`/product/${product.id}`} onClick={scrollToTop}>
               <img
-                src={product.frontImg}
+                src={resolveImageUrl(product.frontImg)}
                 alt={product.productName}
                 className="trendyProduct_front"
               />
               <img
-                src={product.backImg}
+                src={resolveImageUrl(product.backImg)}
                 alt={product.productName}
                 className="trendyProduct_back"
               />

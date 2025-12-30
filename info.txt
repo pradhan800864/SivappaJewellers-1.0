@@ -61,7 +61,17 @@ npm start
 Let me know if you want me to generate the `.patch` file or test it against your specific package version.
 
 
-
+PGPASSWORD=BZdvgbyZOuxLBzMMunVqvNtLaRXruXWc pg_dump \
+  -h yamanote.proxy.rlwy.net \
+  -p 27223 \
+  -U postgres \
+  -d railway \
+  --no-owner \
+  --no-privileges \
+  --clean \
+  --if-exists \
+  > gold_ecommerce_full.sql
+  
 PGPASSWORD=BZdvgbyZOuxLBzMMunVqvNtLaRXruXWc psql -h yamanote.proxy.rlwy.net -U postgres -p 27223 -d railway -f gold_ecommerce_full.sql
 
 serviceWorkerRegistration.unregister();
