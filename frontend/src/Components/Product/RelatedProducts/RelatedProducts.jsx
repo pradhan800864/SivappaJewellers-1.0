@@ -11,7 +11,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 
 import { FiHeart } from "react-icons/fi";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { resolveImageUrl } from "../utils/resolveImageUrl";
+import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 
 const currencyIN = (n) =>
   `₹${Math.round(Number(n || 0)).toLocaleString("en-IN", {

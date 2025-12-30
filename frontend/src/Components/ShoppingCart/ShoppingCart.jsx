@@ -9,7 +9,7 @@ import { AuthContext } from "../../Context/AuthContext"; // Update the path as p
 import { useContext } from "react";
 import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
-import { resolveImageUrl } from "../utils/resolveImageUrl";
+import { resolveImageUrl } from "../../utils/resolveImageUrl";
 
 
 const fixUrl = (u) => {

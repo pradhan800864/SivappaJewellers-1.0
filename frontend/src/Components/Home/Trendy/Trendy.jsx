@@ -7,7 +7,7 @@ import axios from "axios";
 import { FiHeart } from "react-icons/fi";
 import { FaStar, FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { resolveImageUrl } from "../utils/resolveImageUrl";
+import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 

@@ -9,7 +9,7 @@ import { FiHeart } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { resolveImageUrl } from "../utils/resolveImageUrl";
+import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 import "./Product.css";
 
 const API_BASE = process.env.REACT_APP_API_BASE;

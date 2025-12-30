@@ -11,7 +11,7 @@ import { IoFilterSharp, IoClose } from "react-icons/io5";
 import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { resolveImageUrl } from "../utils/resolveImageUrl";
+import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 
 const fixUrl = (u) => {
   if (!u) return "";

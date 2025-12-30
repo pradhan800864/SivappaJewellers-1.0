@@ -4,7 +4,7 @@ import "./ProfilePage.css";
 import { toast } from "react-hot-toast";
 import ReferralsPage from "../Referrals/ReferralsPage";
 import { AuthContext } from "../../Context/AuthContext";
-import { resolveImageUrl } from "../utils/resolveImageUrl";
+import { resolveImageUrl } from "../../utils/resolveImageUrl";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
