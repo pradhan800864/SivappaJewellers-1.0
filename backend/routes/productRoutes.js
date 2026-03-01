@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
+const ExcelJS = require("exceljs");
 
 const getUserIdFromToken = (req) => {
   const h = req.headers.authorization || "";
@@ -949,6 +950,118 @@ router.get("/referrals/level-commission/:userId", async (req, res) => {
   }
 });
 
+router.get("/referrals/level-commission-excel/:userId", async (req, res) => {
+  const userId = Number(req.params.userId);
+  if (!userId) return res.status(400).json({ error: "Invalid userId" });
+
+  const client = await pool.connect();
+  try {
+    /**
+     * Logic:
+     * - downline: builds referral tree under current user, assigns each downline user a level
+     * - wallet_transactions: coins credited to current user (wt.user_id = $1) from referral sources
+     * - order_history: invoice details (invoice_number -> who purchased, subtotal, payment mode)
+     * - join downline with order_history.user_id to get level
+     */
+    const sql = `
+      WITH RECURSIVE downline AS (
+        SELECT id, username, 1 AS level
+        FROM users
+        WHERE referrer_id = $1
+
+        UNION ALL
+
+        SELECT u.id, u.username, d.level + 1
+        FROM users u
+        JOIN downline d ON u.referrer_id = d.id
+        WHERE d.level < 20
+      )
+      SELECT
+        d.level,
+        wt.invoice_number,
+        oh.user_id AS invoice_user_id,
+        u.username AS invoice_username,
+        COALESCE(wt.coins, 0) AS coins,
+        COALESCE(wt.source, '') AS source,
+        wt.created_at AS commission_created_at,
+        oh.subtotal,
+        oh.payment_mode,
+        oh.created_at AS invoice_created_at
+      FROM wallet_transactions wt
+      JOIN order_history oh
+        ON oh.invoice_number = wt.invoice_number
+      JOIN downline d
+        ON d.id = oh.user_id
+      LEFT JOIN users u
+        ON u.id = oh.user_id
+      WHERE wt.user_id = $1
+        AND COALESCE(wt.coins, 0) > 0
+        AND LOWER(COALESCE(wt.source, '')) IN ('referral', 'referral-edit', 'return-recalc')
+      ORDER BY d.level, wt.created_at DESC, wt.invoice_number;
+    `;
+
+    const { rows } = await client.query(sql, [userId]);
+
+    // Create workbook
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Referral Commissions");
+
+    ws.columns = [
+      { header: "Level", key: "level", width: 10 },
+      { header: "Invoice Number", key: "invoice_number", width: 22 },
+      { header: "Invoice User", key: "invoice_username", width: 22 },
+      { header: "Coins", key: "coins", width: 12 },
+      { header: "Source", key: "source", width: 16 },
+      { header: "Commission Date", key: "commission_created_at", width: 22 },
+      { header: "Invoice Subtotal", key: "subtotal", width: 16 },
+      { header: "Payment Mode", key: "payment_mode", width: 14 },
+      { header: "Invoice Date", key: "invoice_created_at", width: 22 },
+    ];
+
+    // Header style
+    ws.getRow(1).font = { bold: true };
+    ws.getRow(1).alignment = { vertical: "middle", horizontal: "left" };
+
+    // Rows
+    for (const r of rows) {
+      ws.addRow({
+        level: r.level,
+        invoice_number: r.invoice_number,
+        invoice_username: r.invoice_username || "",
+        coins: Number(r.coins || 0),
+        source: r.source || "",
+        commission_created_at: r.commission_created_at
+          ? new Date(r.commission_created_at)
+          : "",
+        subtotal: r.subtotal != null ? Number(r.subtotal) : "",
+        payment_mode: r.payment_mode || "",
+        invoice_created_at: r.invoice_created_at ? new Date(r.invoice_created_at) : "",
+      });
+    }
+
+    // Number formats
+    ws.getColumn("coins").numFmt = "0.00";
+    ws.getColumn("subtotal").numFmt = "0.00";
+    ws.getColumn("commission_created_at").numFmt = "yyyy-mm-dd hh:mm";
+    ws.getColumn("invoice_created_at").numFmt = "yyyy-mm-dd hh:mm";
+
+    // Send as file
+    const filename = `level_commission_invoices_user_${userId}.xlsx`;
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+    await wb.xlsx.write(res);
+    res.end();
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to download referral commission report" });
+  } finally {
+    client.release();
+  }
+});
 
 
 // ... your existing product routes here (list, details, etc.)

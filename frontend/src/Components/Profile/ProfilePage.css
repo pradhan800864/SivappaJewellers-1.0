@@ -486,3 +486,69 @@
     padding: 6px 0;
   }
 }
+
+/* ✅ Force real table behavior so header + body align */
+.levelReportTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border-spacing: 0;
+  font-size: small;
+}
+
+.levelReportTable thead {
+  display: table-header-group !important;
+}
+
+.levelReportTable tr {
+  display: table-row !important;   /* overrides any flex/grid */
+}
+
+.levelReportTable th,
+.levelReportTable td {
+  display: table-cell !important;  /* overrides any flex/grid */
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+/* Header look */
+.levelReportTable th {
+  font-weight: 700;
+  background: #f9fafb;
+  color: #111;
+  text-align: left;               /* ✅ keep first header left */
+}
+
+/* Right align numeric columns (Coins + No of Invoices) */
+.levelReportTable th:nth-child(2),
+.levelReportTable td:nth-child(2),
+.levelReportTable th:nth-child(3),
+.levelReportTable td:nth-child(3) {
+  text-align: right;
+}
+
+/* Best row highlight should span full width */
+.levelReportTable tbody tr.bestRow td {
+  background: #eefdf0;
+}
+.levelReportTable tbody tr.bestRow td:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+.levelReportTable tbody tr.bestRow td:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+.levelReportDownload {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.levelReportDownload:hover {
+  background: #f8fafc;
+}

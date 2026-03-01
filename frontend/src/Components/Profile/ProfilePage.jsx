@@ -606,10 +606,68 @@ const ProfilePage = () => {
                   {showWalletHistory ? "Hide Wallet History" : "Show Wallet History"}
                 </button>
 
+                {showWalletHistory && (
+                  <div className="walletHistoryList">
+                    {transactions.length === 0 ? (
+                      <p className="noTx">No recent wallet activity.</p>
+                    ) : (
+                      <ul>
+                        {transactions.map((tx, idx) => (
+                          <li key={idx}>
+                          <span
+                            className={tx.type === "credit" ? "text-green" : "text-red"}
+                          >
+                            {tx.type === "credit" ? "+" : "-"}
+                            {tx.coins} coins
+                          </span>{" "}
+                          — {formatWalletMessage(tx)} —{" "}
+                          {new Date(tx.created_at).toLocaleDateString()}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {/* ✅ Level-wise Commission Report (placed right after wallet history button) */}
                 <div className="levelReportCard">
                   <div className="levelReportHeader">
                     <h4>Level-wise Commission Report</h4>
+
+                    <button
+                      type="button"
+                      className="levelReportRefresh"
+                      onClick={async () => {
+                        if (!user?.id) return;
+
+                        try {
+                          const url = `${API_BASE}/api/referrals/level-commission-excel/${user.id}`;
+                          const res = await fetch(url);
+
+                          if (!res.ok) {
+                            const err = await res.json().catch(() => ({}));
+                            alert(err.error || "Download failed");
+                            return;
+                          }
+
+                          const blob = await res.blob();
+                          const downloadUrl = window.URL.createObjectURL(blob);
+
+                          const a = document.createElement("a");
+                          a.href = downloadUrl;
+                          a.download = `level_commission_invoices.xlsx`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+
+                          window.URL.revokeObjectURL(downloadUrl);
+                        } catch (e) {
+                          alert("Download failed");
+                        }
+                      }}
+                    >
+                      Download To Excel
+                    </button>
 
                     <button
                       type="button"
@@ -652,12 +710,13 @@ const ProfilePage = () => {
                   ) : (
                     <table className="levelReportTable">
                       <thead>
-                        <tr>
-                          <th>Level</th>
-                          <th style={{ textAlign: "right" }}>Coins</th>
-                          <th style={{ textAlign: "right" }}>Tx</th>
+                        <tr className="levelReportTableHeaderRow">
+                          <th>Levels</th>
+                          <th className="textRight">Coins</th>
+                          <th className="textRight">No of Invoices</th>
                         </tr>
                       </thead>
+
                       <tbody>
                         {levelReport.map((r) => {
                           const lvl = Number(r.level || 0);
@@ -667,8 +726,8 @@ const ProfilePage = () => {
                           return (
                             <tr key={lvl} className={bestLevel === lvl ? "bestRow" : ""}>
                               <td>Level {lvl}</td>
-                              <td style={{ textAlign: "right" }}>{coins}</td>
-                              <td style={{ textAlign: "right" }}>{txc}</td>
+                              <td className="textRight">{coins}</td>
+                              <td className="textRight">{txc}</td>
                             </tr>
                           );
                         })}
@@ -677,29 +736,6 @@ const ProfilePage = () => {
                   )}
                 </div>
 
-
-                {showWalletHistory && (
-                  <div className="walletHistoryList">
-                    {transactions.length === 0 ? (
-                      <p className="noTx">No recent wallet activity.</p>
-                    ) : (
-                      <ul>
-                        {transactions.map((tx, idx) => (
-                          <li key={idx}>
-                          <span
-                            className={tx.type === "credit" ? "text-green" : "text-red"}
-                          >
-                            {tx.type === "credit" ? "+" : "-"}
-                            {tx.coins} coins
-                          </span>{" "}
-                          — {formatWalletMessage(tx)} —{" "}
-                          {new Date(tx.created_at).toLocaleDateString()}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </>

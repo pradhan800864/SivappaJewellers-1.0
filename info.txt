@@ -71,7 +71,21 @@ PGPASSWORD=BZdvgbyZOuxLBzMMunVqvNtLaRXruXWc pg_dump \
   --clean \
   --if-exists \
   > gold_ecommerce_full.sql
-  
+
+
+  PGPASSWORD=admin pg_dump \
+  -h localhost \
+  -p 5432 \
+  -U postgres \
+  -d gold_ecommerce \
+  --no-owner \
+  --no-privileges \
+  --clean \
+  --if-exists \
+  > gold_ecommerce_full.sql
+
+
+
 PGPASSWORD=BZdvgbyZOuxLBzMMunVqvNtLaRXruXWc psql -h yamanote.proxy.rlwy.net -U postgres -p 27223 -d railway -f gold_ecommerce_full.sql
 
 serviceWorkerRegistration.unregister();
