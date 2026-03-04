@@ -237,7 +237,7 @@ router.post("/login", async (req, res) => {
   
         // ✅ Get the company user ID
         const companyUser = await pool.query(
-          "SELECT id FROM users WHERE username = 'COMPANY'"
+          "SELECT id FROM users WHERE LOWER(username) = 'company'"
         );
         const companyUserId = companyUser.rows[0]?.id;
   
@@ -255,7 +255,7 @@ router.post("/login", async (req, res) => {
       } else {
         // ✅ If no referral code, assign to the Company User
         const companyUser = await pool.query(
-          "SELECT id FROM users WHERE username = 'Company'"
+          "SELECT id FROM users WHERE LOWER(username) = 'company'"
         );
   
         if (companyUser.rows.length === 0) {
