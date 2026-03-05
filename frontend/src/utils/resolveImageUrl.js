@@ -1,4 +1,4 @@
-export default function resolveImageUrl(u) {
+export function resolveImageUrl(u) {
   if (!u) return "";
 
   // Convert to string and cleanup accidental "undefined/" segments
