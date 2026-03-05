@@ -62,14 +62,32 @@ router.get("/products", async (req, res) => {
       ORDER BY p.name
     `);
 
+    // inside router.get("/products", async (req, res) => { ... })
+
+    const base = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
+
+    // where uploads are served publicly (your nginx already supports /uploads)
+    const uploadsPublic = (process.env.UPLOADS_PUBLIC || "/uploads").replace(/\/+$/, "");
+
+    const toPublic = (u) => {
+      if (!u) return null;
+      if (/^https?:\/\//i.test(u)) return u;
+
+      // normalize: remove any leading slashes
+      let path = String(u).replace(/^\/+/, "");
+
+      // normalize: if DB stored "uploads/xxx" OR "/uploads/xxx", keep it as "/uploads/xxx"
+      if (path.startsWith("uploads/")) path = path; // ok
+      else if (!path.startsWith("uploads/")) path = `uploads/${path}`;
+
+      return `${base}${uploadsPublic}/${path.replace(/^uploads\//, "")}`;
+    };
+
     const productsWithFullImgUrl = result.rows.map((product) => ({
       ...product,
-      frontImg: product.image_url
-        ? `${process.env.REACT_APP_API_BASE}${product.image_url}`
-        : null,
-      backImg: product.image_url
-        ? `${process.env.REACT_APP_API_BASE}${product.image_url}`
-        : null,
+      // product.image_url comes from p.image_urls[1]
+      frontImg: toPublic(product.image_url),
+      backImg: toPublic(product.image_url),
     }));
 
     res.json(productsWithFullImgUrl);
