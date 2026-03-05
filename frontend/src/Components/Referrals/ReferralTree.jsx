@@ -13,7 +13,7 @@ export default function ReferralTree({ userId }) {
   useEffect(() => {
     const fetchBranch = async () => {
       try {
-        const token = localStorage.getItem('app_token');
+        const token = localStorage.getItem('token');
         const res = await axios.get(`${API_BASE}/api/referral-branch`, {
           params: { focusUserId: userId },
           headers: token ? { Authorization: `Bearer ${token}` } : {},
