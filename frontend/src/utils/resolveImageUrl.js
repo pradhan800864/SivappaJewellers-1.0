@@ -1,4 +1,4 @@
-export default function resolveImageUrl(path) {
+export function resolveImageUrl(path) {
   if (!path) return "";
 
   const uploadsBase = (process.env.REACT_APP_UPLOADS_BASE || "/uploads").replace(/\/+$/, "");
