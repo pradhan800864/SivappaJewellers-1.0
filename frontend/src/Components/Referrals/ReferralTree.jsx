@@ -24,37 +24,81 @@ export default function ReferralTree({ userId }) {
         setTree(null);
       }
     };
+
     if (userId) fetchBranch();
   }, [userId]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const update = () => setDims({ width: el.clientWidth, height: el.clientHeight });
+
+    const update = () => {
+      setDims({ width: el.clientWidth, height: el.clientHeight });
+    };
+
     update();
+
     const ro = new ResizeObserver(update);
     ro.observe(el);
+
     return () => ro.disconnect();
   }, []);
 
+  const formatCoins = (coins) => {
+    const n = Math.floor(coins ?? 0);
+    if (n >= 100000) return `${(n / 100000).toFixed(1)}L coins`;
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K coins`;
+    return `${n} coins`;
+  };
+
+  // ✅ Hide wallet only for the fixed company user
+  const isCompanyUser = (nodeDatum) => {
+    return String(nodeDatum?.username || '').trim().toLowerCase() === 'company';
+  };
+
   const renderCustomNode = ({ nodeDatum }) => {
     const hasChildren = nodeDatum.children && nodeDatum.children.length > 0;
-    const formatCoins = (coins) => {
-      const n = Math.floor(coins ?? 0);
-      if (n >= 100000) return `${(n / 100000).toFixed(1)}L coins`;
-      if (n >= 1000) return `${(n / 1000).toFixed(1)}K coins`;
-      return `${n} coins`;
-    };
+    const hideCoins = isCompanyUser(nodeDatum);
+
     return (
       <g>
-        <circle r="25" fill={hasChildren ? '#4a5568' : '#ffffff'} stroke="#4a5568" strokeWidth="2" />
+        <circle
+          r="25"
+          fill={hasChildren ? '#4a5568' : '#ffffff'}
+          stroke="#4a5568"
+          strokeWidth="2"
+        />
         <image href={officeManIcon} x="-20" y="-20" height="40" width="40" />
-        <text fill="#111827" fontSize="13" x="0" y="40" textAnchor="middle" style={{ fontFamily: 'Inter, Roboto, Segoe UI, sans-serif', fontWeight: 600 }}>
+
+        <text
+          fill="#111827"
+          fontSize="13"
+          x="0"
+          y="40"
+          textAnchor="middle"
+          style={{
+            fontFamily: 'Inter, Roboto, Segoe UI, sans-serif',
+            fontWeight: 600,
+          }}
+        >
           {nodeDatum.username}
         </text>
-        <text fill="#4B5563" fontSize="14" x="0" y="56" textAnchor="middle" style={{ fontFamily: 'Inter, Roboto, Segoe UI, sans-serif', fontWeight: 400 }}>
-          {formatCoins(nodeDatum.wallet)}
-        </text>
+
+        {!hideCoins && (
+          <text
+            fill="#4B5563"
+            fontSize="14"
+            x="0"
+            y="56"
+            textAnchor="middle"
+            style={{
+              fontFamily: 'Inter, Roboto, Segoe UI, sans-serif',
+              fontWeight: 400,
+            }}
+          >
+            {formatCoins(nodeDatum.wallet)}
+          </text>
+        )}
       </g>
     );
   };
@@ -62,9 +106,24 @@ export default function ReferralTree({ userId }) {
   return (
     <div
       ref={containerRef}
-      style={{ width: '82vw', height: '50vh', position: 'relative', background: '#f9f9f9', overflow: 'hidden' }}
+      style={{
+        width: '82vw',
+        height: '50vh',
+        position: 'relative',
+        background: '#f9f9f9',
+        overflow: 'hidden',
+      }}
     >
-      <style>{`.rd3t-node, .rd3t-leaf-node, .rd3t-link, .rd3t-g, .rd3t-tree-container svg { cursor: default !important; }`}</style>
+      <style>{`
+        .rd3t-node,
+        .rd3t-leaf-node,
+        .rd3t-link,
+        .rd3t-g,
+        .rd3t-tree-container svg {
+          cursor: default !important;
+        }
+      `}</style>
+
       {tree ? (
         <Tree
           data={tree}
@@ -75,7 +134,7 @@ export default function ReferralTree({ userId }) {
           zoomable={false}
           scaleExtent={{ min: 1, max: 1 }}
           collapsible={false}
-          initialDepth={3}     // parent → you → children → grandchildren
+          initialDepth={3}
           pathFunc="diagonal"
           separation={{ siblings: 1, nonSiblings: 1.5 }}
         />

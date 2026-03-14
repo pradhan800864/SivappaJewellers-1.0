@@ -34,6 +34,9 @@ const ProfilePage = () => {
   const [ordersError, setOrdersError] = useState("");
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersTotal, setOrdersTotal] = useState(0);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
+  const [orderDetailsError, setOrderDetailsError] = useState("");
   const [levelReport, setLevelReport] = useState([]);
   const [bestLevel, setBestLevel] = useState(null);
   const [levelReportLoading, setLevelReportLoading] = useState(false);
@@ -189,9 +192,59 @@ const ProfilePage = () => {
     }
   };
 
+  const formatINR = (n) =>
+    Number(n || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const formatCommissionSource = (source) => {
+    const s = String(source || "").toLowerCase();
+    if (s === "referral") return "Billing";
+    if (s === "redemption") return "Redeemed";
+    return source || "-";
+  };
+
+  const handleViewOrderDetails = async (invoiceNumber) => {
+    const token = getToken();
+    if (!token) {
+      navigate("/loginSignUp");
+      return;
+    }
+
+    setOrderDetailsLoading(true);
+    setOrderDetailsError("");
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/order-history/my/${encodeURIComponent(invoiceNumber)}`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data.error || "Failed to load invoice details";
+        setOrderDetailsError(msg);
+        toast.error(msg);
+        return;
+      }
+      setSelectedOrderDetails(data);
+    } catch (e) {
+      console.error("view order details error:", e);
+      setOrderDetailsError("Failed to load invoice details");
+      toast.error("Failed to load invoice details");
+    } finally {
+      setOrderDetailsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === "My Orders") {
       setOrdersPage(1);
+      setSelectedOrderDetails(null);
+      setOrderDetailsError("");
       fetchOrders(1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -407,6 +460,127 @@ const ProfilePage = () => {
               <p>Loading orders...</p>
             ) : ordersError ? (
               <p style={{ color: "red" }}>{ordersError}</p>
+            ) : selectedOrderDetails ? (
+              <div className="orderDetailsCard">
+                <div className="orderDetailsHead">
+                  <h4>Order Details</h4>
+                  <button
+                    type="button"
+                    className="orderBackBtn"
+                    onClick={() => {
+                      setSelectedOrderDetails(null);
+                      setOrderDetailsError("");
+                    }}
+                  >
+                    Back to Orders
+                  </button>
+                </div>
+
+                {orderDetailsLoading ? (
+                  <p>Loading details...</p>
+                ) : orderDetailsError ? (
+                  <p style={{ color: "red" }}>{orderDetailsError}</p>
+                ) : (
+                  <>
+                    <div className="odGrid">
+                      <div className="odBox">
+                        <h5>Seller Details</h5>
+                        <p><b>Shop:</b> {selectedOrderDetails.invoice?.seller_shop_name || "-"}</p>
+                        <p><b>Address:</b> {selectedOrderDetails.invoice?.seller_address || "-"}</p>
+                        <p><b>GSTIN:</b> {selectedOrderDetails.invoice?.seller_gstin || "-"}</p>
+                        <p><b>Email:</b> {selectedOrderDetails.invoice?.seller_email || "-"}</p>
+                        <p><b>Phone:</b> {selectedOrderDetails.invoice?.seller_phone || "-"}</p>
+                      </div>
+                      <div className="odBox">
+                        <h5>Order Summary</h5>
+                        <p><b>Invoice:</b> {selectedOrderDetails.invoice?.invoice_number || "-"}</p>
+                        <p>
+                          <b>Date:</b>{" "}
+                          {selectedOrderDetails.invoice?.created_at
+                            ? new Date(selectedOrderDetails.invoice.created_at).toLocaleDateString()
+                            : "-"}
+                        </p>
+                        <p><b>Payment Mode:</b> {selectedOrderDetails.invoice?.payment_mode || "-"}</p>
+                        <p><b>Subtotal:</b> ₹{formatINR(selectedOrderDetails.totals?.subtotal || 0)}</p>
+                        <p><b>GST:</b> ₹{formatINR(selectedOrderDetails.totals?.gst || 0)}</p>
+                        <p><b>Total:</b> ₹{formatINR(selectedOrderDetails.totals?.total || 0)}</p>
+                      </div>
+                    </div>
+
+                    <div className="commissionSummaryRow">
+                      <div className="commissionPill">
+                        <span>Credited Coins</span>
+                        <strong>{Number(selectedOrderDetails.commission?.summary?.credited_coins || 0)}</strong>
+                      </div>
+                      <div className="commissionPill">
+                        <span>Redeemed Coins</span>
+                        <strong>{Number(selectedOrderDetails.commission?.summary?.debited_coins || 0)}</strong>
+                      </div>
+                    </div>
+
+                    <div className="ordersTableWrap" style={{ marginTop: "14px" }}>
+                      <table className="ordersTable">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Item</th>
+                            <th>HSN</th>
+                            <th>Qty</th>
+                            <th>Taxable</th>
+                            <th>GST</th>
+                            <th>Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(selectedOrderDetails.items || []).map((it, idx) => (
+                            <tr key={`${it.id || idx}-${idx}`}>
+                              <td>{idx + 1}</td>
+                              <td>{it.name || "-"}</td>
+                              <td>{it.hsn_code || "-"}</td>
+                              <td>{Number(it.qty || 1)}</td>
+                              <td>₹{formatINR(it.line_subtotal || 0)}</td>
+                              <td>₹{formatINR(it.line_tax || 0)}</td>
+                              <td>₹{formatINR(it.line_total || 0)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="ordersTableWrap" style={{ marginTop: "14px" }}>
+                      <table className="ordersTable">
+                        <thead>
+                          <tr>
+                            <th colSpan={4}>Commission Activity</th>
+                          </tr>
+                          <tr>
+                            <th>Date</th>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Coins</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(selectedOrderDetails.commission?.rows || []).length === 0 ? (
+                            <tr>
+                              <td colSpan={4}>No commission activity for this invoice.</td>
+                            </tr>
+                          ) : (
+                            (selectedOrderDetails.commission?.rows || []).map((r) => (
+                              <tr key={r.id}>
+                                <td>{r.created_at ? new Date(r.created_at).toLocaleString() : "-"}</td>
+                                <td>{formatCommissionSource(r.source)}</td>
+                                <td>{r.type || "-"}</td>
+                                <td>{Number(r.coins || 0)}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
             ) : orders.length === 0 ? (
               <p>No orders found.</p>
             ) : (
@@ -419,6 +593,7 @@ const ProfilePage = () => {
                         <th>Date</th>
                         <th>Items</th>
                         <th>Subtotal</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -438,13 +613,21 @@ const ProfilePage = () => {
                               maximumFractionDigits: 2,
                             })}
                           </td>
+                          <td>
+                            <button
+                              type="button"
+                              className="invoiceViewBtn"
+                              onClick={() => handleViewOrderDetails(o.invoice_number)}
+                            >
+                              View Details
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Pagination */}
                 <div className="ordersPager">
                   <button
                     className="pagerBtn"
@@ -464,17 +647,17 @@ const ProfilePage = () => {
                       setOrdersPage((p) => {
                         const max = Math.max(1, Math.ceil(ordersTotal / ORDERS_LIMIT));
                         return Math.min(max, p + 1);
-              })
-            }
-            disabled={ordersPage >= Math.ceil(ordersTotal / ORDERS_LIMIT)}
-          >
-            Next
-          </button>
-        </div>
-      </>
-    )}
-  </>
-)}
+                      })
+                    }
+                    disabled={ordersPage >= Math.ceil(ordersTotal / ORDERS_LIMIT)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        )}
 
 
         {/* ✅ My Favorites */}

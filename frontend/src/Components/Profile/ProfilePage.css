@@ -301,7 +301,7 @@
 .ordersTable {
   width: 100%;
   border-collapse: collapse;
-  min-width: 720px; /* enables horizontal scroll on small screens */
+  min-width: 860px; /* enables horizontal scroll on small screens */
 }
 
 .ordersTable th,
@@ -353,10 +353,111 @@
   color: #444;
 }
 
+.invoiceViewBtn {
+  padding: 8px 12px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.invoiceViewBtn:hover {
+  background: #f8f8f8;
+}
+
+
+.orderDetailsCard {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+}
+
+.orderDetailsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.orderDetailsHead h4 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.orderBackBtn {
+  padding: 8px 12px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.odGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.odBox {
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fcfcfc;
+}
+
+.odBox h5 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.odBox p {
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+.commissionSummaryRow {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.commissionPill {
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 8px 12px;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.commissionPill span {
+  font-size: 12px;
+  color: #666;
+}
+
+.commissionPill strong {
+  font-size: 14px;
+}
+
 /* Mobile */
 @media (max-width: 450px) {
   .pagerInfo {
     font-size: 12px;
+  }
+}
+
+@media (max-width: 1210px) {
+  .odGrid {
+    grid-template-columns: 1fr;
   }
 }
 

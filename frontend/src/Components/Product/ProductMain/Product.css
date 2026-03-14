@@ -20,7 +20,7 @@ body {
 
 .productShowCase {
   display: flex;
-  gap: 0px;
+  gap: 40px;
   /* ✅ ADD THESE */
   max-width: 1500px;     /* match your site container */
   margin: 0 auto;        /* center like header & sections */
@@ -35,6 +35,8 @@ body {
   flex-direction: row;
   align-items: flex-start;
   gap: 20px;
+  flex: 0 0 58%;
+  min-width: 0;
   max-width: 100%;
 }
 
@@ -49,6 +51,7 @@ body {
   height: 80px;
   object-fit: cover;
   flex: 0 0 auto;
+  display: block;
   cursor: pointer;
   border-radius: 8px;
 }
@@ -56,7 +59,9 @@ body {
 /* Big image box */
 .productFullImg {
   position: relative;
-  width: min(560px, 100%);
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
   height: 560px;            /* ✅ fixed height for desktop */
   max-height: 70vh;         /* ✅ prevents too tall on large screens */
   display: flex;
@@ -116,7 +121,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 41%;
+  flex: 1 1 42%;
+  min-width: 0;
   gap: 10px;
   max-width: 100%;
 }
@@ -510,6 +516,7 @@ body {
   /* ✅ On mobile: big image first, thumbs below */
   .productGallery {
     flex-direction: column;
+    flex: 1 1 auto;
     width: 100%;
   }
 

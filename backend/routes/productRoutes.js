@@ -792,6 +792,136 @@ router.get("/order-history/my", async (req, res) => {
   }
 });
 
+/**
+ * GET /api/order-history/my/:invoiceNumber
+ * Returns invoice header + items for the logged-in user only
+ */
+router.get("/order-history/my/:invoiceNumber", async (req, res) => {
+  const userId = getUserIdFromToken(req);
+  const invoiceNumber = String(req.params.invoiceNumber || "").trim();
+
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+  if (!invoiceNumber) return res.status(400).json({ error: "invoiceNumber is required" });
+
+  try {
+    const headRes = await pool.query(
+      `SELECT oh.*
+         FROM order_history oh
+        WHERE oh.invoice_number = $1
+          AND oh.user_id = $2
+        LIMIT 1`,
+      [invoiceNumber, userId]
+    );
+
+    if (!headRes.rowCount) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    const invoice = headRes.rows[0];
+
+    const userRes = await pool.query(
+      `SELECT id, username, email, mobile_number, address, state
+         FROM users
+        WHERE id = $1
+        LIMIT 1`,
+      [userId]
+    );
+
+    const itemsRes = await pool.query(
+      `SELECT oi.*
+         FROM order_items oi
+        WHERE oi.order_id = $1
+        ORDER BY oi.id ASC`,
+      [invoice.id]
+    );
+
+    const items = itemsRes.rows || [];
+
+    const calc = items.reduce(
+      (acc, it) => {
+        const lineSubtotal = Number(it.line_subtotal ?? 0);
+        const lineTax = Number(it.line_tax ?? 0);
+        const lineTotal =
+          Number(it.line_total ?? 0) || Number((lineSubtotal + lineTax).toFixed(2));
+
+        acc.subtotal += lineSubtotal;
+        acc.gst += lineTax;
+        acc.total += lineTotal;
+        return acc;
+      },
+      { subtotal: 0, gst: 0, total: 0 }
+    );
+
+    const commissionRes = await pool.query(
+      `SELECT
+         wt.id,
+         wt.user_id,
+         wt.coins,
+         wt.type,
+         wt.source,
+         wt.note,
+         wt.billing_user,
+         wt.created_at,
+         u.username
+       FROM wallet_transactions wt
+       LEFT JOIN users u ON u.id = wt.user_id
+       WHERE wt.invoice_number = $1
+         AND wt.user_id = $2
+       ORDER BY wt.created_at ASC, wt.id ASC`,
+      [invoiceNumber, userId]
+    );
+
+    const commissionRows = commissionRes.rows || [];
+    const commissionSummary = commissionRows.reduce(
+      (acc, r) => {
+        const coins = Number(r.coins || 0);
+        if ((r.type || "").toLowerCase() === "credit") acc.credited_coins += coins;
+        if ((r.type || "").toLowerCase() === "debit") acc.debited_coins += coins;
+        return acc;
+      },
+      { credited_coins: 0, debited_coins: 0 }
+    );
+
+    return res.json({
+      invoice: {
+        id: invoice.id,
+        invoice_number: invoice.invoice_number,
+        created_at: invoice.created_at,
+        payment_mode: invoice.payment_mode || null,
+        payment_note: invoice.payment_note || null,
+        subtotal: Number(invoice.subtotal ?? calc.subtotal ?? 0),
+        seller_shop_name: invoice.seller_shop_name || null,
+        seller_address: invoice.seller_address || null,
+        seller_gstin: invoice.seller_gstin || null,
+        seller_state_name: invoice.seller_state_name || null,
+        seller_state_code: invoice.seller_state_code || null,
+        seller_email: invoice.seller_email || null,
+        seller_phone: invoice.seller_phone || null,
+      },
+      customer: userRes.rows[0] || null,
+      items,
+      totals: {
+        subtotal: Number((calc.subtotal || invoice.subtotal || 0).toFixed(2)),
+        gst: Number((calc.gst || 0).toFixed(2)),
+        total: Number((calc.total || invoice.subtotal || 0).toFixed(2)),
+      },
+      commission: {
+        summary: {
+          credited_coins: Number(commissionSummary.credited_coins.toFixed(2)),
+          debited_coins: Number(commissionSummary.debited_coins.toFixed(2)),
+          net_coins: Number(
+            (commissionSummary.credited_coins - commissionSummary.debited_coins).toFixed(2)
+          ),
+        },
+        rows: commissionRows,
+      },
+    });
+  } catch (err) {
+    console.error("GET /api/order-history/my/:invoiceNumber error:", err);
+    return res.status(500).json({ error: "Failed to load invoice details" });
+  }
+});
+
 
 
 
