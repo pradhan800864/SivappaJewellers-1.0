@@ -1,0 +1,27 @@
+{
+  "appId": "com.saisuryajewellers.customer",
+  "appName": "Sai Surya Jewellers",
+  "webDir": "build",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#ffffff",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#ffffff"
+    }
+  }
+}

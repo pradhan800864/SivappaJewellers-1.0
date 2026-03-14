@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/app": "^8.0.1",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0",
+    "@capacitor/ios": "^8.2.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "@craco/craco": "^7.1.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
@@ -31,9 +38,18 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:mobile": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "cap:sync": "npx cap sync",
+    "cap:copy": "npx cap copy",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "android:prepare": "npm run build:mobile && npx cap sync android",
+    "ios:prepare": "npm run build:mobile && npx cap sync ios"
   },
   "eslintConfig": {
     "extends": [
