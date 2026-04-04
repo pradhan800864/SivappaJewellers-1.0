@@ -372,7 +372,7 @@ router.get("/tree", async (req, res) => {
   }
 });
 
-// GET /api/referral-branch  → parent -> you -> your direct children (no siblings/grandchildren)
+// GET /api/referral-branch  → you -> your children -> your grandchildren
 // routes/referrals.js (Router mounted at /api)
 router.get('/referral-branch', async (req, res) => {
   try {
@@ -391,16 +391,6 @@ router.get('/referral-branch', async (req, res) => {
     );
     const me = meQ.rows[0];
     if (!me) return res.status(404).json({ error: 'User not found' });
-
-    // Parent
-    let parent = null;
-    if (me.referrer_id) {
-      const pQ = await pool.query(
-        'SELECT id, username, referrer_id, mobile_number, wallet FROM users WHERE id = $1',
-        [me.referrer_id]
-      );
-      parent = pQ.rows[0] || null;
-    }
 
     // Children (level 2)
     const kidsQ = await pool.query(
@@ -437,18 +427,7 @@ router.get('/referral-branch', async (req, res) => {
       children
     };
 
-    const root = parent
-      ? {
-          id: parent.id,
-          username: parent.username,
-          referrer_id: parent.referrer_id,
-          mobile_number: parent.mobile_number,
-          wallet: parent.wallet,
-          children: [youNode] // no siblings
-        }
-      : youNode;
-
-    return res.json(root);
+    return res.json(youNode);
   } catch (err) {
     console.error('Error building referral branch:', err);
     res.status(500).json({ error: 'Internal server error' });

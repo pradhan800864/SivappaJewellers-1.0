@@ -5,6 +5,96 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { generateReferralCode } = require("../utils/referralCode.js");
 
+let referralRequestsTableReady = null;
+
+const createReferralRequestError = (status, message) => {
+  const err = new Error(message);
+  err.status = status;
+  err.exposeMessage = message;
+  return err;
+};
+
+const ensureReferralRequestsTable = () => {
+  if (!referralRequestsTableReady) {
+    referralRequestsTableReady = (async () => {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS referral_requests (
+          id BIGSERIAL PRIMARY KEY,
+          child_user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          requested_parent_user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          request_source TEXT NOT NULL DEFAULT 'referral_code',
+          referral_code_entered TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          reviewed_at TIMESTAMPTZ,
+          reviewed_by INT,
+          reviewer_role TEXT
+        )
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_referral_requests_status_created_at
+        ON referral_requests (status, created_at DESC)
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_referral_requests_child_status
+        ON referral_requests (child_user_id, status, created_at DESC)
+      `);
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS uniq_referral_requests_pending_child
+        ON referral_requests (child_user_id)
+        WHERE status = 'pending'
+      `);
+    })().catch((err) => {
+      referralRequestsTableReady = null;
+      throw err;
+    });
+  }
+
+  return referralRequestsTableReady;
+};
+
+const findCompanyUser = async (client) => {
+  const companyRes = await client.query(
+    `SELECT id, username, email, mobile_number, referral_code
+       FROM users
+      WHERE LOWER(TRIM(username)) = 'company'
+         OR LOWER(TRIM(email)) = 'company@gmail.com'
+         OR referral_code = 'COMPANY-001'
+      ORDER BY id ASC
+      LIMIT 1`
+  );
+
+  return companyRes.rows[0] || null;
+};
+
+const fetchPendingReferralRequest = async (client, userId) => {
+  const { rows } = await client.query(
+    `SELECT
+       rr.id,
+       rr.child_user_id,
+       rr.requested_parent_user_id,
+       rr.request_source,
+       rr.referral_code_entered,
+       rr.status,
+       rr.created_at,
+       rr.updated_at,
+       parent.username AS requested_parent_username,
+       parent.email AS requested_parent_email,
+       parent.mobile_number AS requested_parent_mobile_number,
+       parent.referral_code AS requested_parent_referral_code
+     FROM referral_requests rr
+     JOIN users parent ON parent.id = rr.requested_parent_user_id
+     WHERE rr.child_user_id = $1
+       AND rr.status = 'pending'
+     ORDER BY rr.created_at DESC, rr.id DESC
+     LIMIT 1`,
+    [userId]
+  );
+
+  return rows[0] || null;
+};
+
 // ✅ User Registration with Referral Code
 // ✅ Use referral code generator in user registration
 router.post("/register", async (req, res) => {
@@ -216,65 +306,142 @@ router.post("/login", async (req, res) => {
     }
   });
 
-  router.post("/addReferrer", verifyToken, async (req, res) => {
+  router.get("/referrer-request", verifyToken, async (req, res) => {
     try {
-      const { referral_code } = req.body;
-      const userId = req.user.user_id; // ✅ Logged-in user ID
-      let referrerId = null;
-  
-      if (referral_code) {
-        // ✅ Check if the provided referral code exists
-        const referrer = await pool.query(
-          "SELECT id FROM users WHERE referral_code = $1",
-          [referral_code]
-        );
-  
-        if (referrer.rows.length === 0) {
-          return res.status(400).json({ error: "Invalid referral code" });
-        }
-  
-        referrerId = referrer.rows[0].id;
-  
-        // ✅ Get the company user ID
-        const companyUser = await pool.query(
-          "SELECT id FROM users WHERE LOWER(username) = 'company'"
-        );
-        const companyUserId = companyUser.rows[0]?.id;
-  
-        // ✅ Restrict max 2 children for non-company users
-        if (referrerId !== companyUserId) { // ✅ Only restrict non-company users
-          const childCount = await pool.query(
-            "SELECT COUNT(*) FROM users WHERE referrer_id = $1",
-            [referrerId]
-          );
-  
-          if (parseInt(childCount.rows[0].count) >= 2) {
-            return res.status(400).json({ error: "This user has already reached the maximum of 2 referrals." });
-          }
-        }
-      } else {
-        // ✅ If no referral code, assign to the Company User
-        const companyUser = await pool.query(
-          "SELECT id FROM users WHERE LOWER(username) = 'company'"
-        );
-  
-        if (companyUser.rows.length === 0) {
-          return res.status(400).json({ error: "Company user not found" });
-        }
-  
-        referrerId = companyUser.rows[0].id; // ✅ Assign logged-in user to Company User
-      }
-  
-      // ✅ Update the user's referrer_id in the database
-      const updateUser = await pool.query(
-        "UPDATE users SET referrer_id = $1 WHERE id = $2 RETURNING *",
-        [referrerId, userId]
-      );
-  
-      res.json(updateUser.rows[0]); // ✅ Return updated user info
+      await ensureReferralRequestsTable();
+      const request = await fetchPendingReferralRequest(pool, req.user.user_id);
+      res.json({ request: request || null });
     } catch (error) {
-      console.error("Error adding referrer:", error);
+      console.error("Error fetching referral request:", error);
       res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  router.post("/addReferrer", verifyToken, async (req, res) => {
+    const userId = req.user.user_id;
+    const referralCode = String(req.body?.referral_code || "").trim();
+    const client = await pool.connect();
+
+    try {
+      await ensureReferralRequestsTable();
+      await client.query("BEGIN");
+
+      const childRes = await client.query(
+        `SELECT id, username, referrer_id
+           FROM users
+          WHERE id = $1
+          FOR UPDATE`,
+        [userId]
+      );
+
+      if (!childRes.rowCount) {
+        throw createReferralRequestError(404, "User not found");
+      }
+
+      const child = childRes.rows[0];
+      if (child.referrer_id) {
+        throw createReferralRequestError(400, "Referrer is already assigned to your account");
+      }
+
+      const billedRes = await client.query(
+        `SELECT 1
+           FROM order_history
+          WHERE user_id = $1
+          LIMIT 1`,
+        [userId]
+      );
+
+      if (!billedRes.rowCount) {
+        throw createReferralRequestError(
+          400,
+          "Referral requests will be available after your first billed invoice"
+        );
+      }
+
+      let parent = null;
+      let requestSource = "join_company";
+
+      if (referralCode) {
+        const referrerRes = await client.query(
+          `SELECT id, username, email, mobile_number, referral_code
+             FROM users
+            WHERE LOWER(referral_code) = LOWER($1)
+            LIMIT 1`,
+          [referralCode]
+        );
+
+        if (!referrerRes.rowCount) {
+          throw createReferralRequestError(400, "Invalid referral code");
+        }
+
+        parent = referrerRes.rows[0];
+        requestSource = "referral_code";
+      } else {
+        parent = await findCompanyUser(client);
+        if (!parent) {
+          throw createReferralRequestError(400, "Company user not found");
+        }
+      }
+
+      if (Number(parent.id) === Number(userId)) {
+        throw createReferralRequestError(400, "You cannot add yourself as your own referrer");
+      }
+
+      const pendingRes = await client.query(
+        `SELECT id
+           FROM referral_requests
+          WHERE child_user_id = $1
+            AND status = 'pending'
+          ORDER BY created_at DESC, id DESC
+          LIMIT 1
+          FOR UPDATE`,
+        [userId]
+      );
+
+      if (pendingRes.rowCount) {
+        await client.query(
+          `UPDATE referral_requests
+              SET requested_parent_user_id = $2,
+                  request_source = $3,
+                  referral_code_entered = $4,
+                  updated_at = NOW()
+            WHERE id = $1`,
+          [
+            pendingRes.rows[0].id,
+            Number(parent.id),
+            requestSource,
+            referralCode || null,
+          ]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO referral_requests (
+             child_user_id,
+             requested_parent_user_id,
+             request_source,
+             referral_code_entered,
+             status
+           ) VALUES ($1, $2, $3, $4, 'pending')`,
+          [userId, Number(parent.id), requestSource, referralCode || null]
+        );
+      }
+
+      const request = await fetchPendingReferralRequest(client, userId);
+
+      await client.query("COMMIT");
+      res.json({
+        success: true,
+        message: "Approval has been sent to Admin for approval.",
+        request,
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Error adding referrer:", error);
+      res
+        .status(error.status || 500)
+        .json({ error: error.exposeMessage || "Server error" });
+    } finally {
+      client.release();
     }
   });
   

@@ -23,6 +23,9 @@ const ProfilePage = () => {
   });
   const [transactions, setTransactions] = useState([]);
   const [showWalletHistory, setShowWalletHistory] = useState(false);
+  const [hasReferralBilling, setHasReferralBilling] = useState(null);
+  const [referralBillingLoading, setReferralBillingLoading] = useState(false);
+  const [referralBillingError, setReferralBillingError] = useState("");
 
   // ✅ Favorites state
   const [favoriteProducts, setFavoriteProducts] = useState([]);
@@ -42,6 +45,8 @@ const ProfilePage = () => {
   const [levelReportLoading, setLevelReportLoading] = useState(false);
   const [levelReportError, setLevelReportError] = useState("");
   const ORDERS_LIMIT = 5;
+  const referralLockedMessage =
+    "Your referral dashboard will be available after your first Sai Surya Jewellers bill is generated. Please make a purchase to unlock referral commissions.";
 
   const { logout } = useContext(AuthContext);
 
@@ -55,8 +60,14 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const run = async () => {
-      if (!user?.id) return;
-      if (activeTab !== "Referrals") return;
+      if (!user?.id || activeTab !== "Referrals" || hasReferralBilling !== true) {
+        if (activeTab === "Referrals" && hasReferralBilling === false) {
+          setLevelReport([]);
+          setBestLevel(null);
+          setLevelReportError("");
+        }
+        return;
+      }
   
       setLevelReportLoading(true);
       setLevelReportError("");
@@ -84,7 +95,42 @@ const ProfilePage = () => {
     };
   
     run();
-  }, [activeTab, user?.id]);  
+  }, [activeTab, user?.id, hasReferralBilling]);
+
+  useEffect(() => {
+    const fetchReferralBillingStatus = async () => {
+      const token = getToken();
+      if (!token || !user?.id || activeTab !== "Referrals") return;
+
+      setReferralBillingLoading(true);
+      setReferralBillingError("");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/order-history/my?page=1&limit=1`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          setReferralBillingError(data.error || "Failed to load referral access");
+          setHasReferralBilling(false);
+          return;
+        }
+
+        setHasReferralBilling(Number(data.total || 0) > 0);
+      } catch (e) {
+        console.error("fetchReferralBillingStatus error:", e);
+        setReferralBillingError("Failed to load referral access");
+        setHasReferralBilling(false);
+      } finally {
+        setReferralBillingLoading(false);
+      }
+    };
+
+    fetchReferralBillingStatus();
+  }, [activeTab, user?.id]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -196,6 +242,12 @@ const ProfilePage = () => {
     Number(n || 0).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
+    });
+
+  const formatCoins = (n) =>
+    Number(n || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
     });
 
   const formatCommissionSource = (source) => {
@@ -773,154 +825,175 @@ const ProfilePage = () => {
         {/* ✅ Referrals */}
         {activeTab === "Referrals" && (
           <>
-            <ReferralsPage user={user} />
-
-            <div className="walletSection" style={{ marginTop: "1.5rem" }}>
-              <p>
-                <strong>Wallet:</strong> {Math.floor(Number(user.wallet ?? 0))} coins
-              </p>
-
-
-              <div className="walletHistoryDropdown">
-                <button
-                  onClick={() => setShowWalletHistory(!showWalletHistory)}
-                  className="walletToggle"
-                >
-                  {showWalletHistory ? "Hide Wallet History" : "Show Wallet History"}
-                </button>
-
-                {showWalletHistory && (
-                  <div className="walletHistoryList">
-                    {transactions.length === 0 ? (
-                      <p className="noTx">No recent wallet activity.</p>
-                    ) : (
-                      <ul>
-                        {transactions.map((tx, idx) => (
-                          <li key={idx}>
-                          <span
-                            className={tx.type === "credit" ? "text-green" : "text-red"}
-                          >
-                            {tx.type === "credit" ? "+" : "-"}
-                            {tx.coins} coins
-                          </span>{" "}
-                          — {formatWalletMessage(tx)} —{" "}
-                          {new Date(tx.created_at).toLocaleDateString()}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-
-                {/* ✅ Level-wise Commission Report (placed right after wallet history button) */}
-                <div className="levelReportCard">
-                  <div className="levelReportHeader">
-                    <h4>Level-wise Commission Report</h4>
-
-                    <button
-                      type="button"
-                      className="levelReportRefresh"
-                      onClick={async () => {
-                        if (!user?.id) return;
-
-                        try {
-                          const url = `${API_BASE}/api/referrals/level-commission-excel/${user.id}`;
-                          const res = await fetch(url);
-
-                          if (!res.ok) {
-                            const err = await res.json().catch(() => ({}));
-                            alert(err.error || "Download failed");
-                            return;
-                          }
-
-                          const blob = await res.blob();
-                          const downloadUrl = window.URL.createObjectURL(blob);
-
-                          const a = document.createElement("a");
-                          a.href = downloadUrl;
-                          a.download = `level_commission_invoices.xlsx`;
-                          document.body.appendChild(a);
-                          a.click();
-                          a.remove();
-
-                          window.URL.revokeObjectURL(downloadUrl);
-                        } catch (e) {
-                          alert("Download failed");
-                        }
-                      }}
-                    >
-                      Download To Excel
-                    </button>
-
-                    <button
-                      type="button"
-                      className="levelReportRefresh"
-                      onClick={async () => {
-                        if (!user?.id) return;
-                        setLevelReportLoading(true);
-                        setLevelReportError("");
-                        try {
-                          const res = await fetch(`${API_BASE}/api/referrals/level-commission/${user.id}`);
-                          const data = await res.json().catch(() => ({}));
-                          if (!res.ok) {
-                            setLevelReportError(data.error || "Failed to load level report");
-                            setLevelReport([]);
-                            setBestLevel(null);
-                            return;
-                          }
-                          setLevelReport(Array.isArray(data.levels) ? data.levels : []);
-                          setBestLevel(data.best_level ?? null);
-                        } catch (e) {
-                          setLevelReportError("Failed to load level report");
-                          setLevelReport([]);
-                          setBestLevel(null);
-                        } finally {
-                          setLevelReportLoading(false);
-                        }
-                      }}
-                      disabled={levelReportLoading}
-                    >
-                      {levelReportLoading ? "Loading..." : "Refresh"}
-                    </button>
-                  </div>
-
-                  {levelReportError ? (
-                    <p className="levelReportError">{levelReportError}</p>
-                  ) : levelReportLoading ? (
-                    <p className="levelReportHint">Loading level report...</p>
-                  ) : levelReport.length === 0 ? (
-                    <p className="levelReportHint">No referral commissions yet.</p>
-                  ) : (
-                    <table className="levelReportTable">
-                      <thead>
-                        <tr className="levelReportTableHeaderRow">
-                          <th>Levels</th>
-                          <th className="textRight">Coins</th>
-                          <th className="textRight">No of Invoices</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {levelReport.map((r) => {
-                          const lvl = Number(r.level || 0);
-                          const coins = Number(r.coins || 0);
-                          const txc = Number(r.tx_count || 0);
-
-                          return (
-                            <tr key={lvl} className={bestLevel === lvl ? "bestRow" : ""}>
-                              <td>Level {lvl}</td>
-                              <td className="textRight">{coins}</td>
-                              <td className="textRight">{txc}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-
+            {referralBillingLoading ? (
+              <p>Loading referral details...</p>
+            ) : referralBillingError ? (
+              <p style={{ color: "red" }}>{referralBillingError}</p>
+            ) : !hasReferralBilling ? (
+              <div
+                className="walletSection"
+                style={{
+                  marginTop: "1rem",
+                  padding: "16px 18px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "12px",
+                  background: "#fff",
+                }}
+              >
+                {referralLockedMessage}
               </div>
-            </div>
+            ) : (
+              <>
+                <ReferralsPage user={user} />
+
+                <div className="walletSection" style={{ marginTop: "1.5rem" }}>
+                  <p>
+                    <strong>Wallet:</strong> {formatCoins(user.wallet)} coins
+                  </p>
+
+
+                  <div className="walletHistoryDropdown">
+                    <button
+                      onClick={() => setShowWalletHistory(!showWalletHistory)}
+                      className="walletToggle"
+                    >
+                      {showWalletHistory ? "Hide Wallet History" : "Show Wallet History"}
+                    </button>
+
+                    {showWalletHistory && (
+                      <div className="walletHistoryList">
+                        {transactions.length === 0 ? (
+                          <p className="noTx">No recent wallet activity.</p>
+                        ) : (
+                          <ul>
+                            {transactions.map((tx, idx) => (
+                              <li key={idx}>
+                              <span
+                                className={tx.type === "credit" ? "text-green" : "text-red"}
+                              >
+                                {tx.type === "credit" ? "+" : "-"}
+                                {tx.coins} coins
+                              </span>{" "}
+                              — {formatWalletMessage(tx)} —{" "}
+                              {new Date(tx.created_at).toLocaleDateString()}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ✅ Level-wise Commission Report (placed right after wallet history button) */}
+                    <div className="levelReportCard">
+                      <div className="levelReportHeader">
+                        <h4>Level-wise Commission Report</h4>
+
+                        <button
+                          type="button"
+                          className="levelReportRefresh"
+                          onClick={async () => {
+                            if (!user?.id) return;
+
+                            try {
+                              const url = `${API_BASE}/api/referrals/level-commission-excel/${user.id}`;
+                              const res = await fetch(url);
+
+                              if (!res.ok) {
+                                const err = await res.json().catch(() => ({}));
+                                alert(err.error || "Download failed");
+                                return;
+                              }
+
+                              const blob = await res.blob();
+                              const downloadUrl = window.URL.createObjectURL(blob);
+
+                              const a = document.createElement("a");
+                              a.href = downloadUrl;
+                              a.download = `level_commission_invoices.xlsx`;
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+
+                              window.URL.revokeObjectURL(downloadUrl);
+                            } catch (e) {
+                              alert("Download failed");
+                            }
+                          }}
+                        >
+                          Download To Excel
+                        </button>
+
+                        <button
+                          type="button"
+                          className="levelReportRefresh"
+                          onClick={async () => {
+                            if (!user?.id) return;
+                            setLevelReportLoading(true);
+                            setLevelReportError("");
+                            try {
+                              const res = await fetch(`${API_BASE}/api/referrals/level-commission/${user.id}`);
+                              const data = await res.json().catch(() => ({}));
+                              if (!res.ok) {
+                                setLevelReportError(data.error || "Failed to load level report");
+                                setLevelReport([]);
+                                setBestLevel(null);
+                                return;
+                              }
+                              setLevelReport(Array.isArray(data.levels) ? data.levels : []);
+                              setBestLevel(data.best_level ?? null);
+                            } catch (e) {
+                              setLevelReportError("Failed to load level report");
+                              setLevelReport([]);
+                              setBestLevel(null);
+                            } finally {
+                              setLevelReportLoading(false);
+                            }
+                          }}
+                          disabled={levelReportLoading}
+                        >
+                          {levelReportLoading ? "Loading..." : "Refresh"}
+                        </button>
+                      </div>
+
+                      {levelReportError ? (
+                        <p className="levelReportError">{levelReportError}</p>
+                      ) : levelReportLoading ? (
+                        <p className="levelReportHint">Loading level report...</p>
+                      ) : levelReport.length === 0 ? (
+                        <p className="levelReportHint">No referral commissions yet.</p>
+                      ) : (
+                        <table className="levelReportTable">
+                          <thead>
+                            <tr className="levelReportTableHeaderRow">
+                              <th>Levels</th>
+                              <th className="textRight">Coins</th>
+                              <th className="textRight">No of Invoices</th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {levelReport.map((r) => {
+                              const lvl = Number(r.level || 0);
+                              const coins = Number(r.coins || 0);
+                              const txc = Number(r.tx_count || 0);
+
+                              return (
+                                <tr key={lvl} className={bestLevel === lvl ? "bestRow" : ""}>
+                                  <td>Level {lvl}</td>
+                                  <td className="textRight">{coins}</td>
+                                  <td className="textRight">{txc}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

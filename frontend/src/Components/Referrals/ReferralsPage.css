@@ -31,13 +31,19 @@
   gap: 10px;
   margin-top: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 .addReferrerForm input {
   padding: 10px 12px;
-  flex: 1;
-  min-width: 240px;
+  flex: 0 1 220px;
+  width: 220px;
+  max-width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 8px;
+}
+.addReferrerForm button {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 /* Buttons (scoped - NOT global) */
@@ -119,8 +125,13 @@
     height: 420px;
   }
 
+  .addReferrerForm {
+    align-items: stretch;
+  }
+
   .addReferrerForm input {
-    min-width: 180px;
+    flex-basis: 100%;
+    width: 100%;
   }
 }
 

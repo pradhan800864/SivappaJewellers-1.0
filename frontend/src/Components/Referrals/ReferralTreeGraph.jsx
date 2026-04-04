@@ -175,7 +175,7 @@ export default function ReferralTreeGraph({
           {nodeDatum.name}{isFocus ? " (You)" : ""}
         </text>
         <text x={radius + 8} dy="1.2em" style={{ fill: "#065f46" }}>
-          Coins: {Number.isFinite(coins) ? coins : 0}
+          Coins: {Number.isFinite(coins) ? Number(coins).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 1 }) : 0}
         </text>
       </g>
     );

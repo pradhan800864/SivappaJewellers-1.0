@@ -45,10 +45,10 @@ export default function ReferralTree({ userId }) {
   }, []);
 
   const formatCoins = (coins) => {
-    const n = Math.floor(coins ?? 0);
+    const n = Number(coins ?? 0);
     if (n >= 100000) return `${(n / 100000).toFixed(1)}L coins`;
     if (n >= 1000) return `${(n / 1000).toFixed(1)}K coins`;
-    return `${n} coins`;
+    return `${n.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 1 })} coins`;
   };
 
   // ✅ Hide wallet only for the fixed company user

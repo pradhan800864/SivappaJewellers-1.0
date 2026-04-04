@@ -7,12 +7,14 @@ const API_BASE = process.env.REACT_APP_API_BASE;
 
 const ReferralsPage = ({ user }) => {
   const [referrer, setReferrer] = useState(null);
+  const [pendingRequest, setPendingRequest] = useState(null);
   const [referralCodeInput, setReferralCodeInput] = useState("");
   const [isAddingReferrer, setIsAddingReferrer] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     fetchReferrer();
+    fetchPendingRequest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -25,9 +27,25 @@ const ReferralsPage = ({ user }) => {
       });
       const data = await res.json();
       if (res.ok) setReferrer(data || null);
+      else if (res.status === 404) setReferrer(null);
       else console.error("Failed to fetch referrer:", data.error);
     } catch (err) {
       console.error("Error fetching referrer:", err);
+    }
+  };
+
+  const fetchPendingRequest = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const res = await fetch(`${API_BASE}/api/users/referrer-request`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setPendingRequest(data?.request || null);
+      else console.error("Failed to fetch pending referral request:", data.error);
+    } catch (err) {
+      console.error("Error fetching pending referral request:", err);
     }
   };
 
@@ -46,10 +64,15 @@ const ReferralsPage = ({ user }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success("Referrer added successfully!", { duration: 3000 });
+        toast.success(
+          data?.message || "Approval has been sent to Admin for approval.",
+          { duration: 3000 }
+        );
         setReferralCodeInput("");
         setIsAddingReferrer(false);
+        setPendingRequest(data?.request || null);
         fetchReferrer();
+        fetchPendingRequest();
       } else {
         toast.error(data.error || "Invalid referral code. Please try again!", {
           duration: 3000,
@@ -74,8 +97,13 @@ const ReferralsPage = ({ user }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        toast.success("Joined company successfully!", { duration: 3000 });
+        toast.success(
+          data?.message || "Approval has been sent to Admin for approval.",
+          { duration: 3000 }
+        );
+        setPendingRequest(data?.request || null);
         fetchReferrer();
+        fetchPendingRequest();
       } else {
         toast.error(data.error || "Failed to join company");
       }
@@ -102,8 +130,8 @@ const ReferralsPage = ({ user }) => {
         </p>
       </div>
 
-      {/* 2) Add your referrer (only when no parent) */}
-      {!referrer && (
+      {/* 2) Add your referrer (only when no parent and no pending request) */}
+      {!referrer && !pendingRequest && (
         <div
           className="addReferrerSection"
           style={{
@@ -116,21 +144,12 @@ const ReferralsPage = ({ user }) => {
           <h4 style={{ marginTop: 0 }}>Add Your Referrer</h4>
 
           {isAddingReferrer ? (
-            <div
-              className="addReferrerForm"
-              style={{ display: "flex", gap: 8, flexWrap: "wrap" }}
-            >
+            <div className="addReferrerForm">
               <input
                 type="text"
-                placeholder="Enter Referrer’s Code"
+                placeholder="Enter Referral Code"
                 value={referralCodeInput}
                 onChange={(e) => setReferralCodeInput(e.target.value)}
-                style={{
-                  padding: "10px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 8,
-                  minWidth: 260,
-                }}
               />
               <button className="primaryButton" onClick={handleAddReferrer}>
                 Submit
@@ -158,6 +177,23 @@ const ReferralsPage = ({ user }) => {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {!referrer && pendingRequest && (
+        <div
+          className="referrerSection"
+          style={{
+            padding: "12px 16px",
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            background: "#fff",
+          }}
+        >
+          <strong>Referral Request Pending:</strong>{" "}
+          Your request to join under{" "}
+          <strong>{pendingRequest.requested_parent_username || "the selected referrer"}</strong>{" "}
+          is waiting for admin approval.
         </div>
       )}
 

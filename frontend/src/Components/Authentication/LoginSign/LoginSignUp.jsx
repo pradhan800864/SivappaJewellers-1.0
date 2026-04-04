@@ -6,7 +6,6 @@ import { AuthContext } from "../../../Context/AuthContext";
 
 const LoginSignUp = () => {
   const [activeTab, setActiveTab] = useState("tabButton1");
-  const [step, setStep] = useState(1);
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({
@@ -16,7 +15,6 @@ const LoginSignUp = () => {
     mobile_number: "",
     address: "",
     state: "",
-    referral_code: "", // ✅ Default to empty string (not null)
   });
 
   const [loading, setLoading] = useState(false);
@@ -24,7 +22,6 @@ const LoginSignUp = () => {
 
   const handleTab = (tab) => {
     setActiveTab(tab);
-    setStep(1);
     setFormData({
       username: "",
       email: "",
@@ -32,7 +29,6 @@ const LoginSignUp = () => {
       mobile_number: "",
       address: "",
       state: "",
-      referral_code: "",
     });
     setError("");
   };
@@ -42,39 +38,35 @@ const LoginSignUp = () => {
   };
 
   // ✅ Handles API Requests for Login & Register
-  const handleSubmit = async (e, skipReferral = false) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      let url = "";
       let payload = { ...formData };
 
       if (activeTab === "tabButton1") {
         // ✅ LOGIN
-        // eslint-disable-next-line no-unused-vars
-        url = process.env.REACT_APP_API_BASE + "/api/users/login";
         payload = { email: formData.email, password: formData.password };
       } else {
         // ✅ REGISTER
-        if (step === 1) {
-          if (!formData.username || !formData.email || !formData.password || !formData.mobile_number|| !formData.address|| !formData.state) {
-            setError("All fields are required!");
-            setLoading(false);
-            return;
-          }
-          setStep(2); // ✅ Move to Referral Code Step
+        if (
+          !formData.username ||
+          !formData.email ||
+          !formData.password ||
+          !formData.mobile_number ||
+          !formData.address ||
+          !formData.state
+        ) {
+          setError("All fields are required!");
           setLoading(false);
           return;
         }
-        // ✅ Assign NULL if skipping
-        if (skipReferral) {
-          payload.referral_code = null;
-        }
-      }
 
-      console.log("Sending Payload:", payload); // ✅ Debugging
+        // Register directly without assigning a parent.
+        payload = { ...formData, referral_code: null };
+      }
 
       const response = await fetch(
         activeTab === "tabButton1"
@@ -88,7 +80,6 @@ const LoginSignUp = () => {
       );
 
       const data = await response.json();
-      console.log("data : "+data)
       if (response.ok) {
         if (activeTab === "tabButton1") {
           // ✅ LOGIN SUCCESS
@@ -101,8 +92,7 @@ const LoginSignUp = () => {
           toast.success("Registration successful! Please log in.", { duration: 3000 });
           setActiveTab("tabButton1"); // ✅ Switch to Login Tab Automatically
         }
-      } else if (data.error === "This user has already reached the maximum of 5 referrals.") {
-        console.log(data.error)
+      } else if (data.error === "This user has already reached the maximum of 2 referrals.") {
         toast.error("User has reached the maximum number of referrals allowed.", { duration: 3000 });
       }
       else {
@@ -161,35 +151,15 @@ const LoginSignUp = () => {
             {activeTab === "tabButton2" && (
               <div className="loginSignUpTabsContentRegister">
                 <form onSubmit={handleSubmit}>
-                  {/* ✅ Step 1: Show main fields */}
-                  {step === 1 && (
-                    <>
-                      <input type="text" name="username" placeholder="Username *" value={formData.username} onChange={handleChange} required />
-                      <input type="tel" name="mobile_number" placeholder="Mobile Number *" value={formData.mobile_number} onChange={handleChange} required />
-                      <input type="email" name="email" placeholder="Email address *" value={formData.email} onChange={handleChange} required />
-                      <input type="password" name="password" placeholder="Password *" value={formData.password} onChange={handleChange} required />
-                      <input type="text" name="address" placeholder="Address *" value={formData.address} onChange={handleChange} required />
-                      <input type="text" name="state" placeholder="State *" value={formData.state} onChange={handleChange} required />
-                      <button type="submit" disabled={loading}>
-                        {loading ? "Checking..." : "Register"}
-                      </button>
-                    </>
-                  )}
-
-                  {/* ✅ Step 2: Referral Code Field (Appears After Step 1) */}
-                  {step === 2 && (
-                    <>
-                      <input type="text" name="referral_code" placeholder="Referral Code (Optional)" value={formData.referral_code} onChange={handleChange} />
-                      <div className="stepTwoButtons">
-                        <button type="button" className="skipButton" onClick={(e) => handleSubmit(e, true)}>
-                          Skip for Now
-                        </button>
-                        <button type="submit" className="doneButton">
-                          Done
-                        </button>
-                      </div>
-                    </>
-                  )}
+                  <input type="text" name="username" placeholder="Username *" value={formData.username} onChange={handleChange} required />
+                  <input type="tel" name="mobile_number" placeholder="Mobile Number *" value={formData.mobile_number} onChange={handleChange} required />
+                  <input type="email" name="email" placeholder="Email address *" value={formData.email} onChange={handleChange} required />
+                  <input type="password" name="password" placeholder="Password *" value={formData.password} onChange={handleChange} required />
+                  <input type="text" name="address" placeholder="Address *" value={formData.address} onChange={handleChange} required />
+                  <input type="text" name="state" placeholder="State *" value={formData.state} onChange={handleChange} required />
+                  <button type="submit" disabled={loading}>
+                    {loading ? "Registering..." : "Register"}
+                  </button>
                 </form>
               </div>
             )}
