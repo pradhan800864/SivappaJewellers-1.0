@@ -12,6 +12,18 @@ export function resolveImageUrl(path) {
 
   const raw = String(path).trim();
 
+  // keep inline/browser-managed sources untouched
+  if (
+    raw.startsWith("data:") ||
+    raw.startsWith("blob:") ||
+    raw.startsWith("file:") ||
+    raw.startsWith("capacitor:") ||
+    raw.startsWith("/static/") ||
+    raw.startsWith("static/")
+  ) {
+    return raw;
+  }
+
   const isCapacitorApp =
     typeof window !== "undefined" &&
     !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
