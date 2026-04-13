@@ -372,10 +372,14 @@
 .checkoutSection {
   display: flex;
   gap: 50px;
+  align-items: stretch;
 }
 
 .checkoutDetailsSection {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .checkoutDetailsSection h4 {
@@ -391,11 +395,163 @@
   gap: 30px;
 }
 
+.checkoutDetailsForm {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .checkoutDetailsForm input {
   height: 52px;
   padding: 0px 20px;
   border: 2px solid #e4e4e4;
   outline-color: black;
+}
+
+.storeSearchSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.storeSearchSection input {
+  flex: 1;
+  min-width: 0;
+}
+
+.storeSearchButton {
+  background-color: #000;
+  color: #fff;
+  padding: 0 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  height: 52px;
+  white-space: nowrap;
+}
+
+.storeSearchButton:disabled,
+.storeSelectButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.selectedStoreBanner {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #d8ead8;
+  background: #f3fbf3;
+  color: #14532d;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.storeSelectionPanel {
+  margin-top: 20px;
+  max-height: min(420px, calc(100vh - 380px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+}
+
+.storeSelectionPanel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.storeSelectionPanel::-webkit-scrollbar-thumb {
+  background: #c9c9c9;
+  border-radius: 999px;
+}
+
+.storeSelectionPanel::-webkit-scrollbar-track {
+  background: #f4f4f4;
+  border-radius: 999px;
+}
+
+.storeResultsSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.storeResultsHeading {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.storeResultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.storeResultCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #e4e4e4;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #fff;
+}
+
+.storeResultCard.selected {
+  border-color: #000;
+  background: #f8f8f8;
+}
+
+.storeResultInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.storeResultInfo h5 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.storeResultInfo p {
+  margin: 0;
+  font-size: 13px;
+  color: #444;
+}
+
+.storeResultInfo span {
+  font-size: 12px;
+  color: #666;
+}
+
+.storeSelectButton {
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 16px;
+  min-width: 110px;
+}
+
+.storeNoMatch {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #ead7d7;
+  background: #fff7f7;
+  border-radius: 8px;
+}
+
+.storeNoMatch p {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #5f2120;
 }
 
 .checkoutDetailsForm select {
@@ -860,6 +1016,27 @@
   .checkoutSection {
     flex-direction: column;
     gap: 20px;
+  }
+
+  .storeSearchSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .storeSelectionPanel {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .storeResultCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .storeSelectButton,
+  .storeSearchButton {
+    width: 100%;
   }
 
   .checkoutPaymentSection {

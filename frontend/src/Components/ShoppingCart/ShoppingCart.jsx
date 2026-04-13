@@ -30,9 +30,9 @@ const ShoppingCart = () => {
       dispatch(updateQuantity({ productID: productId, quantity: quantity }));
     }
   };
-  const [storeAddress, setStoreAddress] = useState(null);
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [placedOrderItems, setPlacedOrderItems] = useState([]);
+  const [placedOrderId, setPlacedOrderId] = useState(null);
   // eslint-disable-next-line
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
@@ -45,50 +45,92 @@ const ShoppingCart = () => {
   });
   const [createAccount, setCreateAccount] = useState(false);
 
-  const [pincode, setPincode] = useState("");
-  const [isPincodeValid, setIsPincodeValid] = useState(false);
-    // eslint-disable-next-line
-  const [nearestLocation, setNearestLocation] = useState(null);
-    // eslint-disable-next-line
-  const [orderCode, setOrderCode] = useState(null);
-  const [nearestStoreId, setNearestStoreId] = useState(null);
-  // eslint-disable-next-line
-  const [nearestStore, setNearestStore] = useState(null);
-  const handleCheckPincode = async () => {
-    if (!/^\d{6}$/.test(pincode)) {
-      toast.error("Please enter a valid 6-digit pincode.");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [matchedStores, setMatchedStores] = useState([]);
+  const [allStores, setAllStores] = useState([]);
+  const [selectedStore, setSelectedStore] = useState(null);
+  const [storeSearchPerformed, setStoreSearchPerformed] = useState(false);
+  const [showAllStores, setShowAllStores] = useState(false);
+  const [isSearchingStores, setIsSearchingStores] = useState(false);
+  const [isLoadingAllStores, setIsLoadingAllStores] = useState(false);
+
+  const formatStoreAddress = (store) =>
+    [store?.address, store?.stateName].filter(Boolean).join(", ");
+
+  const handleSearchStores = async () => {
+    const query = locationQuery.trim();
+
+    if (query.length < 2) {
+      toast.error("Please enter your district or state name.");
       return;
     }
-  
+
     try {
-      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/pincode/check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pincode }),
-      });
-  
+      setIsSearchingStores(true);
+      setStoreSearchPerformed(true);
+      setMatchedStores([]);
+      setSelectedStore(null);
+      setShowAllStores(false);
+      setAllStores([]);
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_BASE}/api/stores?search=${encodeURIComponent(query)}`
+      );
+
       const data = await response.json();
-  
+
       if (response.ok) {
-        setNearestStore({ name: data.nearestLocation, address: data.address });
-        setNearestStoreId(data.storeId);
-        setIsPincodeValid(true);
-        setNearestLocation(data.nearestLocation);
-        setOrderCode(data.orderCode);
-        setStoreAddress(data.address);  // NEW
-        toast.success("Pincode validated!");
+        const stores = Array.isArray(data.stores) ? data.stores : [];
+        setMatchedStores(stores);
+        if (stores.length > 0) {
+          toast.success(
+            `${stores.length} store${stores.length > 1 ? "s" : ""} found for your location.`
+          );
+        }
       } else {
-        toast.error(data.error || "Pincode validation failed.");
+        setMatchedStores([]);
+        toast.error(data.error || "Store search failed.");
       }
     } catch (error) {
+      setMatchedStores([]);
       toast.error("Something went wrong. Try again.");
+    } finally {
+      setIsSearchingStores(false);
     }
   };
 
+  const handleLoadAllStores = async () => {
+    try {
+      setIsLoadingAllStores(true);
+
+      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/stores");
+      const data = await response.json();
+
+      if (response.ok) {
+        setAllStores(Array.isArray(data.stores) ? data.stores : []);
+        setShowAllStores(true);
+      } else {
+        toast.error(data.error || "Failed to load stores.");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Try again.");
+    } finally {
+      setIsLoadingAllStores(false);
+    }
+  };
+
+  const handleSelectStore = (store) => {
+    setSelectedStore(store);
+    toast.success(`${store.shopName} selected for your order.`);
+  };
+
+  const displayedStores = showAllStores ? allStores : matchedStores;
+  const shouldShowNoServiceMessage =
+    storeSearchPerformed && !isSearchingStores && matchedStores.length === 0 && !showAllStores;
+
   const handlePlaceOrder = async () => {
-    console.log(!isPincodeValid, !nearestStoreId, !user)
-    if (!isPincodeValid || nearestStoreId==null || !user) {
-      toast.error("Please validate pincode before placing order.");
+    if (!selectedStore?.id || !user) {
+      toast.error("Please select a store before placing order.");
       return;
     }
   
@@ -101,8 +143,7 @@ const ShoppingCart = () => {
         },
         body: JSON.stringify({
           userId: user.id,
-          storeId: nearestStoreId, // Make sure you have this from the pincode check response
-          pincode,
+          storeId: selectedStore.id,
           products: cartItems.map((item) => ({
             productID: item.productID,
             quantity: item.quantity,
@@ -115,6 +156,7 @@ const ShoppingCart = () => {
       if (response.ok) {
         // 🔁 Move to the confirmation tab
         setPlacedOrderItems(cartItems);
+        setPlacedOrderId(data.orderId || null);
         dispatch(clearCart());
         handleTabClick("cartTab3");
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -156,7 +198,12 @@ const ShoppingCart = () => {
         await login(result.token);  // ✅ This updates AuthContext
         toast.success("Login successful!");
         setIsReturningUser(false);  // optional: collapse login form
-        setPincode("");             // optional: reset pincode
+        setLocationQuery("");
+        setMatchedStores([]);
+        setAllStores([]);
+        setSelectedStore(null);
+        setStoreSearchPerformed(false);
+        setShowAllStores(false);
       } else {
         toast.error("Invalid credentials");
       }
@@ -214,8 +261,6 @@ const ShoppingCart = () => {
   };
 
   // Random number
-
-  const orderNumber = Math.floor(Math.random() * 100000);
 
   // Radio Button Data
 
@@ -564,45 +609,90 @@ const ShoppingCart = () => {
                     {loading ? (
                       <p>Checking authentication...</p>
                     ) : isAuthenticatedFromContext ? (
-                      // ✅ If authenticated, show success message & pincode
+                      // ✅ If authenticated, show success message & store search
                       <>
                         <p className="loginSuccessMsg">
-                          🗝️ Authentication Successful. Please enter pincode to check the product availability in near by stores.
+                          Authentication Successful. Please enter your district or state name to find the stores available for your location.
                         </p>
-                        <div className="pincodeCheckSection" style={{ marginTop: "16px" }}>
+                        <div className="storeSearchSection">
                           <input
                             type="text"
-                            placeholder="Enter Pincode"
-                            style={{
-                              padding: "10px",
-                              width: "200px",
-                              marginRight: "10px",
-                              borderRadius: "4px",
-                              border: "1px solid #ccc"
+                            placeholder="Enter district or state name"
+                            value={locationQuery}
+                            onChange={(e) => {
+                              setLocationQuery(e.target.value);
+                              setMatchedStores([]);
+                              setAllStores([]);
+                              setSelectedStore(null);
+                              setStoreSearchPerformed(false);
+                              setShowAllStores(false);
                             }}
-                            value={pincode}
-                            onChange={(e) => setPincode(e.target.value)}
-                            maxLength={6}
                           />
                           <button
-                            style={{
-                              backgroundColor: "black",
-                              color: "white",
-                              padding: "10px 16px",
-                              border: "none",
-                              borderRadius: "4px",
-                              cursor: "pointer"
-                            }}
-                            onClick={handleCheckPincode}
+                            type="button"
+                            className="storeSearchButton"
+                            onClick={handleSearchStores}
+                            disabled={isSearchingStores}
                           >
-                            Check Availability
+                            {isSearchingStores ? "Searching..." : "Search Stores"}
                           </button>
-                          {isPincodeValid && (
-                            <div style={{ marginTop: "10px", color: "green" }}>
-                              📍 Pincode Validated 
-                            </div>
-                          )}
                         </div>
+
+                        {selectedStore && (
+                          <div className="selectedStoreBanner">
+                            <strong>Selected Store:</strong> {selectedStore.shopName}
+                            {formatStoreAddress(selectedStore) ? `, ${formatStoreAddress(selectedStore)}` : ""}
+                          </div>
+                        )}
+
+                        {(displayedStores.length > 0 || shouldShowNoServiceMessage) && (
+                          <div className="storeSelectionPanel">
+                            {displayedStores.length > 0 && (
+                              <div className="storeResultsSection">
+                                <p className="storeResultsHeading">
+                                  {showAllStores ? "All Store Locations" : "Matched Stores"}
+                                </p>
+                                <div className="storeResultsList">
+                                  {displayedStores.map((store) => (
+                                    <div
+                                      key={store.id}
+                                      className={`storeResultCard ${selectedStore?.id === store.id ? "selected" : ""}`}
+                                    >
+                                      <div className="storeResultInfo">
+                                        <h5>{store.shopName}</h5>
+                                        <p>{formatStoreAddress(store) || "Address not available"}</p>
+                                        {store.pincode && <span>Pincode: {store.pincode}</span>}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="storeSelectButton"
+                                        onClick={() => handleSelectStore(store)}
+                                      >
+                                        {selectedStore?.id === store.id ? "Selected" : "Select Store"}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {shouldShowNoServiceMessage && (
+                              <div className="storeNoMatch">
+                                <p>
+                                  Sorry we are not providing the service at your location, please check our store locations from here.
+                                </p>
+                                <button
+                                  type="button"
+                                  className="storeSearchButton"
+                                  onClick={handleLoadAllStores}
+                                  disabled={isLoadingAllStores}
+                                >
+                                  {isLoadingAllStores ? "Loading Stores..." : "View Store Locations"}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </>
                     ) : isReturningUser ? (
                       // ✅ Login form
@@ -756,7 +846,7 @@ const ShoppingCart = () => {
                 <button
                   type="button"
                   onClick={handlePlaceOrder}
-                  disabled={!pincode || !isPincodeValid}
+                  disabled={!selectedStore}
                   
                 >
                   Place Order
@@ -776,9 +866,12 @@ const ShoppingCart = () => {
                     </div>
                     <h3>Your order is completed!</h3>
                     <p>Thank you. Your order has been received.</p>
-                    {storeAddress && (
+                    {selectedStore && (
                       <p>
-                        🎉 Your order has been forwarded to our nearest store at <strong>{storeAddress}</strong>.
+                        Your order has been forwarded to <strong>{selectedStore.shopName}</strong>
+                        {formatStoreAddress(selectedStore) ? (
+                          <> at <strong>{formatStoreAddress(selectedStore)}</strong></>
+                        ) : null}.
                         Our customer service team will contact you shortly to confirm the details.
                       </p>
                     )}
@@ -786,7 +879,7 @@ const ShoppingCart = () => {
                   <div className="orderInfo">
                     <div className="orderInfoItem">
                       <p>Order Number</p>
-                      <h4>{orderNumber}</h4>
+                      <h4>{placedOrderId || "-"}</h4>
                     </div>
                     <div className="orderInfoItem">
                       <p>Date</p>

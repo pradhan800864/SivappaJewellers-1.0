@@ -17,6 +17,15 @@ const getUserIdFromToken = (req) => {
   }
 };
 
+const mapStoreRow = (row) => ({
+  id: row.id,
+  shopName: row.shop_name || "Store",
+  address: row.address || "",
+  stateName: row.state_name || "",
+  pincode: row.pincode || null,
+  code: row.code || null,
+});
+
 router.get("/products", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -94,6 +103,52 @@ router.get("/products", async (req, res) => {
   } catch (err) {
     console.error("Error fetching products:", err);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+router.get("/stores", async (req, res) => {
+  const search = String(req.query.search || "").trim();
+
+  try {
+    let result;
+
+    if (search) {
+      const fuzzyPattern = `%${search.replace(/\s+/g, "%")}%`;
+      const prefixPattern = `${search}%`;
+
+      result = await pool.query(
+        `
+          SELECT id, shop_name, address, state_name, code, pincode
+          FROM shops
+          WHERE COALESCE(shop_name, '') ILIKE $1
+             OR COALESCE(address, '') ILIKE $1
+             OR COALESCE(state_name, '') ILIKE $1
+          ORDER BY
+            CASE
+              WHEN COALESCE(shop_name, '') ILIKE $2 THEN 0
+              WHEN COALESCE(address, '') ILIKE $2 THEN 1
+              WHEN COALESCE(state_name, '') ILIKE $2 THEN 2
+              ELSE 3
+            END,
+            shop_name ASC,
+            id ASC
+        `,
+        [fuzzyPattern, prefixPattern]
+      );
+    } else {
+      result = await pool.query(
+        `
+          SELECT id, shop_name, address, state_name, code, pincode
+          FROM shops
+          ORDER BY shop_name ASC, id ASC
+        `
+      );
+    }
+
+    return res.json({ stores: result.rows.map(mapStoreRow) });
+  } catch (err) {
+    console.error("Error fetching stores:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -184,9 +239,9 @@ router.get("/products", async (req, res) => {
   });
   
   router.post("/place-order", async (req, res) => {
-    const { userId, storeId, pincode, products } = req.body;
+    const { userId, storeId, products } = req.body;
   
-    if (!userId || !storeId || !pincode || !products || products.length === 0) {
+    if (!userId || !storeId || !products || products.length === 0) {
       return res.status(400).json({ error: "Missing required fields" });
     }
   
@@ -194,13 +249,36 @@ router.get("/products", async (req, res) => {
     const orderStatus = "Pending";
   
     try {
+      const storeResult = await pool.query(
+        `SELECT id, shop_name, address, pincode FROM shops WHERE id = $1 LIMIT 1`,
+        [storeId]
+      );
+
+      if (storeResult.rows.length === 0) {
+        return res.status(404).json({ error: "Selected store not found" });
+      }
+
+      const selectedStore = storeResult.rows[0];
+
       await pool.query(
         `INSERT INTO customer_orders (user_id, order_id, store_id, pincode, products, order_status)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        [userId, orderId, storeId, pincode, JSON.stringify(products), orderStatus]
+        [
+          userId,
+          orderId,
+          storeId,
+          selectedStore.pincode || "",
+          JSON.stringify(products),
+          orderStatus,
+        ]
       );
   
-      return res.json({ success: true, message: "Order placed successfully", orderId });
+      return res.json({
+        success: true,
+        message: "Order placed successfully",
+        orderId,
+        store: mapStoreRow(selectedStore),
+      });
     } catch (err) {
       console.error("Error placing order:", err);
       return res.status(500).json({ error: "Internal Server Error" });
