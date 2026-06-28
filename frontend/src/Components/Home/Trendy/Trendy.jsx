@@ -2,12 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import "./Trendy.css";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../../Features/Cart/cartSlice";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import { FiHeart } from "react-icons/fi";
 import { FaStar, FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
+import OtpLoginModal from "../../Authentication/OtpLoginModal/OtpLoginModal";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -144,12 +145,12 @@ const pickRandom = (arr, n) => {
 
 const Trendy = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("tab1");
 
   // wishList: { [productID]: true/false }
   const [wishList, setWishList] = useState({});
+  const [favoriteLoginProductId, setFavoriteLoginProductId] = useState(null);
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -302,15 +303,10 @@ const Trendy = () => {
     });
   };
 
-  // ✅ DB persist favorite toggle (same behavior you want)
-  const toggleFavorite = async (e, productID) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const saveFavorite = async (productID) => {
     const token = getAuthToken();
     if (!token) {
-      toast.error("Please login to add favorites");
-      navigate("/loginSignUp");
+      setFavoriteLoginProductId(productID);
       return;
     }
 
@@ -340,8 +336,15 @@ const Trendy = () => {
       const msg = err?.response?.data?.error || err.message || "Failed to update favorite";
       toast.error(msg);
 
-      if (err?.response?.status === 401) navigate("/loginSignUp");
+      if (err?.response?.status === 401) setFavoriteLoginProductId(productID);
     }
+  };
+
+  // ✅ DB persist favorite toggle (same behavior you want)
+  const toggleFavorite = async (e, productID) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await saveFavorite(productID);
   };
 
   const tabAll = useMemo(() => pickRandom(products, 8), [products]);
@@ -414,6 +417,17 @@ const Trendy = () => {
 
   return (
     <div className="trendyProducts">
+      <OtpLoginModal
+        isOpen={Boolean(favoriteLoginProductId)}
+        title="Login to save favorite"
+        onClose={() => setFavoriteLoginProductId(null)}
+        onSuccess={() => {
+          const productId = favoriteLoginProductId;
+          setFavoriteLoginProductId(null);
+          if (productId) return saveFavorite(productId);
+          return undefined;
+        }}
+      />
       <h2>
         Our Trendy <span>Products</span>
       </h2>

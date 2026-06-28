@@ -5,6 +5,13 @@ import { toast } from "react-hot-toast";
 import ReferralsPage from "../Referrals/ReferralsPage";
 import { AuthContext } from "../../Context/AuthContext";
 import { resolveImageUrl } from "../../utils/resolveImageUrl";
+import {
+  getCustomerDisplayName,
+  getCustomerEmailDisplay,
+  getCustomerProfileValue,
+  getEditableCustomerEmail,
+  getEditableCustomerName,
+} from "../../utils/customerDisplay";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -20,6 +27,8 @@ const ProfilePage = () => {
     username: "",
     email: "",
     mobile_number: "",
+    address: "",
+    state: "",
   });
   const [transactions, setTransactions] = useState([]);
   const [showWalletHistory, setShowWalletHistory] = useState(false);
@@ -48,7 +57,7 @@ const ProfilePage = () => {
   const referralLockedMessage =
     "Your referral dashboard will be available after your first Sai Surya Jewellers bill is generated. Please make a purchase to unlock referral commissions.";
 
-  const { logout } = useContext(AuthContext);
+  const { logout, refreshUser } = useContext(AuthContext);
 
   const getToken = () => localStorage.getItem("token");
 
@@ -150,9 +159,11 @@ const ProfilePage = () => {
         if (response.ok) {
           setUser(data);
           setFormData({
-            username: data.username,
-            email: data.email,
+            username: getEditableCustomerName(data),
+            email: getEditableCustomerEmail(data.email),
             mobile_number: data.mobile_number || "",
+            address: data.address || "",
+            state: data.state || "",
           });
 
           // wallet history
@@ -328,6 +339,11 @@ const ProfilePage = () => {
   };
 
   const handleSave = async () => {
+    if (!formData.username.trim() || !formData.email.trim() || !formData.mobile_number.trim()) {
+      toast.error("Please enter your name, email and mobile number.", { duration: 3000 });
+      return;
+    }
+
     try {
       const token = getToken();
 
@@ -339,9 +355,11 @@ const ProfilePage = () => {
         },
         body: JSON.stringify({
           id: user.id,
-          username: formData.username,
-          email: formData.email,
-          mobile_number: formData.mobile_number,
+          username: formData.username.trim(),
+          email: formData.email.trim(),
+          mobile_number: formData.mobile_number.trim(),
+          address: formData.address.trim(),
+          state: formData.state.trim(),
         }),
       });
 
@@ -349,6 +367,14 @@ const ProfilePage = () => {
 
       if (response.ok) {
         setUser(data); // Update UI with new details
+        setFormData({
+          username: getEditableCustomerName(data),
+          email: getEditableCustomerEmail(data.email),
+          mobile_number: data.mobile_number || "",
+          address: data.address || "",
+          state: data.state || "",
+        });
+        if (refreshUser) await refreshUser();
         setIsEditing(false); // Exit edit mode
         toast.success("Updated user details successfully!", { duration: 3000 });
       } else {
@@ -358,6 +384,23 @@ const ProfilePage = () => {
       console.error("Error updating profile:", error);
     }
   };
+
+  const resetProfileForm = () => {
+    setFormData({
+      username: getEditableCustomerName(user),
+      email: getEditableCustomerEmail(user?.email),
+      mobile_number: user?.mobile_number || "",
+      address: user?.address || "",
+      state: user?.state || "",
+    });
+    setIsEditing(false);
+  };
+
+  const isProfileIncomplete = (profile) =>
+    !getEditableCustomerName(profile) ||
+    !getEditableCustomerEmail(profile?.email) ||
+    !String(profile?.address || "").trim() ||
+    !String(profile?.state || "").trim();
   const normalizeFirstImage = (p) => {
     const urls = p?.image_urls;
   
@@ -764,16 +807,46 @@ const ProfilePage = () => {
         {activeTab === "Account Settings" && (
           <>
             {!isEditing ? (
-              <>
-                <p>
-                  <strong>Username:</strong> {user.username.toUpperCase()}
-                </p>
-                <p>
-                  <strong>Email:</strong> {user.email}
-                </p>
-                <p>
-                  <strong>Mobile:</strong> {user.mobile_number || "Not Available"}
-                </p>
+              <div className="accountSummaryCard">
+                <div className="accountSummaryHeader">
+                  <div className="accountAvatar">
+                    {getCustomerDisplayName(user).charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4>{getCustomerDisplayName(user)}</h4>
+                    <p>Manage your personal details and delivery information.</p>
+                  </div>
+                </div>
+
+                {isProfileIncomplete(user) && (
+                  <div className="profileCompletionNotice">
+                    Complete your profile with your name, email and address before placing orders.
+                  </div>
+                )}
+
+                <div className="accountInfoGrid">
+                  <div className="accountInfoItem">
+                    <span>Full Name</span>
+                    <strong>{getCustomerProfileValue(getEditableCustomerName(user))}</strong>
+                  </div>
+                  <div className="accountInfoItem">
+                    <span>Email Address</span>
+                    <strong>{getCustomerEmailDisplay(user.email)}</strong>
+                  </div>
+                  <div className="accountInfoItem">
+                    <span>Mobile Number</span>
+                    <strong>{getCustomerProfileValue(user.mobile_number)}</strong>
+                  </div>
+                  <div className="accountInfoItem">
+                    <span>Delivery Address</span>
+                    <strong>{getCustomerProfileValue(user.address)}</strong>
+                  </div>
+                  <div className="accountInfoItem">
+                    <span>State</span>
+                    <strong>{getCustomerProfileValue(user.state)}</strong>
+                  </div>
+                </div>
+
                 <div className="profileButtons">
                   <button
                     className="editButton"
@@ -782,42 +855,73 @@ const ProfilePage = () => {
                     Edit Profile
                   </button>
                 </div>
-              </>
+              </div>
             ) : (
-              <>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  placeholder="Username"
-                />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Email"
-                />
-                <input
-                  type="text"
-                  name="mobile_number"
-                  value={formData.mobile_number}
-                  onChange={handleChange}
-                  placeholder="Mobile Number"
-                />
+              <div className="accountSummaryCard">
+                <div className="profileEditGrid">
+                  <label>
+                    <span>Full Name</span>
+                    <input
+                      type="text"
+                      name="username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      placeholder="Enter your full name"
+                    />
+                  </label>
+                  <label>
+                    <span>Email Address</span>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="Enter your email"
+                    />
+                  </label>
+                  <label>
+                    <span>Mobile Number</span>
+                    <input
+                      type="text"
+                      name="mobile_number"
+                      value={formData.mobile_number}
+                      onChange={handleChange}
+                      placeholder="Mobile Number"
+                    />
+                  </label>
+                  <label className="profileEditFull">
+                    <span>Delivery Address</span>
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Enter your delivery address"
+                    />
+                  </label>
+                  <label>
+                    <span>State</span>
+                    <input
+                      type="text"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                      placeholder="Enter your state"
+                    />
+                  </label>
+                </div>
                 <div className="profileButtons">
                   <button className="saveButton" onClick={handleSave}>
                     Save
                   </button>
                   <button
                     className="cancelButton"
-                    onClick={() => setIsEditing(false)}
+                    onClick={resetProfileForm}
                   >
                     Cancel
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </>
         )}

@@ -9,7 +9,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { Navigation, Autoplay } from "swiper/modules";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 
 import { FiHeart } from "react-icons/fi";
@@ -18,6 +18,7 @@ import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
+import OtpLoginModal from "../../Authentication/OtpLoginModal/OtpLoginModal";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -54,10 +55,10 @@ const toUiProduct = (p) => {
 // ---------- component ----------
 const LimitedEdition = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   // ✅ hooks must be at top (before any useEffect that uses them)
   const [wishList, setWishList] = useState({}); // { [productId]: true }
+  const [favoriteLoginProductId, setFavoriteLoginProductId] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
@@ -72,15 +73,10 @@ const LimitedEdition = () => {
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
-  // ✅ Add/remove favorite (persist to DB)
-  const toggleFavorite = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const saveFavorite = async (productId) => {
     const token = getAuthToken();
     if (!token) {
-      toast.error("Please login to add favorites");
-      setTimeout(() => navigate("/loginSignUp"), 0); // ✅ reliable redirect
+      setFavoriteLoginProductId(productId);
       return;
     }
 
@@ -120,6 +116,13 @@ const LimitedEdition = () => {
       setWishList((prev) => ({ ...prev, [productId]: alreadyFav }));
       toast.error(err2?.message || "Failed to update favorite");
     }
+  };
+
+  // ✅ Add/remove favorite (persist to DB)
+  const toggleFavorite = async (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await saveFavorite(productId);
   };
 
   // ✅ Fetch favorites (so heart shows correct state)
@@ -241,6 +244,17 @@ const LimitedEdition = () => {
 
   return (
     <>
+      <OtpLoginModal
+        isOpen={Boolean(favoriteLoginProductId)}
+        title="Login to save favorite"
+        onClose={() => setFavoriteLoginProductId(null)}
+        onSuccess={() => {
+          const productId = favoriteLoginProductId;
+          setFavoriteLoginProductId(null);
+          if (productId) return saveFavorite(productId);
+          return undefined;
+        }}
+      />
       <div className="limitedProductSection">
         <h2>
           Limited <span>Edition</span>

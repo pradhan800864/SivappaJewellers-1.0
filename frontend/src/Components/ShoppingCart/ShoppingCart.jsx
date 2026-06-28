@@ -3,13 +3,16 @@ import "./ShoppingCart.css";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-hot-toast";
 import { MdOutlineClose } from "react-icons/md";
-import { requestLoginOtp, verifyLoginOtp } from "../../utils/auth";
+import { devBypassLogin, requestLoginOtp, verifyLoginOtp } from "../../utils/auth";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext"; // Update the path as per your project
 import { useContext } from "react";
 import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
 import { resolveImageUrl } from "../../utils/resolveImageUrl";
+import { getEditableCustomerName } from "../../utils/customerDisplay";
+
+const isDevLoginEnabled = process.env.REACT_APP_ENABLE_DEV_LOGIN === "true";
 
 const ShoppingCart = () => {
   const cartItems = useSelector((state) => state.cart.items);
@@ -30,7 +33,6 @@ const ShoppingCart = () => {
       dispatch(updateQuantity({ productID: productId, quantity: quantity }));
     }
   };
-  const [isReturningUser, setIsReturningUser] = useState(false);
   const [placedOrderItems, setPlacedOrderItems] = useState([]);
   const [placedOrderId, setPlacedOrderId] = useState(null);
   // eslint-disable-next-line
@@ -39,13 +41,11 @@ const ShoppingCart = () => {
   const [loginOtp, setLoginOtp] = useState("");
   const [loginOtpSent, setLoginOtpSent] = useState(false);
   const [loginResendSeconds, setLoginResendSeconds] = useState(0);
-  const [formData, setFormData] = useState({
+  const [customerDetails, setCustomerDetails] = useState({
     username: "",
-    email: "",
-    password: "",
-    mobile_number: "",
+    address: "",
+    state: "",
   });
-  const [createAccount, setCreateAccount] = useState(false);
 
   const [locationQuery, setLocationQuery] = useState("");
   const [matchedStores, setMatchedStores] = useState([]);
@@ -53,11 +53,23 @@ const ShoppingCart = () => {
   const [selectedStore, setSelectedStore] = useState(null);
   const [storeSearchPerformed, setStoreSearchPerformed] = useState(false);
   const [showAllStores, setShowAllStores] = useState(false);
+  const [showStoreOptions, setShowStoreOptions] = useState(true);
   const [isSearchingStores, setIsSearchingStores] = useState(false);
   const [isLoadingAllStores, setIsLoadingAllStores] = useState(false);
 
   const formatStoreAddress = (store) =>
     [store?.address, store?.stateName].filter(Boolean).join(", ");
+
+  const isCustomerDetailsComplete = () =>
+    Boolean(
+      customerDetails.username.trim() &&
+      customerDetails.address.trim() &&
+      customerDetails.state.trim()
+    );
+
+  const handleCustomerDetailsChange = (field, value) => {
+    setCustomerDetails((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSearchStores = async () => {
     const query = locationQuery.trim();
@@ -72,6 +84,7 @@ const ShoppingCart = () => {
       setStoreSearchPerformed(true);
       setMatchedStores([]);
       setSelectedStore(null);
+      setShowStoreOptions(true);
       setShowAllStores(false);
       setAllStores([]);
 
@@ -111,6 +124,7 @@ const ShoppingCart = () => {
       if (response.ok) {
         setAllStores(Array.isArray(data.stores) ? data.stores : []);
         setShowAllStores(true);
+        setShowStoreOptions(true);
       } else {
         toast.error(data.error || "Failed to load stores.");
       }
@@ -123,25 +137,59 @@ const ShoppingCart = () => {
 
   const handleSelectStore = (store) => {
     setSelectedStore(store);
+    setShowStoreOptions(false);
     toast.success(`${store.shopName} selected for your order.`);
   };
 
   const displayedStores = showAllStores ? allStores : matchedStores;
+  const selectableStores = selectedStore && showStoreOptions
+    ? displayedStores.filter((store) => store.id !== selectedStore.id)
+    : displayedStores;
   const shouldShowNoServiceMessage =
     storeSearchPerformed && !isSearchingStores && matchedStores.length === 0 && !showAllStores;
+  const shouldShowStoreOptions =
+    showStoreOptions && (selectableStores.length > 0 || shouldShowNoServiceMessage);
 
   const handlePlaceOrder = async () => {
     if (!selectedStore?.id || !user) {
       toast.error("Please select a store before placing order.");
       return;
     }
+
+    if (!isCustomerDetailsComplete()) {
+      toast.error("Please enter your name, address and state before submitting the order request.");
+      return;
+    }
   
     try {
+      const token = localStorage.getItem("token");
+      const profileRes = await fetch(process.env.REACT_APP_API_BASE + "/api/users/update", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: user.id,
+          username: customerDetails.username.trim(),
+          email: user.email,
+          mobile_number: user.mobile_number,
+          address: customerDetails.address.trim(),
+          state: customerDetails.state.trim(),
+        }),
+      });
+
+      const profileData = await profileRes.json().catch(() => ({}));
+      if (!profileRes.ok) {
+        toast.error(profileData.error || "Failed to save customer details.");
+        return;
+      }
+
       const response = await fetch(process.env.REACT_APP_API_BASE + "/api/place-order", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           userId: user.id,
@@ -156,14 +204,13 @@ const ShoppingCart = () => {
       const data = await response.json();
   
       if (response.ok) {
-        // 🔁 Move to the confirmation tab
         setPlacedOrderItems(cartItems);
         setPlacedOrderId(data.orderId || null);
         dispatch(clearCart());
         handleTabClick("cartTab3");
         window.scrollTo({ top: 0, behavior: "smooth" });
         setPayments(true);
-        toast.success("Order placed successfully!");
+        toast.success("Order request submitted successfully!");
       } else {
         toast.error(data.error || "Failed to place order.");
       }
@@ -192,6 +239,16 @@ const ShoppingCart = () => {
       setIsAuthenticated(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    setCustomerDetails({
+      username: getEditableCustomerName(user),
+      address: user.address || "",
+      state: user.state || "",
+    });
+  }, [user]);
 
   useEffect(() => {
     if (loginResendSeconds <= 0) return undefined;
@@ -260,7 +317,6 @@ const ShoppingCart = () => {
       if (result.success && result.token) {
         await login(result.token);  // ✅ This updates AuthContext
         toast.success("Login successful!");
-        setIsReturningUser(false);  // optional: collapse login form
         resetCheckoutLoginState();
         setLocationQuery("");
         setMatchedStores([]);
@@ -269,40 +325,31 @@ const ShoppingCart = () => {
         setStoreSearchPerformed(false);
         setShowAllStores(false);
       } else {
-        toast.error("Invalid credentials");
+        toast.error(result.error || "Invalid OTP");
       }
     } catch (error) {
       toast.error("Login failed");
     }
   };
 
-  const handleRegister = async () => {
+  const handleDevBypassCheckoutLogin = async () => {
     try {
-      const payload = {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        mobile_number: formData.mobile_number,
-        referral_code: null,
-      };
-  
-      const response = await fetch(process.env.REACT_APP_API_BASE + "/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
-        toast.success("Registered successfully!");
-        setCreateAccount(false);
-        setIsReturningUser(true);
+      const result = await devBypassLogin(loginMobile.trim() || undefined);
+      if (result.success && result.token) {
+        await login(result.token);
+        toast.success("Local test login successful.");
+        resetCheckoutLoginState();
+        setLocationQuery("");
+        setMatchedStores([]);
+        setAllStores([]);
+        setSelectedStore(null);
+        setStoreSearchPerformed(false);
+        setShowAllStores(false);
       } else {
-        toast.error(data.error || "Registration failed.");
+        toast.error(result.error || "Local test login failed");
       }
     } catch (error) {
-      toast.error("Server error. Try again later.");
+      toast.error("Local test login failed");
     }
   };
 
@@ -654,21 +701,6 @@ const ShoppingCart = () => {
                 <div className="checkoutDetailsSection">
                   <h4>Billing Details</h4>
 
-                  {/* Show checkbox only if not authenticated */}
-                  {!isAuthenticatedFromContext && !isReturningUser && (
-                    <div className="returningUserToggle">
-                      <input
-                        type="checkbox"
-                        id="returningUserCheckbox"
-                        checked={isReturningUser}
-                        onChange={() => setIsReturningUser(true)}
-                      />
-                      <label htmlFor="returningUserCheckbox">
-                        Sign In Already Registered User
-                      </label>
-                    </div>
-                  )}
-
                   <div className="checkoutDetailsForm">
                     {loading ? (
                       <p>Checking authentication...</p>
@@ -676,8 +708,28 @@ const ShoppingCart = () => {
                       // ✅ If authenticated, show success message & store search
                       <>
                         <p className="loginSuccessMsg">
-                          Authentication Successful. Please enter your district or state name to find the stores available for your location.
+                          Authentication successful. Please enter your delivery details and choose the store you prefer.
                         </p>
+                        <div className="checkoutCustomerDetails">
+                          <input
+                            type="text"
+                            placeholder="Full Name *"
+                            value={customerDetails.username}
+                            onChange={(e) => handleCustomerDetailsChange("username", e.target.value)}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Delivery Address *"
+                            value={customerDetails.address}
+                            onChange={(e) => handleCustomerDetailsChange("address", e.target.value)}
+                          />
+                          <input
+                            type="text"
+                            placeholder="State *"
+                            value={customerDetails.state}
+                            onChange={(e) => handleCustomerDetailsChange("state", e.target.value)}
+                          />
+                        </div>
                         <div className="storeSearchSection">
                           <input
                             type="text"
@@ -688,6 +740,7 @@ const ShoppingCart = () => {
                               setMatchedStores([]);
                               setAllStores([]);
                               setSelectedStore(null);
+                              setShowStoreOptions(true);
                               setStoreSearchPerformed(false);
                               setShowAllStores(false);
                             }}
@@ -704,23 +757,32 @@ const ShoppingCart = () => {
 
                         {selectedStore && (
                           <div className="selectedStoreBanner">
-                            <strong>Selected Store:</strong> {selectedStore.shopName}
-                            {formatStoreAddress(selectedStore) ? `, ${formatStoreAddress(selectedStore)}` : ""}
+                            <span>
+                              <strong>Selected Store:</strong> {selectedStore.shopName}
+                              {formatStoreAddress(selectedStore) ? `, ${formatStoreAddress(selectedStore)}` : ""}
+                            </span>
+                            <button
+                              type="button"
+                              className="changeStoreButton"
+                              onClick={() => setShowStoreOptions(true)}
+                            >
+                              Change Store
+                            </button>
                           </div>
                         )}
 
-                        {(displayedStores.length > 0 || shouldShowNoServiceMessage) && (
+                        {shouldShowStoreOptions && (
                           <div className="storeSelectionPanel">
-                            {displayedStores.length > 0 && (
+                            {selectableStores.length > 0 && (
                               <div className="storeResultsSection">
                                 <p className="storeResultsHeading">
                                   {showAllStores ? "All Store Locations" : "Matched Stores"}
                                 </p>
                                 <div className="storeResultsList">
-                                  {displayedStores.map((store) => (
+                                  {selectableStores.map((store) => (
                                     <div
                                       key={store.id}
-                                      className={`storeResultCard ${selectedStore?.id === store.id ? "selected" : ""}`}
+                                      className="storeResultCard"
                                     >
                                       <div className="storeResultInfo">
                                         <h5>{store.shopName}</h5>
@@ -732,7 +794,7 @@ const ShoppingCart = () => {
                                         className="storeSelectButton"
                                         onClick={() => handleSelectStore(store)}
                                       >
-                                        {selectedStore?.id === store.id ? "Selected" : "Select Store"}
+                                        Select Store
                                       </button>
                                     </div>
                                   ))}
@@ -758,12 +820,12 @@ const ShoppingCart = () => {
                           </div>
                         )}
                       </>
-                    ) : isReturningUser ? (
+                    ) : (
                       // ✅ Login form
                       <form>
                         <input
                           type="tel"
-                          placeholder="Registered Mobile Number"
+                          placeholder="Mobile Number"
                           value={loginMobile}
                           disabled={loginOtpSent}
                           onChange={(e) => setLoginMobile(e.target.value)}
@@ -837,60 +899,21 @@ const ShoppingCart = () => {
                         >
                           {loginOtpSent ? "Verify OTP & Login" : "Send OTP"}
                         </button>
-                      </form>
-                    ) : (
-                      // ✅ Registration form
-                      <form>
-                        <input
-                          type="text"
-                          placeholder="Username *"
-                          value={formData.username}
-                          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        />
-                        <input
-                          type="tel"
-                          placeholder="Mobile Number *"
-                          value={formData.mobile_number}
-                          onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
-                        />
-                        <input
-                          type="email"
-                          placeholder="Email *"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                        <input
-                          type="password"
-                          placeholder="Password *"
-                          value={formData.password}
-                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        />
-
-                        <label className="returningUserToggle">
-                          <input
-                            type="checkbox"
-                            checked={createAccount}
-                            onChange={() => setCreateAccount(!createAccount)}
-                          />
-                          Create An Account?
-                        </label>
-
-                        {createAccount && (
+                        {isDevLoginEnabled && !loginOtpSent && (
                           <button
                             type="button"
-                            className="registerBtn"
-                            onClick={handleRegister}
+                            onClick={handleDevBypassCheckoutLogin}
                             style={{
-                              backgroundColor: "black",
-                              color: "white",
+                              backgroundColor: "white",
+                              color: "black",
                               padding: "10px 20px",
-                              border: "none",
+                              border: "1px solid #d1d5db",
                               borderRadius: "4px",
                               cursor: "pointer",
                               marginTop: "10px"
                             }}
                           >
-                            Register
+                            Local Test Login
                           </button>
                         )}
                       </form>
@@ -959,10 +982,10 @@ const ShoppingCart = () => {
                 <button
                   type="button"
                   onClick={handlePlaceOrder}
-                  disabled={!selectedStore}
+                  disabled={!isAuthenticatedFromContext || !selectedStore || !isCustomerDetailsComplete()}
                   
                 >
-                  Place Order
+                  Submit Order Request
                 </button>
 
                 </div>
@@ -977,17 +1000,36 @@ const ShoppingCart = () => {
                     <div className="orderCompleteMessageImg">
                       <img src={resolveImageUrl(success)} alt="" />
                     </div>
-                    <h3>Your order is completed!</h3>
-                    <p>Thank you. Your order has been received.</p>
+                    <h3>Your order request has been submitted!</h3>
+                    <p>Thank you. We have sent your request to the selected store.</p>
                     {selectedStore && (
-                      <p>
-                        Your order has been forwarded to <strong>{selectedStore.shopName}</strong>
-                        {formatStoreAddress(selectedStore) ? (
-                          <> at <strong>{formatStoreAddress(selectedStore)}</strong></>
-                        ) : null}.
-                        Our customer service team will contact you shortly to confirm the details.
-                      </p>
+                      <div className="orderNextSteps">
+                        <p>
+                          Your request has been forwarded to <strong>{selectedStore.shopName}</strong>
+                          {formatStoreAddress(selectedStore) ? (
+                            <> at <strong>{formatStoreAddress(selectedStore)}</strong></>
+                          ) : null}.
+                        </p>
+                        <p>The store team will contact you shortly to confirm availability, billing and payment details.</p>
+                      </div>
                     )}
+                    <div className="orderCompleteActions">
+                      <Link
+                        to="/profile"
+                        state={{ activeTab: "My Orders" }}
+                        className="orderActionButton primary"
+                        onClick={scrollToTop}
+                      >
+                        View My Orders
+                      </Link>
+                      <Link
+                        to="/shop"
+                        className="orderActionButton"
+                        onClick={scrollToTop}
+                      >
+                        Continue Shopping
+                      </Link>
+                    </div>
                   </div>
                   <div className="orderInfo">
                     <div className="orderInfoItem">

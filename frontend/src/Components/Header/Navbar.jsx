@@ -22,6 +22,7 @@ import { FaPinterest } from "react-icons/fa";
 
 import Badge from "@mui/material/Badge";
 import { AuthContext } from "../../Context/AuthContext";
+import { getCustomerDisplayName } from "../../utils/customerDisplay";
 
 const Navbar = () => {
   const cart = useSelector((state) => state.cart);
@@ -85,7 +86,7 @@ const Navbar = () => {
           
           <Link to={user ? "/profile" : "/loginSignUp"} onClick={scrollToTop} className="userContainer">
             <FaRegUser size={22} />
-            {user && <span className="userGreeting">Hi, {user.username.toUpperCase()}</span>}
+            {user && <span className="userGreeting">Hi, {getCustomerDisplayName(user)}</span>}
           </Link>
 
           <Link to="/cart" onClick={scrollToTop}>

@@ -15,6 +15,9 @@ const LOGIN_OTP_RESEND_COOLDOWN_SECONDS = Math.max(
   1
 );
 const TWOFACTOR_BASE_URL = "https://2factor.in/API/V1";
+const isDevAuthBypassEnabled = () =>
+  process.env.NODE_ENV !== "production" &&
+  String(process.env.DEV_AUTH_BYPASS_ENABLED || "").toLowerCase() === "true";
 
 const createReferralRequestError = (status, message) => {
   const err = new Error(message);
@@ -47,7 +50,7 @@ const ensureCustomerLoginOtpsTable = () => {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS customer_login_otps (
           id BIGSERIAL PRIMARY KEY,
-          user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          user_id INT REFERENCES users(id) ON DELETE CASCADE,
           mobile_number TEXT NOT NULL,
           provider_session_id TEXT NOT NULL,
           expires_at TIMESTAMPTZ NOT NULL,
@@ -58,6 +61,7 @@ const ensureCustomerLoginOtpsTable = () => {
       `);
       await pool.query(`
         ALTER TABLE customer_login_otps
+          ALTER COLUMN user_id DROP NOT NULL,
           ADD COLUMN IF NOT EXISTS provider_session_id TEXT,
           ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           ADD COLUMN IF NOT EXISTS used BOOLEAN NOT NULL DEFAULT FALSE,
@@ -109,6 +113,40 @@ const findUserByMobileNumber = async (client, mobileNumber) => {
          )
       LIMIT 1`,
     [cleanMobile, lastTenDigits.length === 10 ? lastTenDigits : ""]
+  );
+
+  return rows[0] || null;
+};
+
+const generateUniqueReferralCodeForClient = async (client) => {
+  let newReferralCode;
+  let isUnique = false;
+
+  while (!isUnique) {
+    newReferralCode = generateReferralCode();
+    const existingCode = await client.query(
+      "SELECT referral_code FROM users WHERE referral_code = $1",
+      [newReferralCode]
+    );
+    if (existingCode.rows.length === 0) isUnique = true;
+  }
+
+  return newReferralCode;
+};
+
+const createOtpOnlyUser = async (client, mobileNumber) => {
+  const cleanMobile = normalizeMobileNumber(mobileNumber);
+  const timestamp = Date.now();
+  const referralCode = await generateUniqueReferralCodeForClient(client);
+  const placeholderPassword = await bcrypt.hash(`otp-login-${timestamp}-${cleanMobile}`, 10);
+  const username = `Customer-${cleanMobile.slice(-4)}-${timestamp}`;
+  const email = `customer-${cleanMobile}-${timestamp}@otp.local`;
+
+  const { rows } = await client.query(
+    `INSERT INTO users (username, email, password, mobile_number, referral_code, address, state, referrer_id)
+     VALUES ($1, $2, $3, $4, $5, '', '', NULL)
+     RETURNING *`,
+    [username, email, placeholderPassword, cleanMobile, referralCode]
   );
 
   return rows[0] || null;
@@ -420,21 +458,20 @@ router.post("/login/request-otp", async (req, res) => {
     await ensureCustomerLoginOtpsTable();
 
     const user = await findUserByMobileNumber(client, mobileNumber);
-    if (!user) {
-      return res.status(404).json({
-        error: "No registered account found for this mobile number",
-      });
-    }
+    const existingUserId = user?.id || null;
 
     const recentOtpRes = await client.query(
       `SELECT created_at
          FROM customer_login_otps
-        WHERE user_id = $1
+        WHERE (
+            ($1::int IS NOT NULL AND user_id = $1)
+            OR ($1::int IS NULL AND mobile_number = $2)
+          )
           AND used = FALSE
-          AND created_at > NOW() - ($2::int * INTERVAL '1 second')
+          AND created_at > NOW() - ($3::int * INTERVAL '1 second')
         ORDER BY created_at DESC
         LIMIT 1`,
-      [user.id, LOGIN_OTP_RESEND_COOLDOWN_SECONDS]
+      [existingUserId, cleanMobile, LOGIN_OTP_RESEND_COOLDOWN_SECONDS]
     );
 
     if (recentOtpRes.rowCount) {
@@ -451,27 +488,30 @@ router.post("/login/request-otp", async (req, res) => {
       });
     }
 
-    const smsResult = await sendLoginOtpSms(user.mobile_number || mobileNumber);
+    const smsResult = await sendLoginOtpSms(user?.mobile_number || mobileNumber);
     const expiresAt = new Date(Date.now() + LOGIN_OTP_TTL_MINUTES * 60 * 1000);
 
     await client.query(
       `UPDATE customer_login_otps
           SET used = TRUE
-        WHERE user_id = $1
+        WHERE (
+            ($1::int IS NOT NULL AND user_id = $1)
+            OR ($1::int IS NULL AND mobile_number = $2)
+          )
           AND used = FALSE`,
-      [user.id]
+      [existingUserId, cleanMobile]
     );
 
     await client.query(
       `INSERT INTO customer_login_otps (user_id, mobile_number, provider_session_id, expires_at)
        VALUES ($1, $2, $3, $4)`,
-      [user.id, cleanMobile, smsResult.sessionId, expiresAt]
+      [existingUserId, cleanMobile, smsResult.sessionId, expiresAt]
     );
 
     return res.json({
       success: true,
       message: "OTP sent successfully.",
-      mobile_number: maskMobileNumber(user.mobile_number || cleanMobile),
+      mobile_number: maskMobileNumber(user?.mobile_number || cleanMobile),
       expires_in_seconds: LOGIN_OTP_TTL_MINUTES * 60,
     });
   } catch (err) {
@@ -497,22 +537,20 @@ router.post("/login/verify-otp", async (req, res) => {
     await ensureCustomerLoginOtpsTable();
     await client.query("BEGIN");
 
-    const user = await findUserByMobileNumber(client, mobileNumber);
-    if (!user) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({
-        error: "No registered account found for this mobile number",
-      });
-    }
+    let user = await findUserByMobileNumber(client, mobileNumber);
+    const existingUserId = user?.id || null;
 
     const otpRes = await client.query(
       `SELECT id, provider_session_id, expires_at, used, attempts
          FROM customer_login_otps
-        WHERE user_id = $1
+        WHERE (
+            ($1::int IS NOT NULL AND user_id = $1)
+            OR ($1::int IS NULL AND mobile_number = $2)
+          )
         ORDER BY created_at DESC
         LIMIT 1
         FOR UPDATE`,
-      [user.id]
+      [existingUserId, cleanMobile]
     );
 
     if (!otpRes.rowCount) {
@@ -557,11 +595,20 @@ router.post("/login/verify-otp", async (req, res) => {
       return res.status(400).json({ error: "Invalid OTP" });
     }
 
+    if (!user) {
+      user = await createOtpOnlyUser(client, mobileNumber);
+      if (!user) {
+        await client.query("ROLLBACK");
+        return res.status(500).json({ error: "Unable to create customer account" });
+      }
+    }
+
     await client.query(
       `UPDATE customer_login_otps
-          SET used = TRUE
+          SET used = TRUE,
+              user_id = $2
         WHERE id = $1`,
-      [otpRow.id]
+      [otpRow.id, user.id]
     );
 
     await client.query("COMMIT");
@@ -574,6 +621,49 @@ router.post("/login/verify-otp", async (req, res) => {
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("Error verifying login OTP:", err);
+    return res.status(500).json({ error: "Server error" });
+  } finally {
+    client.release();
+  }
+});
+
+// Local development only: bypass SMS OTP costs while testing.
+router.post("/login/dev-bypass", async (req, res) => {
+  if (!isDevAuthBypassEnabled()) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  const fallbackMobile = process.env.DEV_AUTH_BYPASS_MOBILE || "9999999999";
+  const mobileNumber = String(req.body?.mobile_number || fallbackMobile).trim();
+  const cleanMobile = normalizeMobileNumber(mobileNumber);
+
+  if (cleanMobile.length < 10) {
+    return res.status(400).json({ error: "Valid mobile number is required" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let user = await findUserByMobileNumber(client, cleanMobile);
+    if (!user) {
+      user = await createOtpOnlyUser(client, cleanMobile);
+    }
+
+    await client.query("COMMIT");
+
+    const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "12h",
+    });
+
+    return res.json({
+      message: "Local development login successful",
+      token,
+      user,
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Error during dev auth bypass:", err);
     return res.status(500).json({ error: "Server error" });
   } finally {
     client.release();
@@ -604,7 +694,7 @@ router.post("/login", (_req, res) => {
   // ✅ Fetch logged-in user details
   router.get("/me", verifyToken, async (req, res) => {
     try {
-      const user = await pool.query("SELECT id, username, email, mobile_number, referral_code, wallet FROM users WHERE id = $1", [
+      const user = await pool.query("SELECT id, username, email, mobile_number, referral_code, wallet, address, state FROM users WHERE id = $1", [
         req.user.user_id,
       ]);
   
@@ -622,7 +712,7 @@ router.post("/login", (_req, res) => {
 
   router.put("/update", verifyToken, async (req, res) => {
     try {
-      const { id, username, email, mobile_number } = req.body; // ✅ Get ID from frontend
+      const { id, username, email, mobile_number, address, state } = req.body; // ✅ Get ID from frontend
   
       // Ensure the user is updating their own profile
       if (id !== req.user.user_id) {
@@ -630,8 +720,8 @@ router.post("/login", (_req, res) => {
       }
   
       const updatedUser = await pool.query(
-        "UPDATE users SET username = $1, email = $2, mobile_number = $3 WHERE id = $4 RETURNING *",
-        [username, email, mobile_number, id] // ✅ Send ID as the 4th parameter
+        "UPDATE users SET username = $1, email = $2, mobile_number = $3, address = COALESCE($4, address), state = COALESCE($5, state) WHERE id = $6 RETURNING *",
+        [username, email, mobile_number, address ?? null, state ?? null, id]
       );
   
       if (updatedUser.rows.length === 0) {

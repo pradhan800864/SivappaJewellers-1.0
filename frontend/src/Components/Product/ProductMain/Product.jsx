@@ -10,6 +10,7 @@ import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
+import OtpLoginModal from "../../Authentication/OtpLoginModal/OtpLoginModal";
 import "./Product.css";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
@@ -34,6 +35,7 @@ const Product = () => {
   const [currentImg, setCurrentImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [wishList, setWishList] = useState({}); // { [productId]: true }
+  const [favoriteLoginProductId, setFavoriteLoginProductId] = useState(null);
 
   const getAuthToken = () =>
     localStorage.getItem("token") ||
@@ -134,12 +136,10 @@ const Product = () => {
     if (!Number.isNaN(val) && val > 0) setQuantity(val);
   };
 
-  const toggleFavorite = async (e, productId) => {
-    e.preventDefault();
-
+  const saveFavorite = async (productId) => {
     const token = getAuthToken();
     if (!token) {
-      toast.error("Please login to add favorites");
+      setFavoriteLoginProductId(productId);
       return;
     }
 
@@ -167,6 +167,11 @@ const Product = () => {
       setWishList((prev) => ({ ...prev, [productId]: alreadyFav }));
       toast.error(err?.response?.data?.error || "Failed to update favorite");
     }
+  };
+
+  const toggleFavorite = async (e, productId) => {
+    e.preventDefault();
+    await saveFavorite(productId);
   };
 
   /**
@@ -216,6 +221,17 @@ const Product = () => {
   if (loading) {
     return (
       <div className="productSection">
+        <OtpLoginModal
+          isOpen={Boolean(favoriteLoginProductId)}
+          title="Login to save favorite"
+          onClose={() => setFavoriteLoginProductId(null)}
+          onSuccess={() => {
+            const productId = favoriteLoginProductId;
+            setFavoriteLoginProductId(null);
+            if (productId) return saveFavorite(productId);
+            return undefined;
+          }}
+        />
         <div className="productShowCase">
           <div className="productDetails">
             <div className="productName">

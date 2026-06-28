@@ -5,18 +5,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../../Features/Cart/cartSlice";
 
 import Filter from "../Filters/Filter";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FiHeart } from "react-icons/fi";
 import { IoFilterSharp, IoClose } from "react-icons/io5";
 import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
+import OtpLoginModal from "../../Authentication/OtpLoginModal/OtpLoginModal";
 
 
 const ShopDetails = () => {
-  const navigate = useNavigate();
-
   const getToken = () => localStorage.getItem("token"); // change key if you use different one
   const authHeaders = () => {
     const t = getToken();
@@ -43,6 +42,7 @@ const ShopDetails = () => {
   const [isSortOpen, setIsSortOpen] = useState(false);
   // wishlist + drawer + pagination
   const [wishList, setWishList] = useState({});
+  const [favoriteLoginProductId, setFavoriteLoginProductId] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 12;
@@ -107,16 +107,11 @@ const ShopDetails = () => {
     // eslint-disable-next-line
   }, []);
 
-  const handleWishlistClick = async (productID) => {
+  const saveFavorite = async (productID) => {
     const token = getToken();
 
     if (!token) {
-      localStorage.setItem("pending_favorite_product_id", String(productID));
-      localStorage.setItem(
-        "post_login_redirect",
-        window.location.pathname + window.location.search
-      );
-      navigate("/loginSignUp");
+      setFavoriteLoginProductId(productID);
       return;
     }
 
@@ -145,16 +140,15 @@ const ShopDetails = () => {
     } catch (err) {
       console.error("Favorite toggle failed:", err);
       if (err?.response?.status === 401) {
-        localStorage.setItem("pending_favorite_product_id", String(productID));
-        localStorage.setItem(
-          "post_login_redirect",
-          window.location.pathname + window.location.search
-        );
-        navigate("/loginSignUp");
+        setFavoriteLoginProductId(productID);
         return;
       }
       toast.error("Failed to update favorite");
     }
+  };
+
+  const handleWishlistClick = async (productID) => {
+    await saveFavorite(productID);
   };
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -393,6 +387,17 @@ const ShopDetails = () => {
 
   return (
     <>
+      <OtpLoginModal
+        isOpen={Boolean(favoriteLoginProductId)}
+        title="Login to save favorite"
+        onClose={() => setFavoriteLoginProductId(null)}
+        onSuccess={() => {
+          const productId = favoriteLoginProductId;
+          setFavoriteLoginProductId(null);
+          if (productId) return saveFavorite(productId);
+          return undefined;
+        }}
+      />
       <div className="shopDetails">
         <div className="shopDetailMain">
           <div className="shopDetails__left">
