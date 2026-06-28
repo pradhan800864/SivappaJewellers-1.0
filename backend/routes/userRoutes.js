@@ -4,14 +4,196 @@ const pool = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { generateReferralCode } = require("../utils/referralCode.js");
+const https = require("https");
 
 let referralRequestsTableReady = null;
+let customerLoginOtpsTableReady = null;
+const LOGIN_OTP_TTL_MINUTES = 5;
+const LOGIN_OTP_MAX_ATTEMPTS = 5;
+const LOGIN_OTP_RESEND_COOLDOWN_SECONDS = Math.max(
+  Number(process.env.LOGIN_OTP_RESEND_COOLDOWN_SECONDS) || 60,
+  1
+);
+const TWOFACTOR_BASE_URL = "https://2factor.in/API/V1";
 
 const createReferralRequestError = (status, message) => {
   const err = new Error(message);
   err.status = status;
   err.exposeMessage = message;
   return err;
+};
+
+const normalizeMobileNumber = (value) => String(value || "").replace(/\D/g, "");
+
+const maskMobileNumber = (mobileNumber) => {
+  const clean = normalizeMobileNumber(mobileNumber);
+  if (clean.length <= 4) return clean;
+  return `${"*".repeat(Math.max(clean.length - 4, 0))}${clean.slice(-4)}`;
+};
+
+const formatTwoFactorMobileNumber = (mobileNumber) => {
+  const raw = String(mobileNumber || "").trim();
+  const clean = normalizeMobileNumber(raw);
+  const defaultCountryCode = normalizeMobileNumber(process.env.DEFAULT_SMS_COUNTRY_CODE || "91");
+
+  if (clean.length === 10 && defaultCountryCode) return `${defaultCountryCode}${clean}`;
+
+  return clean;
+};
+
+const ensureCustomerLoginOtpsTable = () => {
+  if (!customerLoginOtpsTableReady) {
+    customerLoginOtpsTableReady = (async () => {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS customer_login_otps (
+          id BIGSERIAL PRIMARY KEY,
+          user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          mobile_number TEXT NOT NULL,
+          provider_session_id TEXT NOT NULL,
+          expires_at TIMESTAMPTZ NOT NULL,
+          used BOOLEAN NOT NULL DEFAULT FALSE,
+          attempts INT NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `);
+      await pool.query(`
+        ALTER TABLE customer_login_otps
+          ADD COLUMN IF NOT EXISTS provider_session_id TEXT,
+          ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          ADD COLUMN IF NOT EXISTS used BOOLEAN NOT NULL DEFAULT FALSE,
+          ADD COLUMN IF NOT EXISTS attempts INT NOT NULL DEFAULT 0,
+          ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      `);
+      await pool.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1
+              FROM information_schema.columns
+             WHERE table_name = 'customer_login_otps'
+               AND column_name = 'otp_hash'
+          ) THEN
+            ALTER TABLE customer_login_otps ALTER COLUMN otp_hash DROP NOT NULL;
+          END IF;
+        END $$;
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_customer_login_otps_user_created_at
+        ON customer_login_otps (user_id, created_at DESC)
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_customer_login_otps_mobile_created_at
+        ON customer_login_otps (mobile_number, created_at DESC)
+      `);
+    })().catch((err) => {
+      customerLoginOtpsTableReady = null;
+      throw err;
+    });
+  }
+
+  return customerLoginOtpsTableReady;
+};
+
+const findUserByMobileNumber = async (client, mobileNumber) => {
+  const cleanMobile = normalizeMobileNumber(mobileNumber);
+  if (cleanMobile.length < 10) return null;
+  const lastTenDigits = cleanMobile.slice(-10);
+
+  const { rows } = await client.query(
+    `SELECT *
+       FROM users
+      WHERE regexp_replace(COALESCE(mobile_number, ''), '[^0-9]', '', 'g') = $1
+         OR (
+           $2::text <> ''
+           AND right(regexp_replace(COALESCE(mobile_number, ''), '[^0-9]', '', 'g'), 10) = $2
+         )
+      LIMIT 1`,
+    [cleanMobile, lastTenDigits.length === 10 ? lastTenDigits : ""]
+  );
+
+  return rows[0] || null;
+};
+
+const getJson = (urlString, options = {}) =>
+  new Promise((resolve, reject) => {
+    const allowedErrorStatuses = new Set(options.allowedErrorStatuses || []);
+    const url = new URL(urlString);
+    const req = https.request(
+      {
+        method: "GET",
+        hostname: url.hostname,
+        path: `${url.pathname}${url.search}`,
+        port: url.port || 443,
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
+        res.on("end", () => {
+          let parsed = null;
+          try {
+            parsed = data ? JSON.parse(data) : null;
+          } catch (error) {
+            reject(new Error(`Invalid JSON response from 2Factor: ${data}`));
+            return;
+          }
+
+          if (
+            (res.statusCode >= 200 && res.statusCode < 300) ||
+            allowedErrorStatuses.has(res.statusCode)
+          ) {
+            resolve(parsed);
+          } else {
+            reject(new Error(`2Factor failed with status ${res.statusCode}: ${data}`));
+          }
+        });
+      }
+    );
+
+    req.on("error", reject);
+    req.end();
+  });
+
+const getTwoFactorApiKey = () => String(process.env.TWOFACTOR_API_KEY || "").trim();
+
+const sendLoginOtpSms = async (mobileNumber) => {
+  const apiKey = getTwoFactorApiKey();
+  if (!apiKey) {
+    throw new Error("TWOFACTOR_API_KEY is not configured");
+  }
+
+  const formattedMobile = formatTwoFactorMobileNumber(mobileNumber);
+  if (!formattedMobile) {
+    throw new Error("Valid mobile number is required");
+  }
+
+  const url = `${TWOFACTOR_BASE_URL}/${encodeURIComponent(apiKey)}/SMS/${encodeURIComponent(formattedMobile)}/AUTOGEN`;
+  const result = await getJson(url);
+
+  if (String(result?.Status || "").toLowerCase() !== "success" || !result?.Details) {
+    throw new Error(result?.Details || "Failed to send OTP through 2Factor");
+  }
+
+  return {
+    sessionId: String(result.Details),
+    providerResponse: result,
+  };
+};
+
+const verifyLoginOtpWithProvider = async (sessionId, otp) => {
+  const apiKey = getTwoFactorApiKey();
+  if (!apiKey) {
+    throw new Error("TWOFACTOR_API_KEY is not configured");
+  }
+
+  const url = `${TWOFACTOR_BASE_URL}/${encodeURIComponent(apiKey)}/SMS/VERIFY/${encodeURIComponent(sessionId)}/${encodeURIComponent(otp)}`;
+  const result = await getJson(url, { allowedErrorStatuses: [400] });
+
+  return {
+    verified: String(result?.Status || "").toLowerCase() === "success",
+    providerResponse: result,
+  };
 };
 
 const ensureReferralRequestsTable = () => {
@@ -31,6 +213,17 @@ const ensureReferralRequestsTable = () => {
           reviewed_by INT,
           reviewer_role TEXT
         )
+      `);
+      await pool.query(`
+        ALTER TABLE referral_requests
+          ADD COLUMN IF NOT EXISTS request_source TEXT NOT NULL DEFAULT 'referral_code',
+          ADD COLUMN IF NOT EXISTS referral_code_entered TEXT,
+          ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending',
+          ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ,
+          ADD COLUMN IF NOT EXISTS reviewed_by INT,
+          ADD COLUMN IF NOT EXISTS reviewer_role TEXT
       `);
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_referral_requests_status_created_at
@@ -68,6 +261,41 @@ const findCompanyUser = async (client) => {
   return companyRes.rows[0] || null;
 };
 
+const resolveRequestedReferralParent = async (client, referralCode) => {
+  const cleanReferralCode = String(referralCode || "").trim();
+
+  if (cleanReferralCode) {
+    const referrerRes = await client.query(
+      `SELECT id, username, email, mobile_number, referral_code
+         FROM users
+        WHERE LOWER(referral_code) = LOWER($1)
+        LIMIT 1`,
+      [cleanReferralCode]
+    );
+
+    if (!referrerRes.rowCount) {
+      throw createReferralRequestError(400, "Invalid referral code");
+    }
+
+    return {
+      parent: referrerRes.rows[0],
+      requestSource: "referral_code",
+      referralCodeEntered: cleanReferralCode,
+    };
+  }
+
+  const company = await findCompanyUser(client);
+  if (!company) {
+    throw createReferralRequestError(400, "Company user not found");
+  }
+
+  return {
+    parent: company,
+    requestSource: "join_company",
+    referralCodeEntered: null,
+  };
+};
+
 const fetchPendingReferralRequest = async (client, userId) => {
   const { rows } = await client.query(
     `SELECT
@@ -98,16 +326,22 @@ const fetchPendingReferralRequest = async (client, userId) => {
 // ✅ User Registration with Referral Code
 // ✅ Use referral code generator in user registration
 router.post("/register", async (req, res) => {
+  const client = await pool.connect();
   try {
     const { username, email, password, mobile_number, referral_code, address, state, joinCompany } = req.body;
+    const requestedReferralCode = joinCompany ? null : referral_code;
+
+    await ensureReferralRequestsTable();
+    await client.query("BEGIN");
 
     // ✅ Check if the user already exists
-    const userExists = await pool.query(
+    const userExists = await client.query(
       "SELECT * FROM users WHERE email = $1 OR mobile_number = $2",
       [email, mobile_number]
     );
 
     if (userExists.rows.length > 0) {
+      await client.query("ROLLBACK");
       return res.status(400).json({ error: "User already exists" });
     }
 
@@ -115,48 +349,14 @@ router.post("/register", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // ✅ Default referrer_id (If user selects "Join Company")
-    let referrerId = null;
-
-    if (joinCompany) {
-      referrerId = 1; // ✅ Assign Company User (ID: 1) as parent
-    } else if (referral_code) {
-      const referrer = await pool.query(
-        "SELECT id FROM users WHERE referral_code = $1",
-        [referral_code]
-      );
-
-      if (referrer.rows.length === 0) {
-        return res.status(400).json({ error: "Invalid referral code" });
-      }
-
-      referrerId = referrer.rows[0].id;
-
-      // ✅ Get company user ID (to exclude from the child limit check)
-      const companyUser = await pool.query(
-        "SELECT id FROM users WHERE username = 'COMPANY'"
-      );
-      const companyUserId = companyUser.rows[0]?.id;
-
-      // ✅ Check if referrer has already 2 children (except Company)
-      if (referrerId !== companyUserId) {
-        const childCount = await pool.query(
-          "SELECT COUNT(*) FROM users WHERE referrer_id = $1",
-          [referrerId]
-        );
-
-        if (parseInt(childCount.rows[0].count) >= 2) {
-          return res.status(400).json({ error: "This user has already reached the maximum of 2 referrals." });
-        }
-      }
-    }
+    const referralRequest = await resolveRequestedReferralParent(client, requestedReferralCode);
 
     // ✅ Generate a unique referral code
     let newReferralCode;
     let isUnique = false;
     while (!isUnique) {
       newReferralCode = generateReferralCode();
-      const existingCode = await pool.query(
+      const existingCode = await client.query(
         "SELECT referral_code FROM users WHERE referral_code = $1",
         [newReferralCode]
       );
@@ -164,52 +364,228 @@ router.post("/register", async (req, res) => {
     }
 
     // ✅ Insert new user into the database
-    const newUser = await pool.query(
+    const newUser = await client.query(
       "INSERT INTO users (username, email, password, mobile_number, referral_code, address, state, referrer_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
-      [username, email, hashedPassword, mobile_number, newReferralCode, address, state, referrerId]
+      [username, email, hashedPassword, mobile_number, newReferralCode, address, state, null]
     );
 
+    await client.query(
+      `INSERT INTO referral_requests (
+         child_user_id,
+         requested_parent_user_id,
+         request_source,
+         referral_code_entered,
+         status
+       ) VALUES ($1, $2, $3, $4, 'pending')`,
+      [
+        Number(newUser.rows[0].id),
+        Number(referralRequest.parent.id),
+        referralRequest.requestSource,
+        referralRequest.referralCodeEntered,
+      ]
+    );
+
+    const pendingRequest = await fetchPendingReferralRequest(client, newUser.rows[0].id);
+
+    await client.query("COMMIT");
     res.status(201).json({
-      message: "User registered successfully",
+      message: "User registered successfully. Approval has been sent to Admin for approval.",
       user: newUser.rows[0],
+      request: pendingRequest,
     });
 
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("Error registering user:", err);
-    res.status(500).json({ error: "Server error" });
+    res
+      .status(err.status || 500)
+      .json({ error: err.exposeMessage || "Server error" });
+  } finally {
+    client.release();
   }
 });
 
 
-// Login User
-router.post("/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      // Check if user exists
-      const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-  
-      if (user.rows.length === 0) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-  
-      // Compare password
-      const isValid = await bcrypt.compare(password, user.rows[0].password);
-      if (!isValid) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-  
-      // Generate JWT token
-      const token = jwt.sign({ user_id: user.rows[0].id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
+// Request mobile OTP for login
+router.post("/login/request-otp", async (req, res) => {
+  const mobileNumber = String(req.body?.mobile_number || "").trim();
+  const cleanMobile = normalizeMobileNumber(mobileNumber);
+
+  if (cleanMobile.length < 10) {
+    return res.status(400).json({ error: "Valid mobile number is required" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await ensureCustomerLoginOtpsTable();
+
+    const user = await findUserByMobileNumber(client, mobileNumber);
+    if (!user) {
+      return res.status(404).json({
+        error: "No registered account found for this mobile number",
       });
-  
-      res.json({ message: "Login successful", token, user: user.rows[0] });
-    } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Server error");
     }
+
+    const recentOtpRes = await client.query(
+      `SELECT created_at
+         FROM customer_login_otps
+        WHERE user_id = $1
+          AND used = FALSE
+          AND created_at > NOW() - ($2::int * INTERVAL '1 second')
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [user.id, LOGIN_OTP_RESEND_COOLDOWN_SECONDS]
+    );
+
+    if (recentOtpRes.rowCount) {
+      const createdAtMs = new Date(recentOtpRes.rows[0].created_at).getTime();
+      const elapsedSeconds = Math.floor((Date.now() - createdAtMs) / 1000);
+      const retryAfterSeconds = Math.max(
+        LOGIN_OTP_RESEND_COOLDOWN_SECONDS - elapsedSeconds,
+        1
+      );
+      res.set("Retry-After", String(retryAfterSeconds));
+      return res.status(429).json({
+        error: `OTP already sent. Please try again after ${retryAfterSeconds} second${retryAfterSeconds === 1 ? "" : "s"}.`,
+        retry_after_seconds: retryAfterSeconds,
+      });
+    }
+
+    const smsResult = await sendLoginOtpSms(user.mobile_number || mobileNumber);
+    const expiresAt = new Date(Date.now() + LOGIN_OTP_TTL_MINUTES * 60 * 1000);
+
+    await client.query(
+      `UPDATE customer_login_otps
+          SET used = TRUE
+        WHERE user_id = $1
+          AND used = FALSE`,
+      [user.id]
+    );
+
+    await client.query(
+      `INSERT INTO customer_login_otps (user_id, mobile_number, provider_session_id, expires_at)
+       VALUES ($1, $2, $3, $4)`,
+      [user.id, cleanMobile, smsResult.sessionId, expiresAt]
+    );
+
+    return res.json({
+      success: true,
+      message: "OTP sent successfully.",
+      mobile_number: maskMobileNumber(user.mobile_number || cleanMobile),
+      expires_in_seconds: LOGIN_OTP_TTL_MINUTES * 60,
+    });
+  } catch (err) {
+    console.error("Error requesting login OTP:", err);
+    return res.status(500).json({ error: "Server error" });
+  } finally {
+    client.release();
+  }
+});
+
+// Verify mobile OTP and issue customer JWT
+router.post("/login/verify-otp", async (req, res) => {
+  const mobileNumber = String(req.body?.mobile_number || "").trim();
+  const cleanMobile = normalizeMobileNumber(mobileNumber);
+  const otp = String(req.body?.otp || "").trim();
+
+  if (cleanMobile.length < 10 || !otp) {
+    return res.status(400).json({ error: "Mobile number and OTP are required" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await ensureCustomerLoginOtpsTable();
+    await client.query("BEGIN");
+
+    const user = await findUserByMobileNumber(client, mobileNumber);
+    if (!user) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        error: "No registered account found for this mobile number",
+      });
+    }
+
+    const otpRes = await client.query(
+      `SELECT id, provider_session_id, expires_at, used, attempts
+         FROM customer_login_otps
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 1
+        FOR UPDATE`,
+      [user.id]
+    );
+
+    if (!otpRes.rowCount) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Please request an OTP first" });
+    }
+
+    const otpRow = otpRes.rows[0];
+    if (otpRow.used) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "OTP already used. Please request a new OTP." });
+    }
+
+    if (new Date(otpRow.expires_at) < new Date()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        error: "OTP expired. Please request a new OTP.",
+        otp_expired: true,
+      });
+    }
+
+    if (Number(otpRow.attempts || 0) >= LOGIN_OTP_MAX_ATTEMPTS) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Too many attempts. Please request a new OTP." });
+    }
+
+    if (!otpRow.provider_session_id) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Please request a new OTP" });
+    }
+
+    const otpVerification = await verifyLoginOtpWithProvider(otpRow.provider_session_id, otp);
+    await client.query(
+      `UPDATE customer_login_otps
+          SET attempts = attempts + 1
+        WHERE id = $1`,
+      [otpRow.id]
+    );
+
+    if (!otpVerification.verified) {
+      await client.query("COMMIT");
+      return res.status(400).json({ error: "Invalid OTP" });
+    }
+
+    await client.query(
+      `UPDATE customer_login_otps
+          SET used = TRUE
+        WHERE id = $1`,
+      [otpRow.id]
+    );
+
+    await client.query("COMMIT");
+
+    const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "12h",
+    });
+
+    return res.json({ message: "Login successful", token, user });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Error verifying login OTP:", err);
+    return res.status(500).json({ error: "Server error" });
+  } finally {
+    client.release();
+  }
+});
+
+// Password login has been replaced by mobile OTP login.
+router.post("/login", (_req, res) => {
+  return res.status(410).json({
+    error: "Password login is disabled. Please login with mobile OTP.",
   });
+});
 
   // Middleware to verify token
   const verifyToken = (req, res, next) => {

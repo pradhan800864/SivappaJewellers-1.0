@@ -3,7 +3,7 @@ import "./ShoppingCart.css";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-hot-toast";
 import { MdOutlineClose } from "react-icons/md";
-import { loginUser } from "../../utils/auth";
+import { requestLoginOtp, verifyLoginOtp } from "../../utils/auth";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext"; // Update the path as per your project
 import { useContext } from "react";
@@ -35,8 +35,10 @@ const ShoppingCart = () => {
   const [placedOrderId, setPlacedOrderId] = useState(null);
   // eslint-disable-next-line
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [loginMobile, setLoginMobile] = useState("");
+  const [loginOtp, setLoginOtp] = useState("");
+  const [loginOtpSent, setLoginOtpSent] = useState(false);
+  const [loginResendSeconds, setLoginResendSeconds] = useState(0);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -191,13 +193,75 @@ const ShoppingCart = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (loginResendSeconds <= 0) return undefined;
+
+    const timer = setInterval(() => {
+      setLoginResendSeconds((seconds) => Math.max(seconds - 1, 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [loginResendSeconds]);
+
+  const formatLoginCountdown = (seconds) => {
+    const safeSeconds = Math.max(Number(seconds) || 0, 0);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainingSeconds = safeSeconds % 60;
+    if (minutes <= 0) return `${remainingSeconds}s`;
+    return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+  };
+
+  const resetCheckoutLoginState = () => {
+    setLoginMobile("");
+    setLoginOtp("");
+    setLoginOtpSent(false);
+    setLoginResendSeconds(0);
+  };
+
+  const startCheckoutOtpCooldown = (result) => {
+    setLoginResendSeconds(Number(result.retry_after_seconds || result.resend_after_seconds || 60));
+  };
+
+  const handleRequestLoginOtp = async () => {
+    try {
+      const result = await requestLoginOtp(loginMobile);
+      if (result.success) {
+        setLoginOtpSent(true);
+        startCheckoutOtpCooldown(result);
+        toast.success(result.message || "OTP sent successfully!");
+      } else if (result.retry_after_seconds) {
+        startCheckoutOtpCooldown(result);
+      }
+    } catch (error) {
+      toast.error("Failed to send OTP");
+    }
+  };
+
+  const handleResendCheckoutOtp = async () => {
+    if (loginResendSeconds > 0 || !loginMobile) return;
+
+    try {
+      const result = await requestLoginOtp(loginMobile);
+      if (result.success) {
+        setLoginOtp("");
+        startCheckoutOtpCooldown(result);
+        toast.success(result.message || "OTP sent successfully!");
+      } else if (result.retry_after_seconds) {
+        startCheckoutOtpCooldown(result);
+      }
+    } catch (error) {
+      toast.error("Failed to send OTP");
+    }
+  };
+
   const handleLogin = async () => {
     try {
-      const result = await loginUser(email, password);
-      if (result.token) {
+      const result = await verifyLoginOtp(loginMobile, loginOtp);
+      if (result.success && result.token) {
         await login(result.token);  // ✅ This updates AuthContext
         toast.success("Login successful!");
         setIsReturningUser(false);  // optional: collapse login form
+        resetCheckoutLoginState();
         setLocationQuery("");
         setMatchedStores([]);
         setAllStores([]);
@@ -698,20 +762,69 @@ const ShoppingCart = () => {
                       // ✅ Login form
                       <form>
                         <input
-                          type="email"
-                          placeholder="Email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          type="tel"
+                          placeholder="Registered Mobile Number"
+                          value={loginMobile}
+                          disabled={loginOtpSent}
+                          onChange={(e) => setLoginMobile(e.target.value)}
                         />
-                        <input
-                          type="password"
-                          placeholder="Password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
+                        {loginOtpSent && (
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength="6"
+                            placeholder="Enter OTP"
+                            value={loginOtp}
+                            onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          />
+                        )}
+                        {loginOtpSent && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLoginOtpSent(false);
+                              setLoginOtp("");
+                            }}
+                            style={{
+                              backgroundColor: "white",
+                              color: "black",
+                              padding: "10px 20px",
+                              border: "1px solid #d1d5db",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginTop: "10px"
+                            }}
+                          >
+                            Change Mobile Number
+                          </button>
+                        )}
+                        {loginOtpSent && (
+                          <p style={{ color: "#767676", fontSize: "14px", marginTop: "8px" }}>
+                            {loginResendSeconds > 0
+                              ? `You can request a new OTP in ${formatLoginCountdown(loginResendSeconds)}.`
+                              : "Didn't receive the OTP?"}
+                          </p>
+                        )}
+                        {loginOtpSent && loginResendSeconds <= 0 && (
+                          <button
+                            type="button"
+                            onClick={handleResendCheckoutOtp}
+                            style={{
+                              backgroundColor: "white",
+                              color: "black",
+                              padding: "10px 20px",
+                              border: "1px solid #d1d5db",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              marginTop: "10px"
+                            }}
+                          >
+                            Request New OTP
+                          </button>
+                        )}
                         <button
                           type="button"
-                          onClick={handleLogin}
+                          onClick={loginOtpSent ? handleLogin : handleRequestLoginOtp}
                           style={{
                             backgroundColor: "black",
                             color: "white",
@@ -722,7 +835,7 @@ const ShoppingCart = () => {
                             marginTop: "10px"
                           }}
                         >
-                          Login
+                          {loginOtpSent ? "Verify OTP & Login" : "Send OTP"}
                         </button>
                       </form>
                     ) : (
