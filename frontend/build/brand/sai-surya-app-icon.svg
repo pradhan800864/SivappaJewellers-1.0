@@ -1,0 +1,11 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Sai Suryaa Jewellers app icon</title>
+  <desc id="desc">A minimal four-petal gold lotus with a small maroon centre dot on a deep maroon background.</desc>
+  <rect width="1024" height="1024" fill="#571C25"/>
+  <path d="M512 208C573 281 573 370 512 442C451 370 451 281 512 208Z" fill="#E7BC61"/>
+  <path d="M512 816C451 743 451 654 512 582C573 654 573 743 512 816Z" fill="#E7BC61"/>
+  <path d="M208 512C281 451 370 451 442 512C370 573 281 573 208 512Z" fill="#E7BC61"/>
+  <path d="M816 512C743 573 654 573 582 512C654 451 743 451 816 512Z" fill="#E7BC61"/>
+  <circle cx="512" cy="512" r="60" fill="#FFF0BA"/>
+  <circle cx="512" cy="512" r="23" fill="#571C25"/>
+</svg>

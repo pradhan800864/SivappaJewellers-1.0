@@ -28,6 +28,44 @@
   background: none !important;
 }
 
+.brandLogoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #1b1b1b;
+  text-decoration: none;
+}
+
+.brandLogoMark {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.brandLogoText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.brandLogoText span {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.brandLogoText small {
+  margin-top: 3px;
+  color: #9c6a25;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+}
+
 .linkContainer ul {
   display: flex;
   align-items: center;
@@ -258,11 +296,35 @@
   font-weight: 500;
   color: #333;
 }
-.mobile-logo-text span {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+.brandLogoLinkMobile {
+  gap: 8px;
+}
+
+.brandLogoMarkMobile {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+}
+
+.brandLogoMobileText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
   color: #1b1b1b;
   white-space: nowrap;
+}
+
+.brandLogoMobileText span {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.brandLogoMobileText small {
+  margin-top: 2px;
+  color: #9c6a25;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
 }

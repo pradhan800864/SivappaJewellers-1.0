@@ -55,7 +55,7 @@ const ProfilePage = () => {
   const [levelReportError, setLevelReportError] = useState("");
   const ORDERS_LIMIT = 5;
   const referralLockedMessage =
-    "Your referral dashboard will be available after your first Sai Surya Jewellers bill is generated. Please make a purchase to unlock referral commissions.";
+    "Your referral dashboard will be available after your first Sai Suryaa Jewellers bill is generated. Please make a purchase to unlock referral commissions.";
 
   const { logout, refreshUser } = useContext(AuthContext);
 

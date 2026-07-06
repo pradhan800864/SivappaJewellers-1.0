@@ -62,7 +62,7 @@ router.post("/forgot-password", async (req, res) => {
   
       // ✅ 4) Send email
       await transporter.sendMail({
-        from: `"Sai Surya Jewellery" <${process.env.EMAIL_USER}>`,
+        from: `"Sai Suryaa Jewellers" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Your password reset OTP",
         text: `Your OTP is ${otp}. It is valid for ${OTP_TTL_MINUTES} minutes.`,

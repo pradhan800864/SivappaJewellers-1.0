@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Sai Surya Jewellers</string>
-    <string name="title_activity_main">Sai Surya Jewellers</string>
+    <string name="app_name">Sai Suryaa Jewellers</string>
+    <string name="title_activity_main">Sai Suryaa Jewellers</string>
     <string name="package_name">com.saisuryajewellers.customer</string>
     <string name="custom_url_scheme">com.saisuryajewellers.customer</string>
 </resources>

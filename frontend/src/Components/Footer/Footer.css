@@ -21,11 +21,25 @@
 }
 
 .footer_logo_container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
 .footer_logo_container img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+  flex: 0 0 auto;
   background: none !important;
+}
+
+.footer_logo_container h2 {
+  font-size: 18px;
+  line-height: 1.1;
 }
 
 .footer_left p {

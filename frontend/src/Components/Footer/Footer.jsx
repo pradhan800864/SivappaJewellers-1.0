@@ -10,6 +10,7 @@ import { FaPinterest } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+  const brandLogoSrc = `${process.env.PUBLIC_URL}/brand/sai-surya-app-icon.svg`;
   const handleSubscribe = (e) => {
     e.preventDefault();
     alert("Subscribed Successfully");
@@ -30,7 +31,8 @@ const Footer = () => {
         <div className="footer__container">
           <div className="footer_left">
             <div className="footer_logo_container">
-            <h2>SAI SURYA JEWELLERS</h2>
+              <img src={brandLogoSrc} alt="" aria-hidden="true" />
+              <h2>SAI SURYAA JEWELLERS</h2>
             </div>
 
             <p>Shop No:4, Police Quarters, Kurnool, Andhra Pradesh 518001</p>
@@ -138,7 +140,7 @@ const Footer = () => {
         </div>
         <div className="footer_bottom">
           <p>
-            © {getCurrentYear()} Sai Surya Jewellers | All Rights Reserved 
+            © {getCurrentYear()} Sai Suryaa Jewellers | All Rights Reserved 
           </p>
         </div>
       </footer>

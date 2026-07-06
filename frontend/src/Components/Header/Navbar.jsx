@@ -29,6 +29,7 @@ const Navbar = () => {
   const { user } = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const brandLogoSrc = `${process.env.PUBLIC_URL}/brand/sai-surya-app-icon.svg`;
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
     document.body.style.overflow = mobileMenuOpen ? "auto" : "hidden";
@@ -47,8 +48,17 @@ const Navbar = () => {
       <nav className="navBar">
         <div className="logoLinkContainer">
           <div className="logoContainer">
-            <Link to="/" onClick={scrollToTop} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <h2> Sai Surya Jewellers</h2>
+            <Link
+              to="/"
+              onClick={scrollToTop}
+              className="brandLogoLink"
+              aria-label="Sai Suryaa Jewellers home"
+            >
+              <img src={brandLogoSrc} alt="" className="brandLogoMark" aria-hidden="true" />
+              <span className="brandLogoText">
+                <span>Sai Suryaa</span>
+                <small>Jewellers</small>
+              </span>
             </Link>
           </div>
           <div className="linkContainer">
@@ -129,8 +139,17 @@ const Navbar = () => {
             <RiMenu2Line size={22} onClick={toggleMobileMenu} />
           )}
           <div className="logoContainer mobile-logo-text">
-            <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
-              <span>Sai Surya Jewellers</span>
+            <Link
+              to="/"
+              onClick={scrollToTop}
+              className="brandLogoLink brandLogoLinkMobile"
+              aria-label="Sai Suryaa Jewellers home"
+            >
+              <img src={brandLogoSrc} alt="" className="brandLogoMark brandLogoMarkMobile" aria-hidden="true" />
+              <span className="brandLogoMobileText">
+                <span>Sai Suryaa</span>
+                <small>Jewellers</small>
+              </span>
             </Link>
           </div>
           <Link to="/cart">
