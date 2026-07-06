@@ -18,6 +18,46 @@ const parseNum = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+const LABEL_CATEGORY_BY_KEY = {
+  trendy: "trendy",
+  trending: "trendy",
+  newarrival: "new-arrival",
+  newarrivals: "new-arrival",
+  bestseller: "best-seller",
+  bestsellers: "best-seller",
+  toprated: "top-rated",
+};
+
+const normalizeLabelKey = (label) =>
+  String(label || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "");
+
+const parseLabels = (labels) => {
+  if (Array.isArray(labels)) return labels;
+  if (typeof labels === "string") {
+    try {
+      const parsed = JSON.parse(labels);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // Some older rows may be stored as comma-separated labels.
+    }
+    return labels.split(",").map((s) => s.trim());
+  }
+  return [];
+};
+
+const getLabelCategories = (labels) =>
+  [
+    ...new Set(
+      parseLabels(labels)
+        .map((label) => LABEL_CATEGORY_BY_KEY[normalizeLabelKey(label)])
+        .filter(Boolean)
+    ),
+  ];
+
 // Try common token keys (use whichever your app stores)
 const getAuthToken = () =>
   localStorage.getItem("token") ||
@@ -72,6 +112,7 @@ const toUiProduct = (p) => {
 
   const front = resolveImageUrl(p.image_url || imgs[0]);
   const back = resolveImageUrl(imgs[1] || imgs[0] || p.image_url);
+  const labels = parseLabels(p.labels);
 
   const isGroup = !!p.is_group;
 
@@ -131,6 +172,8 @@ const toUiProduct = (p) => {
     stone_price: stonePrice,
     metal_rate: metalRate,
     final_price: Math.round(finalPriceFromApi || 0),
+    labels,
+    labelCategories: getLabelCategories(labels),
   };
 };
 
@@ -347,10 +390,22 @@ const Trendy = () => {
     await saveFavorite(productID);
   };
 
-  const tabAll = useMemo(() => pickRandom(products, 8), [products]);
-  const tabNew = useMemo(() => pickRandom(products, 8), [products]);
-  const tabBest = useMemo(() => pickRandom(products, 8), [products]);
-  const tabTop = useMemo(() => pickRandom(products, 8), [products]);
+  const tabAll = useMemo(
+    () => pickRandom(products.filter((product) => product.labelCategories.includes("trendy")), 8),
+    [products]
+  );
+  const tabNew = useMemo(
+    () => pickRandom(products.filter((product) => product.labelCategories.includes("new-arrival")), 8),
+    [products]
+  );
+  const tabBest = useMemo(
+    () => pickRandom(products.filter((product) => product.labelCategories.includes("best-seller")), 8),
+    [products]
+  );
+  const tabTop = useMemo(
+    () => pickRandom(products.filter((product) => product.labelCategories.includes("top-rated")), 8),
+    [products]
+  );
 
   const renderGrid = (items) => (
     <div className="trendyMainContainer">

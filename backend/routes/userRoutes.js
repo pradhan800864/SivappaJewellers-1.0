@@ -14,6 +14,7 @@ const LOGIN_OTP_RESEND_COOLDOWN_SECONDS = Math.max(
   Number(process.env.LOGIN_OTP_RESEND_COOLDOWN_SECONDS) || 60,
   1
 );
+const CUSTOMER_JWT_EXPIRES_IN = process.env.CUSTOMER_JWT_EXPIRES_IN || "180d";
 const TWOFACTOR_BASE_URL = "https://2factor.in/API/V1";
 const isDevAuthBypassEnabled = () =>
   process.env.NODE_ENV !== "production" &&
@@ -614,7 +615,7 @@ router.post("/login/verify-otp", async (req, res) => {
     await client.query("COMMIT");
 
     const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "12h",
+      expiresIn: CUSTOMER_JWT_EXPIRES_IN,
     });
 
     return res.json({ message: "Login successful", token, user });
@@ -653,7 +654,7 @@ router.post("/login/dev-bypass", async (req, res) => {
     await client.query("COMMIT");
 
     const token = jwt.sign({ user_id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "12h",
+      expiresIn: CUSTOMER_JWT_EXPIRES_IN,
     });
 
     return res.json({
