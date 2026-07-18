@@ -754,12 +754,37 @@ router.post("/login", (_req, res) => {
           fields: validationErrors,
         });
       }
-  
+
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const emailOwner = await pool.query(
+        `SELECT id
+           FROM users
+          WHERE LOWER(email) = $1
+            AND id <> $2
+          LIMIT 1`,
+        [normalizedEmail, Number(id)]
+      );
+
+      if (emailOwner.rowCount > 0) {
+        return res.status(409).json({
+          error: "This email is already registered to another account.",
+          code: "EMAIL_ALREADY_EXISTS",
+          field: "email",
+        });
+      }
+
       const updatedUser = await pool.query(
-        "UPDATE users SET username = $1, email = $2, mobile_number = $3, address = $4, state = $5 WHERE id = $6 RETURNING *",
+        `UPDATE users
+            SET username = $1,
+                email = $2,
+                mobile_number = $3,
+                address = $4,
+                state = $5
+          WHERE id = $6
+          RETURNING id, username, email, mobile_number, referral_code, wallet, address, state`,
         [
           String(username).trim(),
-          String(email).trim(),
+          normalizedEmail,
           String(mobile_number).trim(),
           String(address).trim(),
           String(state).trim(),
@@ -770,11 +795,42 @@ router.post("/login", (_req, res) => {
       if (updatedUser.rows.length === 0) {
         return res.status(404).json({ error: "User not found" });
       }
-  
+
       res.json(updatedUser.rows[0]); // Send updated user info
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Server error" });
+      if (err?.code === "23505") {
+        const isEmailConflict =
+          err.constraint === "users_email_key" ||
+          String(err.detail || "").includes("(email)");
+
+        if (isEmailConflict) {
+          console.warn("Profile update rejected: email already belongs to another user", {
+            userId: req.user?.user_id,
+            constraint: err.constraint,
+          });
+          return res.status(409).json({
+            error: "This email is already registered to another account.",
+            code: "EMAIL_ALREADY_EXISTS",
+            field: "email",
+          });
+        }
+
+        console.warn("Profile update rejected by a unique constraint", {
+          userId: req.user?.user_id,
+          constraint: err.constraint,
+        });
+        return res.status(409).json({
+          error: "One of these profile details is already used by another account.",
+          code: "PROFILE_DETAILS_ALREADY_EXIST",
+        });
+      }
+
+      console.error("Profile update failed", {
+        userId: req.user?.user_id,
+        code: err?.code,
+        message: err?.message,
+      });
+      return res.status(500).json({ error: "Unable to update profile right now." });
     }
   });
 
