@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import "./LoginSignUp.css";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { AuthContext } from "../../../Context/AuthContext";
 import { devBypassLogin, requestLoginOtp, verifyLoginOtp } from "../../../utils/auth";
@@ -220,6 +220,11 @@ const LoginSignUp = () => {
                     You can request a new OTP for {loginMobile || "this number"} in {formatCountdown(resendSeconds)}.
                   </p>
                 )}
+                <p className="loginLegalNotice">
+                  Continuing verifies this mobile number and may create a customer account.
+                  Please review our <Link to="/terms">Terms of Use</Link> and{" "}
+                  <Link to="/privacy">Privacy Notice</Link>.
+                </p>
                 <button
                   type="submit"
                   disabled={loading || (!otpSent && resendSeconds > 0 && mobileNumber === loginMobile)}

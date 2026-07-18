@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { AuthContext } from "../../../Context/AuthContext";
 import { devBypassLogin, requestLoginOtp, verifyLoginOtp } from "../../../utils/auth";
+import { Link } from "react-router-dom";
 import "./OtpLoginModal.css";
 
 const isDevLoginEnabled = process.env.REACT_APP_ENABLE_DEV_LOGIN === "true";
@@ -121,6 +122,11 @@ const OtpLoginModal = ({ isOpen, onClose, onSuccess, title = "Login to continue"
         <h3>{title}</h3>
         <p className="otpModalHint">Enter your mobile number to save this item to your favorites.</p>
         {error && <p className="otpModalError">{error}</p>}
+        <p className="otpModalLegal">
+          Continuing verifies this mobile number and may create an account. See our{" "}
+          <Link to="/terms" onClick={onClose}>Terms</Link> and{" "}
+          <Link to="/privacy" onClick={onClose}>Privacy Notice</Link>.
+        </p>
 
         <input
           type="tel"

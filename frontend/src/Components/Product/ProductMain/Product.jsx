@@ -317,7 +317,7 @@ const Product = () => {
               <p>
                 {product.full_description ||
                   product.short_description ||
-                  "Product description will appear here. Update 'description' field in your products table to override this placeholder."}
+                  "Contact the selected store to confirm this product’s design, weight, purity, availability and final price."}
               </p>
             </div>
 
@@ -340,7 +340,7 @@ const Product = () => {
 
               <div className="infoBadge">
                 <span className="infoBadgeIcon">🛡️</span>
-                <span className="infoBadgeText">Transit Insurance</span>
+                <span className="infoBadgeText">Store-Confirmed Fulfilment</span>
               </div>
 
               <div

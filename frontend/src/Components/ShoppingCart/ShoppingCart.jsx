@@ -10,7 +10,11 @@ import { useContext } from "react";
 import success from "../../Assets/success.png";
 import { removeFromCart, updateQuantity, clearCart } from "../../Features/Cart/cartSlice";
 import { resolveImageUrl } from "../../utils/resolveImageUrl";
-import { getEditableCustomerName } from "../../utils/customerDisplay";
+import {
+  getEditableCustomerEmail,
+  getEditableCustomerName,
+} from "../../utils/customerDisplay";
+import { policyMeta } from "../Legal/legalContent";
 
 const isDevLoginEnabled = process.env.REACT_APP_ENABLE_DEV_LOGIN === "true";
 
@@ -21,6 +25,7 @@ const ShoppingCart = () => {
   const { isAuthenticated: isAuthenticatedFromContext, loading, login, user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState("cartTab1");
   const [payments, setPayments] = useState(false);
+  const [acceptedOrderRequestTerms, setAcceptedOrderRequestTerms] = useState(false);
 
   const handleTabClick = (tab) => {
     if (tab === "cartTab1" || cartItems.length > 0) {
@@ -41,12 +46,6 @@ const ShoppingCart = () => {
   const [loginOtp, setLoginOtp] = useState("");
   const [loginOtpSent, setLoginOtpSent] = useState(false);
   const [loginResendSeconds, setLoginResendSeconds] = useState(0);
-  const [customerDetails, setCustomerDetails] = useState({
-    username: "",
-    address: "",
-    state: "",
-  });
-
   const [locationQuery, setLocationQuery] = useState("");
   const [matchedStores, setMatchedStores] = useState([]);
   const [allStores, setAllStores] = useState([]);
@@ -60,18 +59,26 @@ const ShoppingCart = () => {
   const formatStoreAddress = (store) =>
     [store?.address, store?.stateName].filter(Boolean).join(", ");
 
-  const isCustomerDetailsComplete = () =>
-    Boolean(
-      customerDetails.username.trim() &&
-      customerDetails.address.trim() &&
-      customerDetails.state.trim()
-    );
+  const hasSavedDeliveryAddress = Boolean(
+    String(user?.address || "").trim() && String(user?.state || "").trim()
+  );
+  const customerEmail = getEditableCustomerEmail(user?.email);
+  const customerMobileDigits = String(user?.mobile_number || "").replace(/\D/g, "");
 
-  const handleCustomerDetailsChange = (field, value) => {
-    setCustomerDetails((prev) => ({ ...prev, [field]: value }));
-  };
+  const isCustomerProfileComplete = Boolean(
+    getEditableCustomerName(user) &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail) &&
+      customerMobileDigits.length >= 10 &&
+      customerMobileDigits.length <= 15 &&
+      hasSavedDeliveryAddress
+  );
 
   const handleSearchStores = async () => {
+    if (!hasSavedDeliveryAddress) {
+      toast.error("Please update your delivery address and state in Account Settings first.");
+      return;
+    }
+
     const query = locationQuery.trim();
 
     if (query.length < 2) {
@@ -156,35 +163,18 @@ const ShoppingCart = () => {
       return;
     }
 
-    if (!isCustomerDetailsComplete()) {
-      toast.error("Please enter your name, address and state before submitting the order request.");
+    if (!isCustomerProfileComplete) {
+      toast.error("Please complete all profile fields in Account Settings before submitting an order request.");
+      return;
+    }
+
+    if (!acceptedOrderRequestTerms) {
+      toast.error("Please review and accept the order-request terms before submitting.");
       return;
     }
   
     try {
       const token = localStorage.getItem("token");
-      const profileRes = await fetch(process.env.REACT_APP_API_BASE + "/api/users/update", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          id: user.id,
-          username: customerDetails.username.trim(),
-          email: user.email,
-          mobile_number: user.mobile_number,
-          address: customerDetails.address.trim(),
-          state: customerDetails.state.trim(),
-        }),
-      });
-
-      const profileData = await profileRes.json().catch(() => ({}));
-      if (!profileRes.ok) {
-        toast.error(profileData.error || "Failed to save customer details.");
-        return;
-      }
-
       const response = await fetch(process.env.REACT_APP_API_BASE + "/api/place-order", {
         method: "POST",
         headers: {
@@ -192,8 +182,8 @@ const ShoppingCart = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: user.id,
           storeId: selectedStore.id,
+          termsVersion: policyMeta.version,
           products: cartItems.map((item) => ({
             productID: item.productID,
             quantity: item.quantity,
@@ -210,6 +200,7 @@ const ShoppingCart = () => {
         handleTabClick("cartTab3");
         window.scrollTo({ top: 0, behavior: "smooth" });
         setPayments(true);
+        setAcceptedOrderRequestTerms(false);
         toast.success("Order request submitted successfully!");
       } else {
         toast.error(data.error || "Failed to place order.");
@@ -239,16 +230,6 @@ const ShoppingCart = () => {
       setIsAuthenticated(true);
     }
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-
-    setCustomerDetails({
-      username: getEditableCustomerName(user),
-      address: user.address || "",
-      state: user.state || "",
-    });
-  }, [user]);
 
   useEffect(() => {
     if (loginResendSeconds <= 0) return undefined;
@@ -378,7 +359,7 @@ const ShoppingCart = () => {
   return (
     <div>
       <div className="shoppingCartSection">
-        <h2>Cart</h2>
+        <h2>Request Bag</h2>
 
         <div className="shoppingCartTabsContainer">
           <div className={`shoppingCartTabs ${activeTab}`}>
@@ -392,8 +373,8 @@ const ShoppingCart = () => {
               <div className="shoppingCartTabsNumber">
                 <h3>01</h3>
                 <div className="shoppingCartTabsHeading">
-                  <h3>Shopping Bag</h3>
-                  <p>Manage Your Items List</p>
+                  <h3>Request Bag</h3>
+                  <p>Review Selected Items</p>
                 </div>
               </div>
             </button>
@@ -408,8 +389,8 @@ const ShoppingCart = () => {
               <div className="shoppingCartTabsNumber">
                 <h3>02</h3>
                 <div className="shoppingCartTabsHeading">
-                  <h3>Shipping and Checkout</h3>
-                  <p>Checkout Your Items List</p>
+                  <h3>Details & Store</h3>
+                  <p>Choose Where To Send The Request</p>
                 </div>
               </div>
             </button>
@@ -423,8 +404,8 @@ const ShoppingCart = () => {
               <div className="shoppingCartTabsNumber">
                 <h3>03</h3>
                 <div className="shoppingCartTabsHeading">
-                  <h3>Confirmation</h3>
-                  <p>Review And Submit Your Order</p>
+                  <h3>Request Submitted</h3>
+                  <p>Store Follow-Up Details</p>
                 </div>
               </div>
             </button>
@@ -531,50 +512,6 @@ const ShoppingCart = () => {
                         </tr>
                       )}
                     </tbody>
-                    <tfoot>
-                      <td
-                        colSpan="6"
-                        className="shopCartFooter"
-                        style={{
-                          borderBottom: "none",
-                          padding: "20px 0px",
-                        }}
-                      >
-                        {cartItems.length > 0 && (
-                          <div className="shopCartFooterContainer">
-                            <form>
-                              <input
-                                type="text"
-                                placeholder="Coupon Code"
-                              ></input>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                }}
-                                style={{
-                                  backgroundColor: "black",
-                                  color: "white",
-                                  padding: "10px 16px",
-                                  border: "none",
-                                  borderRadius: "4px",
-                                  cursor: "pointer"
-                                }}
-                              >
-                               Apply Coupon
-                              </button>
-                            </form>
-                            {/* <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                              }}
-                              className="shopCartFooterbutton"
-                            >
-                              Update Cart
-                            </button> */}
-                          </div>
-                        )}
-                      </td>
-                    </tfoot>
                   </table>
 
                   {/* For Mobile devices */}
@@ -645,31 +582,6 @@ const ShoppingCart = () => {
                             </div>
                           </div>
                         ))}
-                        <div className="shopCartFooter">
-                          <div className="shopCartFooterContainer">
-                            <form>
-                              <input
-                                type="text"
-                                placeholder="Coupon Code"
-                              ></input>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                }}
-                              >
-                                Apply Coupon
-                              </button>
-                            </form>
-                            {/* <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                              }}
-                              className="shopCartFooterbutton"
-                            >
-                              Update Cart
-                            </button> */}
-                          </div>
-                        </div>
                       </>
                     ) : (
                       <div className="shoppingCartEmpty">
@@ -689,7 +601,7 @@ const ShoppingCart = () => {
                     }}
                     disabled={cartItems.length === 0}
                   >
-                    Proceed to Checkout
+                    Continue to Store Selection
                   </button>
                 </div>
               </div>
@@ -699,7 +611,7 @@ const ShoppingCart = () => {
             {activeTab === "cartTab2" && (
               <div className="checkoutSection">
                 <div className="checkoutDetailsSection">
-                  <h4>Billing Details</h4>
+                  <h4>Customer & Store Details</h4>
 
                   <div className="checkoutDetailsForm">
                     {loading ? (
@@ -707,29 +619,28 @@ const ShoppingCart = () => {
                     ) : isAuthenticatedFromContext ? (
                       // ✅ If authenticated, show success message & store search
                       <>
-                        <p className="loginSuccessMsg">
-                          Authentication successful. Please enter your delivery details and choose the store you prefer.
-                        </p>
-                        <div className="checkoutCustomerDetails">
-                          <input
-                            type="text"
-                            placeholder="Full Name *"
-                            value={customerDetails.username}
-                            onChange={(e) => handleCustomerDetailsChange("username", e.target.value)}
-                          />
-                          <input
-                            type="text"
-                            placeholder="Delivery Address *"
-                            value={customerDetails.address}
-                            onChange={(e) => handleCustomerDetailsChange("address", e.target.value)}
-                          />
-                          <input
-                            type="text"
-                            placeholder="State *"
-                            value={customerDetails.state}
-                            onChange={(e) => handleCustomerDetailsChange("state", e.target.value)}
-                          />
-                        </div>
+                        {hasSavedDeliveryAddress ? (
+                          <p className="loginSuccessMsg">
+                            Profile verified. Search for a store to continue with your order request.
+                          </p>
+                        ) : (
+                          <div className="checkoutProfileWarning" role="alert">
+                            <div>
+                              <strong>Delivery address required</strong>
+                              <p>
+                                Update your delivery address and state in Account Settings before searching for stores.
+                              </p>
+                            </div>
+                            <Link
+                              to="/profile"
+                              state={{ activeTab: "Account Settings" }}
+                              className="checkoutProfileLink"
+                              onClick={scrollToTop}
+                            >
+                              Update Profile
+                            </Link>
+                          </div>
+                        )}
                         <div className="storeSearchSection">
                           <input
                             type="text"
@@ -749,7 +660,7 @@ const ShoppingCart = () => {
                             type="button"
                             className="storeSearchButton"
                             onClick={handleSearchStores}
-                            disabled={isSearchingStores}
+                            disabled={isSearchingStores || !hasSavedDeliveryAddress}
                           >
                             {isSearchingStores ? "Searching..." : "Search Stores"}
                           </button>
@@ -884,6 +795,11 @@ const ShoppingCart = () => {
                             Request New OTP
                           </button>
                         )}
+                        <p className="checkoutLoginLegal">
+                          Continuing verifies this mobile number and may create an account.
+                          See our <Link to="/terms" target="_blank" rel="noreferrer">Terms</Link>{" "}
+                          and <Link to="/privacy" target="_blank" rel="noreferrer">Privacy Notice</Link>.
+                        </p>
                         <button
                           type="button"
                           onClick={loginOtpSent ? handleLogin : handleRequestLoginOtp}
@@ -925,7 +841,7 @@ const ShoppingCart = () => {
 
                 <div className="checkoutPaymentSection">
                 <div className="checkoutTotalContainer">
-                  <h3>Your Order</h3>
+                  <h3>Request Summary</h3>
                   <div className="checkoutItems">
                     <table>
                       <thead>
@@ -961,15 +877,15 @@ const ShoppingCart = () => {
                         <table>
                           <tbody>
                             <tr>
-                              <th>Subtotal</th>
+                              <th>Estimated subtotal</th>
                               <td>₹{subtotal.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
                             </tr>
                             <tr>
-                              <th>GST (3%)</th>
+                              <th>Estimated GST (3%)</th>
                               <td>₹{gst.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
                             </tr>
                             <tr>
-                              <th>Total</th>
+                              <th>Estimated total</th>
                               <td>₹{total.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
                             </tr>
                           </tbody>
@@ -977,12 +893,32 @@ const ShoppingCart = () => {
                       </div>
                     );
                   })()}
+                  <p className="orderEstimateNotice">
+                    Estimate only. The selected store will confirm availability, actual
+                    weight, live metal rate, charges, discounts and applicable tax before
+                    any payment or completed sale.
+                  </p>
                 </div>
+
+                <label className="orderRequestConsent">
+                  <input
+                    type="checkbox"
+                    checked={acceptedOrderRequestTerms}
+                    onChange={(event) => setAcceptedOrderRequestTerms(event.target.checked)}
+                  />
+                  <span>
+                    I expressly ask the selected store to contact me about these items. I
+                    understand this is not a confirmed sale or tax invoice, and I agree to
+                    the <Link to="/terms" target="_blank" rel="noreferrer">Order Request Terms</Link>{" "}
+                    (version {policyMeta.version}) and acknowledge the{" "}
+                    <Link to="/privacy" target="_blank" rel="noreferrer">Privacy Notice</Link>.
+                  </span>
+                </label>
                   
                 <button
                   type="button"
                   onClick={handlePlaceOrder}
-                  disabled={!isAuthenticatedFromContext || !selectedStore || !isCustomerDetailsComplete()}
+                  disabled={!isAuthenticatedFromContext || !selectedStore || !isCustomerProfileComplete || !acceptedOrderRequestTerms}
                   
                 >
                   Submit Order Request
@@ -1016,11 +952,10 @@ const ShoppingCart = () => {
                     <div className="orderCompleteActions">
                       <Link
                         to="/profile"
-                        state={{ activeTab: "My Orders" }}
                         className="orderActionButton primary"
                         onClick={scrollToTop}
                       >
-                        View My Orders
+                        Open My Account
                       </Link>
                       <Link
                         to="/shop"
@@ -1041,13 +976,13 @@ const ShoppingCart = () => {
                       <h4>{formatDate(currentDate)}</h4>
                     </div>
                     <div className="orderInfoItem">
-                      <p>Total</p>
+                      <p>Estimated Total</p>
                       <h4>₹{placedTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</h4>
                     </div>
                    
                   </div>
                   <div className="orderTotalContainer">
-                    <h3>Order Details</h3>
+                    <h3>Requested Items</h3>
                     <div className="orderItems">
                       <table>
                         <thead>
@@ -1071,20 +1006,24 @@ const ShoppingCart = () => {
                       <table>
                         <tbody>
                           <tr>
-                            <th>Subtotal</th>
+                            <th>Estimated subtotal</th>
                             <td>₹{placedSubtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                           <tr>
-                            <th>GST (3%)</th>
+                            <th>Estimated GST (3%)</th>
                             <td>₹{placedGst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                           <tr>
-                            <th>Total</th>
+                            <th>Estimated total</th>
                             <td>₹{placedTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
+                    <p className="orderEstimateNotice">
+                      No payment has been collected. The selected store will confirm the
+                      final sale price and issue the applicable bill or tax invoice.
+                    </p>
                   </div>
                 </div>
               </div>

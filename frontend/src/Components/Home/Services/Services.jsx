@@ -7,6 +7,7 @@ import { AiOutlineReload } from "react-icons/ai";
 import { FaTools } from "react-icons/fa";
 import { FaLock } from "react-icons/fa";
 import { GiDiamondRing } from "react-icons/gi";
+import { Link } from "react-router-dom";
 
 
 const Services = () => {
@@ -21,34 +22,34 @@ const Services = () => {
         </div>
         <div className="serviceBox">
           <TfiHeadphoneAlt size={50} style={{ marginBottom: "20px" }} />
-          <h3>24/7 Customer Support</h3>
-          <p>Friendly 24/7 customer support</p>
+          <h3>Customer Support</h3>
+          <p>Contact our store team for product and order-request help</p>
         </div>
         {/* Certified Jewelry */}
         <div className="serviceBox">
           <MdVerified size={50} style={{ marginBottom: "20px", color: "gold" }} />
           <h3>Certified & Authentic</h3>
-          <p>All our jewelry comes with authenticity certification</p>
+          <p>Review the applicable hallmark, purity and certificate details before billing</p>
         </div>
         {/* Easy Returns & Exchanges */}
         <div className="serviceBox">
           <AiOutlineReload size={50} style={{ marginBottom: "20px", color: "green" }} />
-          <h3>Easy Returns & Exchanges</h3>
-          <p>Hassle-free 30-day return & exchange policy</p>
+          <h3>Clear Returns & Exchanges</h3>
+          <p><Link to="/cancellations-returns-refunds">See eligibility, exclusions and statutory remedies</Link></p>
         </div>
 
         {/* Jewelry Repair & Maintenance */}
         <div className="serviceBox">
           <FaTools size={50} style={{ marginBottom: "20px", color: "gray" }} />
           <h3>Jewelry Repair & Maintenance</h3>
-          <p>We offer professional cleaning, resizing, and repairs</p>
+          <p>Ask the selected store about available cleaning, resizing and repair services</p>
         </div>
 
         {/* Secure Payments */}
         <div className="serviceBox">
           <FaLock size={50} style={{ marginBottom: "20px", color: "blue" }} />
-          <h3>Secure Payments</h3>
-          <p>100% secure payment gateway with multiple options</p>
+          <h3>Verified Billing</h3>
+          <p>No payment is collected in the app; pay only after the store confirms the bill</p>
         </div>
       </div>
     </>

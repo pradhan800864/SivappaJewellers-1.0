@@ -53,6 +53,18 @@
   font-size: 14px;
 }
 
+.otpModalLegal {
+  margin: 0;
+  color: #666;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.otpModalLegal a {
+  color: #6f1726;
+  text-underline-offset: 2px;
+}
+
 .otpModal input {
   height: 52px;
   border: 1px solid #ddd;

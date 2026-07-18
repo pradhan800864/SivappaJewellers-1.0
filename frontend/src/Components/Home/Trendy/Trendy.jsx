@@ -9,6 +9,7 @@ import { FaStar, FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 import OtpLoginModal from "../../Authentication/OtpLoginModal/OtpLoginModal";
+import { fetchProductCatalog } from "../../../utils/productCatalog";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -110,8 +111,13 @@ const toUiProduct = (p) => {
     }
   }
 
-  const front = resolveImageUrl(p.image_url || imgs[0]);
-  const back = resolveImageUrl(imgs[1] || imgs[0] || p.image_url);
+  // The products API already resolves its image fields against the customer
+  // backend. Prefer those URLs so localhost does not incorrectly rebuild the
+  // path against the separate admin uploads server.
+  const front = resolveImageUrl(p.frontImg || p.image_url || imgs[0]);
+  const back = resolveImageUrl(
+    p.backImg || imgs[1] || p.frontImg || imgs[0] || p.image_url
+  );
   const labels = parseLabels(p.labels);
 
   const isGroup = !!p.is_group;
@@ -250,8 +256,7 @@ const Trendy = () => {
         setLoading(true);
         setErr(null);
 
-        const { data } = await axios.get(`${API_BASE}/api/products`);
-        const list = Array.isArray(data) ? data : data.rows || data.items || [];
+        const list = await fetchProductCatalog();
         const ui = list.map(toUiProduct);
 
         // for groups: if metal_rate missing, fetch it and recompute with vadd
@@ -417,11 +422,15 @@ const Trendy = () => {
                 src={resolveImageUrl(product.frontImg)}
                 alt={product.productName}
                 className="trendyProduct_front"
+                loading="lazy"
+                decoding="async"
               />
               <img
                 src={resolveImageUrl(product.backImg)}
                 alt={product.productName}
                 className="trendyProduct_back"
+                loading="lazy"
+                decoding="async"
               />
             </Link>
             <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>

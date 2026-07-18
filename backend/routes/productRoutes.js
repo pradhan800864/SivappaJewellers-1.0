@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
 const ExcelJS = require("exceljs");
+const CURRENT_ORDER_TERMS_VERSION = "1.0";
 
 const getUserIdFromToken = (req) => {
   const h = req.headers.authorization || "";
@@ -26,9 +27,58 @@ const mapStoreRow = (row) => ({
   code: row.code || null,
 });
 
+const isCompleteCustomerProfile = (profile) => {
+  const username = String(profile?.username || "").trim();
+  const email = String(profile?.email || "").trim().toLowerCase();
+  const mobileDigits = String(profile?.mobile_number || "").replace(/\D/g, "");
+
+  return Boolean(
+    username &&
+      !/^customer-\d{4}-\d+$/i.test(username) &&
+      email &&
+      !email.endsWith("@otp.local") &&
+      mobileDigits.length >= 10 &&
+      mobileDigits.length <= 15 &&
+      String(profile?.address || "").trim() &&
+      String(profile?.state || "").trim()
+  );
+};
+
+let customerOrderLegalColumnsReady = false;
+const routeResponseCache = new Map();
+
+const getCachedRouteValue = async (key, ttlMs, loader) => {
+  const cached = routeResponseCache.get(key);
+  if (cached?.promise) return cached.promise;
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const promise = loader()
+    .then((value) => {
+      routeResponseCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+      return value;
+    })
+    .catch((error) => {
+      routeResponseCache.delete(key);
+      throw error;
+    });
+
+  routeResponseCache.set(key, { promise, expiresAt: Date.now() + ttlMs });
+  return promise;
+};
+
+const ensureCustomerOrderLegalColumns = async () => {
+  if (customerOrderLegalColumnsReady) return;
+  await pool.query(`
+    ALTER TABLE customer_orders
+      ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ
+  `);
+  customerOrderLegalColumnsReady = true;
+};
+
 router.get("/products", async (req, res) => {
   try {
-    const result = await pool.query(`
+    const result = await getCachedRouteValue("products", 30 * 1000, () => pool.query(`
       SELECT
         p.*,
         pt.name                                  AS product_type,
@@ -69,9 +119,7 @@ router.get("/products", async (req, res) => {
       ) mp ON TRUE
 
       ORDER BY p.name
-    `);
-
-    // inside router.get("/products", async (req, res) => { ... })
+    `));
 
     const base = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get("host")}`;
 
@@ -154,101 +202,59 @@ router.get("/stores", async (req, res) => {
 
 
 
-  router.post("/pincode/check", async (req, res) => {
-    const { pincode } = req.body;
-  
-    if (!/^\d{6}$/.test(pincode)) {
-      return res.status(400).json({ error: "Invalid pincode format" });
-    }
-  
-    try {
-      // Step 1: Check in shops
-      const shopResult = await pool.query("SELECT * FROM shops WHERE pincode = $1", [pincode]);
-      if (shopResult.rows.length > 0) {
-        return res.json({
-          storeId: shopResult.rows[0].id,
-          nearestLocation: shopResult.rows[0].shop_name || "Shop",
-          address: shopResult.rows[0].address,
-          orderCode: `ORD-${Date.now()}`
-        });
-      }
-  
-      // Step 2: Check in owners
-      const ownerResult = await pool.query("SELECT * FROM owner WHERE pincode = $1", [pincode]);
-      if (ownerResult.rows.length > 0) {
-        return res.json({
-          storeId: ownerResult.rows[0].id,
-          nearestLocation: ownerResult.rows[0].username || "Owner",
-          address: ownerResult.rows[0].address,
-          orderCode: `ORD-${Date.now()}`
-        });
-      }
-  
-      // Step 3: Find nearest available pincode
-      const allPincodes = await pool.query(`
-        SELECT pincode FROM (
-          SELECT pincode FROM shops
-          UNION
-          SELECT pincode FROM owner
-        ) all_pincodes
-      `);
-  
-      const nearest = allPincodes.rows
-        .map((row) => ({
-          pincode: row.pincode,
-          distance: Math.abs(Number(row.pincode) - Number(pincode))
-        }))
-        .sort((a, b) => a.distance - b.distance)[0];
-  
-      if (nearest) {
-        // Try to find address for the nearest pincode
-        const shopNearest = await pool.query("SELECT * FROM shops WHERE pincode = $1", [nearest.pincode]);
-        if (shopNearest.rows.length > 0) {
-          return res.json({
-            nearestLocation: shopNearest.rows[0].shop_name || "Shop",
-            address: shopNearest.rows[0].address,
-            orderCode: `ORD-${Date.now()}`,
-            storeId: shopNearest.rows[0].id
-          });
-        }
-  
-        const ownerNearest = await pool.query("SELECT * FROM owner WHERE pincode = $1", [nearest.pincode]);
-        if (ownerNearest.rows.length > 0) {
-          return res.json({
-            nearestLocation: ownerNearest.rows[0].username || "Owner",
-            address: ownerNearest.rows[0].address,
-            orderCode: `ORD-${Date.now()}`,
-            storeId: ownerNearest.rows[0].id
-          });
-        }
-  
-        // fallback: return nearest pincode without address
-        return res.json({
-          nearestLocation: `Closest available pincode: ${nearest.pincode}`,
-          address: null,
-          orderCode: `ORD-${Date.now()}`
-        });
-      }
-  
-      return res.status(404).json({ error: "No available delivery location found." });
-  
-    } catch (err) {
-      console.error("Error in pincode check:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-  });
   
   router.post("/place-order", async (req, res) => {
-    const { userId, storeId, products } = req.body;
+    const userId = getUserIdFromToken(req);
+    const { storeId, products, termsVersion } = req.body;
   
-    if (!userId || !storeId || !products || products.length === 0) {
+    if (!userId) {
+      return res.status(401).json({ error: "Please sign in before submitting an order request" });
+    }
+
+    if (!storeId || !Array.isArray(products) || products.length === 0 || !termsVersion) {
       return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (String(termsVersion) !== CURRENT_ORDER_TERMS_VERSION) {
+      return res.status(409).json({ error: "Please review the current order-request terms and try again" });
+    }
+
+    const cleanProducts = products
+      .map((product) => ({
+        productID: Number(product.productID),
+        quantity: Number(product.quantity),
+      }))
+      .filter((product) => Number.isInteger(product.productID) && product.productID > 0
+        && Number.isInteger(product.quantity) && product.quantity >= 1 && product.quantity <= 20);
+
+    if (cleanProducts.length !== products.length) {
+      return res.status(400).json({ error: "Invalid product or quantity in request" });
     }
   
     const orderId = `ORD-${Date.now()}`;
     const orderStatus = "Pending";
   
     try {
+      await ensureCustomerOrderLegalColumns();
+      const profileResult = await pool.query(
+        `SELECT username, email, mobile_number, address, state
+           FROM users
+          WHERE id = $1
+          LIMIT 1`,
+        [userId]
+      );
+
+      if (!profileResult.rows.length) {
+        return res.status(404).json({ error: "Customer profile not found" });
+      }
+
+      if (!isCompleteCustomerProfile(profileResult.rows[0])) {
+        return res.status(409).json({
+          error: "Please complete all profile fields in Account Settings before submitting an order request",
+          code: "PROFILE_INCOMPLETE",
+        });
+      }
+
       const storeResult = await pool.query(
         `SELECT id, shop_name, address, pincode FROM shops WHERE id = $1 LIMIT 1`,
         [storeId]
@@ -261,21 +267,25 @@ router.get("/stores", async (req, res) => {
       const selectedStore = storeResult.rows[0];
 
       await pool.query(
-        `INSERT INTO customer_orders (user_id, order_id, store_id, pincode, products, order_status)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO customer_orders (
+           user_id, order_id, store_id, pincode, products, order_status,
+           terms_version, terms_accepted_at
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
         [
           userId,
           orderId,
           storeId,
           selectedStore.pincode || "",
-          JSON.stringify(products),
+          JSON.stringify(cleanProducts),
           orderStatus,
+          String(termsVersion).slice(0, 20),
         ]
       );
   
       return res.json({
         success: true,
-        message: "Order placed successfully",
+        message: "Order request submitted successfully",
         orderId,
         store: mapStoreRow(selectedStore),
       });
@@ -325,130 +335,6 @@ router.get('/health', async(req, res) => {
 });
 
   // server/routes/referrals.js
-router.get("/tree", async (req, res) => {
-  const focusUserId = Number(req.query.rootUserId || req.user.id);
-  const includeParent = String(req.query.includeParent || "0") === "1";
-  const withCoins = String(req.query.withCoins || "0") === "1";
-
-  const SOURCES = ['referral_commission','referral-bonus','referral']; // tweak if needed
-
-  const colExists = async (table, column) => {
-    const q = `
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = $1 AND column_name = $2
-      LIMIT 1
-    `;
-    const r = await pool.query(q, [table, column]);
-    return r.rowCount > 0;
-  };
-
-  try {
-    // 1) Figure out root (parent if requested)
-    const { rows: focusRows } = await pool.query(
-      `SELECT id, username, referrer_id FROM users WHERE id = $1`,
-      [focusUserId]
-    );
-    if (focusRows.length === 0) return res.json(null);
-
-    const focus = focusRows[0];
-    const rootId = includeParent && focus.referrer_id ? focus.referrer_id : focusUserId;
-
-    // 2) Build the referral tree from root
-    const treeSql = `
-      WITH RECURSIVE referral_tree AS (
-        SELECT id, username, referrer_id
-        FROM users
-        WHERE id = $1
-        UNION ALL
-        SELECT u.id, u.username, u.referrer_id
-        FROM users u
-        JOIN referral_tree rt ON u.referrer_id = rt.id
-      )
-      SELECT id, username, referrer_id FROM referral_tree;
-    `;
-    const { rows } = await pool.query(treeSql, [rootId]);
-
-    const byId = new Map(rows.map(r => [r.id, { ...r, children: [] }]));
-    rows.forEach(r => {
-      if (r.referrer_id && byId.has(r.referrer_id)) {
-        byId.get(r.referrer_id).children.push(byId.get(r.id));
-      }
-    });
-    const root = byId.get(rootId);
-
-    const result = { root, focusUserId };
-
-    // 3) Coins generated for the focus user by their direct children
-    if (withCoins) {
-      const hasMeta = await colExists('wallet_transactions', 'meta');          // JSONB
-      const hasChildId = await colExists('wallet_transactions', 'child_id');   // INT
-      // If your column is named "remarks" or "note", change this:
-      const hasDescription = await colExists('wallet_transactions', 'description'); // TEXT
-
-      let perChild = [];
-      if (hasMeta) {
-        // JSONB: meta->>'child_id'
-        const q = `
-          SELECT (meta->>'child_id')::int AS child_id, SUM(coins)::int AS coins
-          FROM wallet_transactions
-          WHERE user_id = $1
-            AND type = 'credit'
-            AND source = ANY($2)
-            AND meta ? 'child_id'
-          GROUP BY 1
-        `;
-        const { rows: r1 } = await pool.query(q, [focusUserId, SOURCES]);
-        perChild = r1;
-      } else if (hasChildId) {
-        // Dedicated child_id column
-        const q = `
-          SELECT child_id::int AS child_id, SUM(coins)::int AS coins
-          FROM wallet_transactions
-          WHERE user_id = $1
-            AND type = 'credit'
-            AND source = ANY($2)
-            AND child_id IS NOT NULL
-          GROUP BY 1
-        `;
-        const { rows: r2 } = await pool.query(q, [focusUserId, SOURCES]);
-        perChild = r2;
-      } else if (hasDescription) {
-        // Parse "child_id=123" from a text column with regex
-        const q = `
-          SELECT (regexp_matches(description, 'child_id=(\\d+)', 'i'))[1]::int AS child_id,
-                 SUM(coins)::int AS coins
-          FROM wallet_transactions
-          WHERE user_id = $1
-            AND type = 'credit'
-            AND source = ANY($2)
-            AND description ~* 'child_id=\\d+'
-          GROUP BY 1
-        `;
-        const { rows: r3 } = await pool.query(q, [focusUserId, SOURCES]);
-        perChild = r3;
-      } else {
-        // No way to attribute per child → only total from referral credits
-        const q = `
-          SELECT COALESCE(SUM(coins),0)::int AS total
-          FROM wallet_transactions
-          WHERE user_id = $1
-            AND type = 'credit'
-            AND source = ANY($2)
-        `;
-        const { rows: r4 } = await pool.query(q, [focusUserId, SOURCES]);
-        result.coins = { totalFromChildren: Number(r4[0]?.total || 0), perChild: [] };
-        return res.json(result);
-      }
-
-      const totalFromChildren = perChild.reduce((a, b) => a + Number(b.coins || 0), 0);
-      result.coins = { totalFromChildren, perChild };
-    }
-
-    res.json(result);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 // GET /api/referral-branch  → you -> your children -> your grandchildren
 // routes/referrals.js (Router mounted at /api)
@@ -515,41 +401,6 @@ router.get('/referral-branch', async (req, res) => {
 
 
 
-// GET /api/referral-tree  (same as admin app)
-router.get('/referral-tree', async (req, res) => {
-  try {
-    // If your customer API is protected, uncomment the token read & pass header check
-    // const user = req.user; // from your auth middleware, if any
-
-    const result = await pool.query(
-      'SELECT id, username, referrer_id, mobile_number, wallet FROM users'
-    );
-    const users = result.rows;
-
-    // Build map of users by id
-    const userMap = new Map();
-    users.forEach(u => userMap.set(u.id, { ...u, children: [] }));
-
-    let root = null;
-
-    // Build tree structure (single "Company" root expected)
-    users.forEach(user => {
-      if (user.referrer_id) {
-        const parent = userMap.get(user.referrer_id);
-        if (parent) parent.children.push(userMap.get(user.id));
-      } else {
-        // user with no referrer_id is the root
-        root = userMap.get(user.id);
-      }
-    });
-
-    res.json(root);
-  } catch (err) {
-    console.error('Error building referral tree:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
   // GET /api/metal-rate?metal=silver&purity=999
   router.get("/metal-rate", async (req, res) => {
     try {
@@ -599,39 +450,36 @@ router.get("/taxonomy", async (req, res) => {
       return res.json(_taxonomyCache);
     }
 
-    const typesQ = await pool.query(`
-      SELECT id, name
-      FROM product_types
-      ORDER BY name
-    `);
-
-    const catsQ = await pool.query(`
-      SELECT pc.id, pc.name, pc.type_id, pt.name AS type_name
-      FROM product_categories pc
-      JOIN product_types pt ON pt.id = pc.type_id
-      ORDER BY pt.name, pc.name
-    `);
-
-    const subsQ = await pool.query(`
-      SELECT spc.id, spc.name, spc.category_id
-      FROM sub_product_categories spc
-      ORDER BY spc.name
-    `);
-
-    // If you keep purities/stone_type on products, expose them too (optional)
-    const puritiesQ = await pool.query(`
-      SELECT DISTINCT TRIM(purity) AS label
-      FROM products
-      WHERE purity IS NOT NULL AND TRIM(purity) <> ''
-      ORDER BY label DESC
-    `);
-
-    const stoneTypesQ = await pool.query(`
-      SELECT DISTINCT TRIM(stone_type) AS label
-      FROM products
-      WHERE stone_type IS NOT NULL AND TRIM(stone_type) <> ''
-      ORDER BY label
-    `);
+    const [typesQ, catsQ, subsQ, puritiesQ, stoneTypesQ] = await Promise.all([
+      pool.query(`
+        SELECT id, name
+        FROM product_types
+        ORDER BY name
+      `),
+      pool.query(`
+        SELECT pc.id, pc.name, pc.type_id, pt.name AS type_name
+        FROM product_categories pc
+        JOIN product_types pt ON pt.id = pc.type_id
+        ORDER BY pt.name, pc.name
+      `),
+      pool.query(`
+        SELECT spc.id, spc.name, spc.category_id
+        FROM sub_product_categories spc
+        ORDER BY spc.name
+      `),
+      pool.query(`
+        SELECT DISTINCT TRIM(purity) AS label
+        FROM products
+        WHERE purity IS NOT NULL AND TRIM(purity) <> ''
+        ORDER BY label DESC
+      `),
+      pool.query(`
+        SELECT DISTINCT TRIM(stone_type) AS label
+        FROM products
+        WHERE stone_type IS NOT NULL AND TRIM(stone_type) <> ''
+        ORDER BY label
+      `),
+    ]);
 
     // Build productTypes -> [{id,label}]
     const productTypes = typesQ.rows.map((r) => ({ id: r.id, label: r.name }));

@@ -44,7 +44,9 @@ CREATE TABLE customer_orders (
   FOREIGN KEY (store_id) REFERENCES shops(id),
   customer_address text,
   advance_payment NUMERIC(12,2) NOT NULL DEFAULT 0,
-  expected_delivery_date DATE
+  expected_delivery_date DATE,
+  terms_version VARCHAR(20),
+  terms_accepted_at TIMESTAMPTZ
 );
 
 

@@ -210,6 +210,19 @@
   border-color: #c32929;
 }
 
+.profileDetails input[aria-invalid="true"] {
+  border-color: #c32929;
+  background: #fff8f8;
+}
+
+.profileFieldError {
+  display: block;
+  margin-top: 2px;
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 /* =========================
    Referrals + Wallet
 ========================= */

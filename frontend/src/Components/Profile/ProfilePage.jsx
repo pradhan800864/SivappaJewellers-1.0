@@ -30,6 +30,7 @@ const ProfilePage = () => {
     address: "",
     state: "",
   });
+  const [formErrors, setFormErrors] = useState({});
   const [transactions, setTransactions] = useState([]);
   const [showWalletHistory, setShowWalletHistory] = useState(false);
   const [hasReferralBilling, setHasReferralBilling] = useState(null);
@@ -335,12 +336,44 @@ const ProfilePage = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((current) => ({ ...current, [name]: value }));
+    setFormErrors((current) => {
+      if (!current[name]) return current;
+      const next = { ...current };
+      delete next[name];
+      return next;
+    });
+  };
+
+  const validateProfileForm = () => {
+    const errors = {};
+    const username = formData.username.trim();
+    const email = formData.email.trim();
+    const mobileNumber = formData.mobile_number.trim();
+    const mobileDigits = mobileNumber.replace(/\D/g, "");
+
+    if (!username) errors.username = "Full name is required.";
+    if (!email) errors.email = "Email address is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Enter a valid email address.";
+    }
+    if (!mobileNumber) errors.mobile_number = "Mobile number is required.";
+    else if (mobileDigits.length < 10 || mobileDigits.length > 15) {
+      errors.mobile_number = "Enter a valid mobile number.";
+    }
+    if (!formData.address.trim()) errors.address = "Delivery address is required.";
+    if (!formData.state.trim()) errors.state = "State is required.";
+
+    return errors;
   };
 
   const handleSave = async () => {
-    if (!formData.username.trim() || !formData.email.trim() || !formData.mobile_number.trim()) {
-      toast.error("Please enter your name, email and mobile number.", { duration: 3000 });
+    const errors = validateProfileForm();
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please complete all required profile fields.", { duration: 3000 });
       return;
     }
 
@@ -375,6 +408,7 @@ const ProfilePage = () => {
           state: data.state || "",
         });
         if (refreshUser) await refreshUser();
+        setFormErrors({});
         setIsEditing(false); // Exit edit mode
         toast.success("Updated user details successfully!", { duration: 3000 });
       } else {
@@ -393,12 +427,26 @@ const ProfilePage = () => {
       address: user?.address || "",
       state: user?.state || "",
     });
+    setFormErrors({});
     setIsEditing(false);
+  };
+
+  const startEditingProfile = () => {
+    setFormData({
+      username: getEditableCustomerName(user),
+      email: getEditableCustomerEmail(user?.email),
+      mobile_number: user?.mobile_number || "",
+      address: user?.address || "",
+      state: user?.state || "",
+    });
+    setFormErrors({});
+    setIsEditing(true);
   };
 
   const isProfileIncomplete = (profile) =>
     !getEditableCustomerName(profile) ||
     !getEditableCustomerEmail(profile?.email) ||
+    !String(profile?.mobile_number || "").trim() ||
     !String(profile?.address || "").trim() ||
     !String(profile?.state || "").trim();
   const normalizeFirstImage = (p) => {
@@ -820,7 +868,7 @@ const ProfilePage = () => {
 
                 {isProfileIncomplete(user) && (
                   <div className="profileCompletionNotice">
-                    Complete your profile with your name, email and address before placing orders.
+                    Complete all profile fields before searching for stores or submitting order requests.
                   </div>
                 )}
 
@@ -850,7 +898,7 @@ const ProfilePage = () => {
                 <div className="profileButtons">
                   <button
                     className="editButton"
-                    onClick={() => setIsEditing(true)}
+                    onClick={startEditingProfile}
                   >
                     Edit Profile
                   </button>
@@ -867,7 +915,10 @@ const ProfilePage = () => {
                       value={formData.username}
                       onChange={handleChange}
                       placeholder="Enter your full name"
+                      required
+                      aria-invalid={Boolean(formErrors.username)}
                     />
+                    {formErrors.username && <small className="profileFieldError">{formErrors.username}</small>}
                   </label>
                   <label>
                     <span>Email Address</span>
@@ -877,7 +928,10 @@ const ProfilePage = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="Enter your email"
+                      required
+                      aria-invalid={Boolean(formErrors.email)}
                     />
+                    {formErrors.email && <small className="profileFieldError">{formErrors.email}</small>}
                   </label>
                   <label>
                     <span>Mobile Number</span>
@@ -887,7 +941,10 @@ const ProfilePage = () => {
                       value={formData.mobile_number}
                       onChange={handleChange}
                       placeholder="Mobile Number"
+                      required
+                      aria-invalid={Boolean(formErrors.mobile_number)}
                     />
+                    {formErrors.mobile_number && <small className="profileFieldError">{formErrors.mobile_number}</small>}
                   </label>
                   <label className="profileEditFull">
                     <span>Delivery Address</span>
@@ -897,7 +954,10 @@ const ProfilePage = () => {
                       value={formData.address}
                       onChange={handleChange}
                       placeholder="Enter your delivery address"
+                      required
+                      aria-invalid={Boolean(formErrors.address)}
                     />
+                    {formErrors.address && <small className="profileFieldError">{formErrors.address}</small>}
                   </label>
                   <label>
                     <span>State</span>
@@ -907,7 +967,10 @@ const ProfilePage = () => {
                       value={formData.state}
                       onChange={handleChange}
                       placeholder="Enter your state"
+                      required
+                      aria-invalid={Boolean(formErrors.state)}
                     />
+                    {formErrors.state && <small className="profileFieldError">{formErrors.state}</small>}
                   </label>
                 </div>
                 <div className="profileButtons">

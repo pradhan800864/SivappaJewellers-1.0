@@ -23,6 +23,15 @@ import ShoppingCart from "./Components/ShoppingCart/ShoppingCart";
 import { AuthProvider } from "./Context/AuthContext";
 import { Toaster } from "react-hot-toast";
 import OpenInAppBanner from "./Components/OpenInAppBanner/OpenInAppBanner";
+import {
+  LegalCentre,
+  PrivacyNotice,
+  StoreFulfilmentPolicy,
+  ReturnsRefundsPolicy,
+  ProductDisclosures,
+  ReferralWalletTerms,
+  GrievanceRedressal,
+} from "./Pages/LegalPolicies";
 
 const App = () => {
   const isiOS =
@@ -55,6 +64,13 @@ const App = () => {
           <Route path="/resetPassword" element={<ResetPass />} />
           <Route path="/BlogDetails" element={<BlogDetails />} />
           <Route path="/terms" element={<TermsConditions />} />
+          <Route path="/legal" element={<LegalCentre />} />
+          <Route path="/privacy" element={<PrivacyNotice />} />
+          <Route path="/store-fulfilment" element={<StoreFulfilmentPolicy />} />
+          <Route path="/cancellations-returns-refunds" element={<ReturnsRefundsPolicy />} />
+          <Route path="/product-disclosures" element={<ProductDisclosures />} />
+          <Route path="/referral-wallet-terms" element={<ReferralWalletTerms />} />
+          <Route path="/grievance" element={<GrievanceRedressal />} />
           <Route path="/cart" element={<ShoppingCart />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

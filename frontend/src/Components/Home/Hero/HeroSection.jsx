@@ -12,7 +12,7 @@ const HeroSection = () => {
         <div className="sectionleft">
           <p>New Arrival</p>
           <h1>Luxury Diamond Rings</h1>
-          <span>Exclusive Collection - Up to 60% off & Free Shipping</span>
+          <span>Explore our jewellery collection and request availability from your preferred store</span>
           <div className="heroLink">
             <Link to="/shop">
               <h5>Discover More</h5>

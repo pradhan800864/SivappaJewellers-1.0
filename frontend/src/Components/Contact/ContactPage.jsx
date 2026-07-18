@@ -1,89 +1,62 @@
-import React, { useState } from "react";
+import React from "react";
+import { Link } from "react-router-dom";
 import "./ContactPage.css";
+import { businessDetails } from "../Legal/legalContent";
 
 const ContactPage = () => {
-  const [name, setname] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setmessage] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(
-      `Thank You ${name} for Contacting Us. We will Get Back to You Soon.\n\nYour Mail Id - ${email}.\nYour Message is - ${message}`
-    );
-    setname("");
-    setEmail("");
-    setmessage("");
-  };
-
   return (
     <>
       <div className="contactSection">
         <h2>Contact Us</h2>
-        <div className="contactMap">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3872.4843769043555!2d78.045081!3d15.8333229!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bb5e7669b62db2f:0xded0185e3645c62b!2sSri%20Sivappa%20Jewellers!5e0!3m2!1sen!2sin!4v1708798894132!5m2!1sen!2sin"
-            width="800"
-            height="600"
-            allowfullscreen=""
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            title="uomomap"
-          ></iframe>
+        <div className="contactMap contactMapConsentSafe">
+          <h3>Visit our Kurnool store</h3>
+          <p>{businessDetails.address}</p>
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Sri%20Sivappa%20Jewellers%20Kurnool"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open location in Google Maps
+          </a>
+          <small>Google Maps opens only when you choose this link.</small>
         </div>
         <div className="contactInfo">
           <div className="contactAddress">
             <div className="address">
               <h3>Store in Kurnool</h3>
+              <p>{businessDetails.address}</p>
               <p>
-                Shop No:4, Police Quarters, Kurnool
-                <br /> Andhra Pradesh
-              </p>
-              <p>
-                saisuryajewellers@gmail.com
+                <a href={`mailto:${businessDetails.email}`}>{businessDetails.email}</a>
                 <br />
-                +91 94402557666
+                <a href={`tel:${businessDetails.phoneHref}`}>{businessDetails.phoneDisplay}</a>
               </p>
+              <p>GSTIN: {businessDetails.gstin}</p>
             </div>
             <div className="address">
-              <h3>Store in India</h3>
+              <h3>Customer grievance</h3>
               <p>
-                A-791, A-791, Bandra Reclamation Rd, Mumbai
-                <br /> Maharashtra
+                We acknowledge consumer complaints within 48 hours and aim to
+                resolve them within one month.
               </p>
-              <p>
-                contact@dummymail.com
-                <br />
-                +44 20 7123 4567
-              </p>
+              <Link to="/grievance">View grievance process</Link>
             </div>
           </div>
           <div className="contactForm">
             <h3>Get In Touch</h3>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                value={name}
-                placeholder="Name *"
-                onChange={(e) => setname(e.target.value)}
-                required
-              />
-              <input
-                type="email"
-                value={email}
-                placeholder="Email address *"
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <textarea
-                rows={10}
-                cols={40}
-                placeholder="Your Message"
-                value={message}
-                onChange={(e) => setmessage(e.target.value)}
-              />
-              <button type="submit">Submit</button>
-            </form>
+            <p>
+              Email us from your registered contact details and include your order
+              request or invoice number, selected store, issue and preferred resolution.
+            </p>
+            <a className="contactAction" href={`mailto:${businessDetails.email}`}>
+              Email customer care
+            </a>
+            <a className="contactAction secondary" href={`tel:${businessDetails.phoneHref}`}>
+              Call {businessDetails.phoneDisplay}
+            </a>
+            <p className="contactPrivacyNote">
+              We use the information you send to answer your request, prevent fraud
+              and maintain legally required records. See our <Link to="/privacy">Privacy Notice</Link>.
+            </p>
           </div>
         </div>
       </div>

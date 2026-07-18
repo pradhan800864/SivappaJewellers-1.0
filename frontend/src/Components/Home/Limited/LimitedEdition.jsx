@@ -19,6 +19,7 @@ import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 import OtpLoginModal from "../../Authentication/OtpLoginModal/OtpLoginModal";
+import { fetchProductCatalog } from "../../../utils/productCatalog";
 
 const API_BASE = process.env.REACT_APP_API_BASE;
 
@@ -31,8 +32,12 @@ const num = (v) => {
 // map backend row → UI product shape
 const toUiProduct = (p) => {
   const imgs = Array.isArray(p.image_urls) ? p.image_urls : [];
-  const front = resolveImageUrl(p.image_url || imgs[0]);
-  const back = resolveImageUrl(imgs[1] || imgs[0] || p.image_url);
+  // Prefer the absolute URLs returned by the products API. The raw database
+  // paths are kept as fallbacks for older API responses.
+  const front = resolveImageUrl(p.frontImg || p.image_url || imgs[0]);
+  const back = resolveImageUrl(
+    p.backImg || imgs[1] || p.frontImg || imgs[0] || p.image_url
+  );
 
   return {
     id: p.id,
@@ -195,8 +200,7 @@ const LimitedEdition = () => {
         setLoading(true);
         setErr(null);
 
-        const { data } = await axios.get(`${API_BASE}/api/products`);
-        const list = Array.isArray(data) ? data : data.rows || data.items || [];
+        const list = await fetchProductCatalog();
         const ui = list.map(toUiProduct);
 
         const le = ui.filter((p) =>
@@ -304,6 +308,8 @@ const LimitedEdition = () => {
                         src={resolveImageUrl(product.frontImg)}
                         alt={product.productName}
                         className="lpImage"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </Link>
 

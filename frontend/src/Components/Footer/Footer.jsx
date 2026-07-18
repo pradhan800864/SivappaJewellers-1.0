@@ -1,21 +1,10 @@
 import React from "react";
 import "./Footer.css";
-import paymentIcon from "../../Assets/paymentIcon.png";
-import { FaFacebookF } from "react-icons/fa";
-import { FaXTwitter } from "react-icons/fa6";
-import { FaInstagram } from "react-icons/fa";
-import { FaYoutube } from "react-icons/fa";
-import { FaPinterest } from "react-icons/fa";
-
 import { Link } from "react-router-dom";
+import { businessDetails } from "../Legal/legalContent";
 
 const Footer = () => {
   const brandLogoSrc = `${process.env.PUBLIC_URL}/brand/sai-surya-app-icon.svg`;
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    alert("Subscribed Successfully");
-  };
-
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -35,19 +24,13 @@ const Footer = () => {
               <h2>SAI SURYAA JEWELLERS</h2>
             </div>
 
-            <p>Shop No:4, Police Quarters, Kurnool, Andhra Pradesh 518001</p>
+            <p>{businessDetails.merchantName}</p>
+            <p>{businessDetails.address}</p>
+            <p>GSTIN: {businessDetails.gstin}</p>
 
             <div className="footer_address">
-              <strong> saisuryajewellers@gmail.com </strong>
-              <strong> +91 94402557666 </strong>
-            </div>
-
-            <div className="social_links">
-              <FaFacebookF />
-              <FaXTwitter />
-              <FaInstagram />
-              <FaYoutube />
-              <FaPinterest />
+              <a href={`mailto:${businessDetails.email}`}>{businessDetails.email}</a>
+              <a href={`tel:${businessDetails.phoneHref}`}>{businessDetails.phoneDisplay}</a>
             </div>
           </div>
 
@@ -57,12 +40,6 @@ const Footer = () => {
               <ul onClick={scrollToTop}>
                 <li>
                   <Link to="/about">About Us</Link>
-                </li>
-                <li>
-                  <Link to="/about">Career</Link>
-                </li>
-                <li>
-                  <Link to="*">Affilates</Link>
                 </li>
                 <li>
                   <Link to="/blog">Blog</Link>
@@ -96,46 +73,43 @@ const Footer = () => {
             </div>
           </div>
           <div className="footer_content">
-            <h5>Help</h5>
+            <h5>Policies</h5>
             <div className="links_container">
               <ul onClick={scrollToTop}>
                 <li>
-                  <Link to="/contact">Customer Service</Link>
+                  <Link to="/legal">Legal & Policy Centre</Link>
                 </li>
                 <li>
-                  <Link to="/loginSignUp">My Account</Link>
+                  <Link to="/terms">Terms of Use</Link>
                 </li>
                 <li>
-                  <Link to="/contact">Find a Store</Link>
+                  <Link to="/privacy">Privacy Notice</Link>
                 </li>
                 <li>
-                  <Link to="/terms">Legal & Privacy</Link>
+                  <Link to="/cancellations-returns-refunds">Returns & Refunds</Link>
                 </li>
                 <li>
-                  <Link to="/contact">Contact</Link>
+                  <Link to="/store-fulfilment">Store Fulfilment</Link>
                 </li>
                 <li>
-                  <Link to="/">Gift Card</Link>
+                  <Link to="/grievance">Grievance Redressal</Link>
                 </li>
               </ul>
             </div>
           </div>
           <div className="footer_right">
-            <h5>Subscribe</h5>
+            <h5>Order Requests</h5>
             <p>
-              Be the first to get the latest news about trends, promotions, and
-              much more!
+              Browse products and send a request to your selected store. The store
+              confirms availability, final price, billing and fulfilment before payment.
             </p>
-
-            <form onSubmit={handleSubscribe}>
-              <input type="email" placeholder="Your email address" required />
-              <button type="submit">Join</button>
-            </form>
-
-            <h6>Secure Payments</h6>
-            <div className="paymentIconContainer">
-              <img src={paymentIcon} alt="" />
-            </div>
+            <p className="footerNoPayment"><strong>No payment is collected in this app.</strong></p>
+            <Link className="footerPolicyLink" to="/product-disclosures" onClick={scrollToTop}>
+              Pricing & Hallmarking
+            </Link>
+            <Link className="footerPolicyLink" to="/referral-wallet-terms" onClick={scrollToTop}>
+              Referral & Wallet Terms
+            </Link>
           </div>
         </div>
         <div className="footer_bottom">

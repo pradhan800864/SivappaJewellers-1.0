@@ -29,6 +29,26 @@ const createReferralRequestError = (status, message) => {
 
 const normalizeMobileNumber = (value) => String(value || "").replace(/\D/g, "");
 
+const validateRequiredProfileFields = ({ username, email, mobile_number, address, state }) => {
+  const errors = {};
+  const cleanUsername = String(username || "").trim();
+  const cleanEmail = String(email || "").trim();
+  const cleanMobile = normalizeMobileNumber(mobile_number);
+
+  if (!cleanUsername) errors.username = "Full name is required";
+  if (!cleanEmail) errors.email = "Email address is required";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    errors.email = "Valid email address is required";
+  }
+  if (cleanMobile.length < 10 || cleanMobile.length > 15) {
+    errors.mobile_number = "Valid mobile number is required";
+  }
+  if (!String(address || "").trim()) errors.address = "Delivery address is required";
+  if (!String(state || "").trim()) errors.state = "State is required";
+
+  return errors;
+};
+
 const maskMobileNumber = (mobileNumber) => {
   const clean = normalizeMobileNumber(mobileNumber);
   if (clean.length <= 4) return clean;
@@ -716,13 +736,35 @@ router.post("/login", (_req, res) => {
       const { id, username, email, mobile_number, address, state } = req.body; // ✅ Get ID from frontend
   
       // Ensure the user is updating their own profile
-      if (id !== req.user.user_id) {
+      if (Number(id) !== Number(req.user.user_id)) {
         return res.status(403).json({ error: "Unauthorized action" });
+      }
+
+      const validationErrors = validateRequiredProfileFields({
+        username,
+        email,
+        mobile_number,
+        address,
+        state,
+      });
+
+      if (Object.keys(validationErrors).length > 0) {
+        return res.status(400).json({
+          error: "Please complete all required profile fields",
+          fields: validationErrors,
+        });
       }
   
       const updatedUser = await pool.query(
-        "UPDATE users SET username = $1, email = $2, mobile_number = $3, address = COALESCE($4, address), state = COALESCE($5, state) WHERE id = $6 RETURNING *",
-        [username, email, mobile_number, address ?? null, state ?? null, id]
+        "UPDATE users SET username = $1, email = $2, mobile_number = $3, address = $4, state = $5 WHERE id = $6 RETURNING *",
+        [
+          String(username).trim(),
+          String(email).trim(),
+          String(mobile_number).trim(),
+          String(address).trim(),
+          String(state).trim(),
+          Number(id),
+        ]
       );
   
       if (updatedUser.rows.length === 0) {
