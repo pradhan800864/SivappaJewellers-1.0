@@ -12,7 +12,7 @@ const ContactPage = () => {
           <h3>Visit our Kurnool store</h3>
           <p>{businessDetails.address}</p>
           <a
-            href="https://www.google.com/maps/search/?api=1&query=Sri%20Sivappa%20Jewellers%20Kurnool"
+            href="https://www.google.com/maps/search/?api=1&query=Sai%20Suryaa%20Jewellers%20Kurnool"
             target="_blank"
             rel="noreferrer"
           >

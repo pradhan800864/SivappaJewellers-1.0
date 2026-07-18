@@ -36,7 +36,6 @@ const AdditionalInfo = () => {
       .get(`${process.env.REACT_APP_API_BASE}/api/products/${id}`)
       .then((res) => setProduct(res.data))
       .catch((e) => {
-        console.error("Failed to load product additional info:", e);
         setProduct(null);
       })
       .finally(() => setLoading(false));

@@ -37,7 +37,6 @@ const RelatedProducts = () => {
       .get(`${process.env.REACT_APP_API_BASE}/api/products/${id}/related?limit=20`)
       .then((res) => setItems(res.data || []))
       .catch((e) => {
-        console.error("Failed to load related products:", e);
         setItems([]);
       });
   }, [id]);

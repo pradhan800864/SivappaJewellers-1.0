@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import "./App.css";
 
@@ -62,7 +62,11 @@ const App = () => {
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/loginSignUp" element={<Authentication />} />
           <Route path="/resetPassword" element={<ResetPass />} />
-          <Route path="/BlogDetails" element={<BlogDetails />} />
+          <Route path="/blog/:slug" element={<BlogDetails />} />
+          <Route
+            path="/BlogDetails"
+            element={<Navigate to="/blog/kundan-meenakari-jaipur" replace />}
+          />
           <Route path="/terms" element={<TermsConditions />} />
           <Route path="/legal" element={<LegalCentre />} />
           <Route path="/privacy" element={<PrivacyNotice />} />

@@ -28,9 +28,7 @@ const ReferralsPage = ({ user }) => {
       const data = await res.json();
       if (res.ok) setReferrer(data || null);
       else if (res.status === 404) setReferrer(null);
-      else console.error("Failed to fetch referrer:", data.error);
     } catch (err) {
-      console.error("Error fetching referrer:", err);
     }
   };
 
@@ -43,9 +41,7 @@ const ReferralsPage = ({ user }) => {
       });
       const data = await res.json();
       if (res.ok) setPendingRequest(data?.request || null);
-      else console.error("Failed to fetch pending referral request:", data.error);
     } catch (err) {
-      console.error("Error fetching pending referral request:", err);
     }
   };
 
@@ -79,7 +75,6 @@ const ReferralsPage = ({ user }) => {
         });
       }
     } catch (err) {
-      console.error("Error adding referrer:", err);
       toast.error("Server error. Please try again later!", { duration: 3000 });
     }
   };
@@ -108,7 +103,6 @@ const ReferralsPage = ({ user }) => {
         toast.error(data.error || "Failed to join company");
       }
     } catch (err) {
-      console.error("Error joining company:", err);
       toast.error("Server error. Please try again later!", { duration: 3000 });
     }
   };

@@ -37,8 +37,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:mobile": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
+    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "postbuild": "node scripts/strip-console-from-build.js",
+    "build:mobile": "GENERATE_SOURCEMAP=false DISABLE_ESLINT_PLUGIN=true react-scripts build && node scripts/strip-console-from-build.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "postinstall": "patch-package",
@@ -55,7 +56,10 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "no-console": "error"
+    }
   },
   "browserslist": {
     "production": [

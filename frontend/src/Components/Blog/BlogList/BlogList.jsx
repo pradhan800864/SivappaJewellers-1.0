@@ -1,68 +1,64 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 import "./BlogList.css";
-
 import BlogData from "../../../Data/BlogData";
-import { Link } from "react-router-dom";
 
 const BlogList = () => {
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <>
-      <div className="blogListSection">
-        <div className="blogListHeaderContainer">
-          <div className="blogListHeader">
-            <h2>Our Blog's</h2>
-            <div className="blogListHeaderCategories">
-            <p>NEW COLLECTIONS</p>
-            <p className="activeCategory">TRENDING JEWELRY</p>
-            <p>GEMSTONES & METALS</p>
-          </div>
+    <main className="blogListSection">
+      <div className="blogListHeaderContainer">
+        <div className="blogListHeader">
+          <p className="blogListEyebrow">Stories of Indian craftsmanship</p>
+          <h1>Our Journal</h1>
+          <div className="blogListHeaderCategories" aria-label="Journal themes">
+            <span className="activeCategory">Heritage Jewellery</span>
+            <span>Regional Craft</span>
+            <span>Artisan Stories</span>
           </div>
         </div>
-        <div className="blogPostListContainer">
-          {BlogData.map((blogPost) => (
-            <div className="blogPost">
-              <div className="blogPostThumb">
-                <img src={blogPost.blogThumbnail} alt="blogPost" />
-              </div>
+      </div>
+
+      <div className="blogPostListContainer">
+        {BlogData.map((blogPost) => {
+          const articlePath = `/blog/${blogPost.slug}`;
+
+          return (
+            <article className="blogPost" key={blogPost.blogID}>
+              <Link className="blogPostThumb" to={articlePath} onClick={scrollToTop}>
+                <img
+                  src={blogPost.blogThumbnail}
+                  alt={blogPost.imageAlt}
+                  loading="lazy"
+                />
+              </Link>
+
               <div className="blogPostContent">
                 <div className="blogPostContentDate">
-                  <p>by admin</p>
-                  <p>{blogPost.blogDate}</p>
+                  <span>{blogPost.category}</span>
+                  <span>{blogPost.blogDate}</span>
                 </div>
-                <div className="blogPostContentHeading">
-                  <Link to="/BlogDetails" onClick={scrollToTop}>
+                <h2 className="blogPostContentHeading">
+                  <Link to={articlePath} onClick={scrollToTop}>
                     {blogPost.blogHeading}
                   </Link>
-                </div>
-                <div className="blogPostContentDescription">
-                  <p>
-                    Midst one brought greater also morning green saying had
-                    good. Open stars day let over gathered, grass face one every
-                    light of under.
-                  </p>
-                </div>
+                </h2>
+                <p className="blogPostContentDescription">{blogPost.excerpt}</p>
                 <div className="blogPostContentReadMore">
-                  <Link to="/BlogDetails" onClick={scrollToTop}>
-                    Continue Reading
+                  <Link to={articlePath} onClick={scrollToTop}>
+                    Read the story
                   </Link>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <p className="blogListShowMore" onClick={scrollToTop}>
-          Show More
-        </p>
+            </article>
+          );
+        })}
       </div>
-    </>
+    </main>
   );
 };
 

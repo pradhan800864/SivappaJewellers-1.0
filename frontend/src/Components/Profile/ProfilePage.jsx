@@ -131,7 +131,6 @@ const ProfilePage = () => {
 
         setHasReferralBilling(Number(data.total || 0) > 0);
       } catch (e) {
-        console.error("fetchReferralBillingStatus error:", e);
         setReferralBillingError("Failed to load referral access");
         setHasReferralBilling(false);
       } finally {
@@ -174,11 +173,9 @@ const ProfilePage = () => {
           const txData = await txRes.json();
           if (txRes.ok) setTransactions(txData);
         } else {
-          console.error("Failed to fetch user:", data.error);
           navigate("/loginSignUp");
         }
       } catch (error) {
-        console.error("Error fetching user:", error);
       }
     };
 
@@ -208,7 +205,6 @@ const ProfilePage = () => {
         setFavError(data.error || "Failed to load favorites");
       }
     } catch (e) {
-      console.error("fetchFavorites error:", e);
       setFavError("Failed to load favorites");
     } finally {
       setFavLoading(false);
@@ -243,7 +239,6 @@ const ProfilePage = () => {
         setOrdersError(data.error || "Failed to load orders");
       }
     } catch (e) {
-      console.error("fetchOrders error:", e);
       setOrdersError("Failed to load orders");
     } finally {
       setOrdersLoading(false);
@@ -296,7 +291,6 @@ const ProfilePage = () => {
       }
       setSelectedOrderDetails(data);
     } catch (e) {
-      console.error("view order details error:", e);
       setOrderDetailsError("Failed to load invoice details");
       toast.error("Failed to load invoice details");
     } finally {
@@ -415,7 +409,6 @@ const ProfilePage = () => {
         toast.error(data.error || "Failed to update profile", { duration: 3000 });
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
     }
   };
 
@@ -513,7 +506,6 @@ const ProfilePage = () => {
         toast.error(data.error || "Failed to remove favorite", { duration: 3000 });
       }
     } catch (e) {
-      console.error("removeFavorite error:", e);
       toast.error("Failed to remove favorite", { duration: 3000 });
     }
   };

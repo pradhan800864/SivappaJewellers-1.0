@@ -72,7 +72,7 @@ const ShopDetails = () => {
   useEffect(() => {
     fetchProductCatalog()
       .then(setProducts)
-      .catch((err) => console.error("Failed to fetch products:", err));
+      .catch(() => {});
   }, []);
 
   // Load taxonomy
@@ -80,7 +80,7 @@ const ShopDetails = () => {
     axios
       .get(process.env.REACT_APP_API_BASE + "/api/taxonomy")
       .then((res) => setTaxonomy(res.data))
-      .catch((err) => console.error("Failed to fetch taxonomy:", err));
+      .catch(() => {});
   }, []);
 
   // Load favorites for logged-in user so hearts are correct
@@ -99,7 +99,6 @@ const ShopDetails = () => {
         setWishList(map);
       })
       .catch((err) => {
-        console.error("Failed to fetch favorites:", err);
       });
     // eslint-disable-next-line
   }, []);
@@ -135,7 +134,6 @@ const ShopDetails = () => {
         toast.success("Removed from favorites");
       }
     } catch (err) {
-      console.error("Favorite toggle failed:", err);
       if (err?.response?.status === 401) {
         setFavoriteLoginProductId(productID);
         return;

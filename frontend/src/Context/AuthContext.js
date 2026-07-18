@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error("Error fetching user:", error);
       localStorage.removeItem("token");
       setUser(null);
       setIsAuthenticated(false);

@@ -87,7 +87,6 @@ const Product = () => {
         setCurrentImg(0);
       })
       .catch((err) => {
-        console.error("Failed to fetch product:", err);
         setError("Product not found");
         setLoading(false);
       });

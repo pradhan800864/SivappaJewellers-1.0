@@ -7,8 +7,6 @@ export function Model(props) {
   const modelRef = useRef();
 
   useEffect(() => {
-    console.log("Nodes:", nodes);
-    console.log("Materials:", materials);
 
     // ✅ Gold Material (Ring)
     if (materials.wire_143225087) {

@@ -20,7 +20,6 @@ export default function ReferralTree({ userId }) {
         });
         setTree(res.data);
       } catch (error) {
-        console.error('Error fetching referral branch:', error);
         setTree(null);
       }
     };

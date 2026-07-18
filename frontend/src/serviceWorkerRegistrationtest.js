@@ -5,14 +5,12 @@ export function register() {
       window.addEventListener("load", async () => {
         try {
           await navigator.serviceWorker.register("/service-worker.js");
-          // console.log("Service Worker registered");
         } catch (e) {
-          console.error("Service Worker registration failed:", e);
         }
       });
     }
   }
-  
+
   export function unregister() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.ready
@@ -20,4 +18,3 @@ export function register() {
         .catch(() => {});
     }
   }
-  

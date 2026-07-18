@@ -6,10 +6,10 @@ export const policyMeta = {
 
 export const businessDetails = {
   brandName: "Sai Suryaa Jewellers",
-  merchantName: "Sivappa Jewellers",
+  merchantName: "Sai Suryaa Jewellers",
   address: "Shop No. 1, H.No. 18/100A/1, S.V.C. Shroff Bazar, Kurnool, Andhra Pradesh, India",
   gstin: "37AIBPA3539R1ZZ",
-  email: "sivappajewellers@gmail.com",
+  email: "jewellerssaisurya@gmail.com",
   phoneDisplay: "+91 94402 55766",
   phoneHref: "+919440255766",
   grievanceOfficer: "Customer Grievance Officer",
