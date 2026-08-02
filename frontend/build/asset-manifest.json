@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.7d80ed60.css",
-    "main.js": "/static/js/main.86593de1.js",
+    "main.js": "/static/js/main.54c55871.js",
     "static/js/206.82e11303.chunk.js": "/static/js/206.82e11303.chunk.js",
     "static/media/heroImage3.jpg": "/static/media/heroImage3.971ea24178a023e70ba1.jpg",
     "static/media/hero-campaign-v2.png": "/static/media/hero-campaign-v2.2a2c72818c5c3701d5ae.png",
@@ -32,6 +32,6 @@
   },
   "entrypoints": [
     "static/css/main.7d80ed60.css",
-    "static/js/main.86593de1.js"
+    "static/js/main.54c55871.js"
   ]
 }

@@ -273,7 +273,7 @@ const LimitedEdition = () => {
           )}
 
           <Swiper
-            slidesPerView={Math.min(4, Math.max(items.length, 2))}
+            slidesPerView={4}
             slidesPerGroup={1}
             spaceBetween={30}
             loop={items.length > 4}
@@ -290,9 +290,9 @@ const LimitedEdition = () => {
             }}
             modules={[Navigation, Autoplay]}
             breakpoints={{
-              320: { slidesPerView: Math.min(2, Math.max(items.length, 1)), slidesPerGroup: 1, spaceBetween: 14 },
-              768: { slidesPerView: Math.min(3, Math.max(items.length, 2)), slidesPerGroup: 1, spaceBetween: 24 },
-              1024: { slidesPerView: Math.min(4, Math.max(items.length, 2)), slidesPerGroup: 1, spaceBetween: 30 },
+              320: { slidesPerView: 2, slidesPerGroup: 1, spaceBetween: 14 },
+              768: { slidesPerView: 3, slidesPerGroup: 1, spaceBetween: 24 },
+              1024: { slidesPerView: 4, slidesPerGroup: 1, spaceBetween: 30 },
             }}
           >
             {items.map((product, idx) => (
