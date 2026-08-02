@@ -1,334 +1,412 @@
 .trendyProducts {
+  width: min(1600px, 100%);
+  margin: 0 auto;
+  padding: clamp(80px, 9vw, 134px) clamp(24px, 5vw, 82px) clamp(100px, 10vw, 150px);
+}
+
+.trendyHeading {
+  padding-bottom: 26px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 85px 0;
-  padding: 0 160px;
-  gap: 40px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  border-bottom: 1px solid var(--home-border);
 }
 
-.trendyProducts h2 {
+.trendyHeading > div > p {
+  margin: 0 0 11px;
+  color: var(--home-wine);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
-  font-size: 35px;
-  font-weight: 500;
 }
 
-.trendyProducts h2 span {
-  font-weight: 700;
+.trendyHeading h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(44px, 5vw, 72px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.trendyHeading > a,
+.discoverMore a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--home-wine);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
 .trendyTabs {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
+  margin-top: 36px;
 }
 
 .tabs {
+  margin-bottom: 42px;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 50px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.tabs p {
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
+.tabs button {
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid var(--home-border);
+  border-radius: 999px;
+  color: var(--home-muted);
+  background: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: 16px;
-  font-weight: 600;
-  position: relative;
-  transition: color 0.3s;
-  color: #767676;
-  text-decoration: none;
+  cursor: pointer;
 }
 
-.tabs p:hover {
-  color: black;
-}
-
-.tabs p.active {
-  color: black;
-}
-
-.tabs p.active::after {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: rgb(0, 0, 0);
-}
-
-.tabs p:not(.active)::after {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background-color: rgb(0, 0, 0);
-  transition: width 0.2s ease, left 0.2s ease;
-}
-
-.tabs p:not(.active):hover::after {
-  width: 100%;
-  left: 0;
-  transition-delay: 0.2s;
+.tabs button:hover,
+.tabs button.active {
+  color: #fff;
+  border-color: var(--home-wine);
+  background: var(--home-wine);
 }
 
 .trendyMainContainer {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-gap: 30px;
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 18px;
+  scroll-padding-inline: 1px;
+  scroll-snap-type: x proximity;
+  scrollbar-color: var(--home-wine) #eee6df;
+  scrollbar-width: thin;
+}
+
+.trendyMainContainer::-webkit-scrollbar {
+  height: 4px;
+}
+
+.trendyMainContainer::-webkit-scrollbar-track {
+  background: #eee6df;
+}
+
+.trendyMainContainer::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--home-wine);
 }
 
 .trendyProductContainer {
-  position: relative;
+  min-width: 210px;
+  flex: 0 0 calc((100% - 72px) / 5);
+  display: flex;
+  flex-direction: column;
+  scroll-snap-align: start;
 }
 
 .trendyProductImages {
   position: relative;
-  width: 258px;
-  height: 320px;
+  width: 100%;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  -webkit-transition: all 0.2s cubic-bezier(0.99, 0.99, 0, 0.61);
-  transition: 0.3s linear;
-  -moz-transition: 0.3s linear;
-  -o-transition: 0.3s linear;
+  background: #f0ebe5;
+}
+
+.trendyProductImages > a {
+  position: absolute;
+  inset: 0;
+  display: block;
 }
 
 .trendyProductImages img {
   position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  top: 0;
-  left: 0;
-  overflow: hidden;
+  display: block;
   object-fit: cover;
-  transition: opacity 0.3s linear;
+  transition: opacity 360ms ease, transform 650ms ease;
 }
 
-.trendyProductImages .trendyProduct_back {
-  z-index: 1;
+.trendyProduct_back {
   opacity: 0;
-  transition: opacity 0.3s linear;
-}
-
-.trendyProductContainer:hover .trendyProduct_back {
-  opacity: 1;
-}
-
-.trendyProductImages .trendyProduct_front {
-  z-index: 2;
-  transition: opacity 0.3s linear;
-  cursor: pointer;
 }
 
 .trendyProductContainer:hover .trendyProduct_front {
   opacity: 0;
 }
 
-.trendyProductContainer h4 {
-  position: relative;
-  top: 320px;
-  text-align: center;
-  padding: 10px;
-  background-color: rgb(253, 253, 253);
-  transition: all 0.2s cubic-bezier(0.99, 0.99, 0, 0.61);
-  margin: 0 10px;
-  text-transform: uppercase;
-  font-weight: 500;
-  font-size: 14px;
+.trendyProductContainer:hover .trendyProduct_back {
+  opacity: 1;
+  transform: scale(1.025);
+}
+
+.trendyViewPiece {
+  position: absolute;
+  right: 13px;
+  bottom: 13px;
+  left: 13px;
   z-index: 3;
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  background: rgba(67, 16, 28, 0.94);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.trendyProductContainer:hover .trendyViewPiece,
+.trendyProductImages > a:focus-visible .trendyViewPiece {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.trendyWishButton,
+.trendyCartButton {
+  position: absolute;
+  z-index: 5;
+  border: 0;
   cursor: pointer;
 }
 
-.trendyProductContainer:hover h4 {
-  top: 270px;
+.trendyWishButton {
+  top: 13px;
+  right: 13px;
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #4d4540;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 7px 24px rgba(27, 15, 12, 0.1);
 }
 
-.trendyProductInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.trendyWishButton svg {
+  width: 17px;
+  height: 17px;
 }
 
-.trendyProductCategoryWishlist {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
+.trendyWishButton .isFavorite {
+  color: var(--home-wine);
+  fill: var(--home-wine);
 }
 
-.trendyProductCategoryWishlist p {
-  color: #767676;
-  font-size: 14px;
+.trendyCartButton {
+  top: 59px;
+  right: 13px;
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #4d4540;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 7px 24px rgba(27, 15, 12, 0.1);
+  font-size: 0;
 }
 
-.trendyProductNameInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.trendyCartButton svg {
+  width: 17px;
+  height: 17px;
+  display: block;
 }
 
-.trendyProductNameInfo a {
-  text-decoration: none;
-  color: black;
-}
-
-.trendyProductNameInfo h5 {
-  font-weight: 400;
-  font-size: 16px;
-  text-align: left;
-}
-
-.trendyProductRatingReviews {
-  display: flex;
-  gap: 10px;
-}
-
-.trendyProductRatingReviews span {
-  color: #767676;
-  font-size: 14px;
-}
-
-.trendyProductRatingStar {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.discoverMore p {
-  font-size: 14px;
-  font-weight: 500;
-  text-transform: uppercase;
-  position: relative;
-  display: inline-block;
-}
-
-.discoverMore p::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -5px;
-  width: 60%;
-  border-bottom: 2px solid black;
-  transition: width 0.2s ease;
-}
-
-.discoverMore p:hover::after {
-  width: 100%;
-}
-
-.discoverMore a {
-  text-decoration: none;
-  color: black;
-}
-
-.trendyProductImagesCart {
+.trendyCartButton span {
   display: none;
 }
 
-@media screen and (max-width: 1210px) {
-  .trendyProducts {
-    padding: 0 60px;
+@media (max-width: 730px), (hover: none) {
+  .trendyCartButton {
+    top: auto;
+    right: 13px;
+    bottom: 13px;
+    left: 13px;
+    width: auto;
+    height: auto;
+    min-height: 43px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    background: var(--home-wine);
+    font-size: 9px;
+    font-weight: 750;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
-  .trendyProducts h2 {
-    font-size: 26px;
+  .trendyCartButton span {
+    display: inline;
+  }
+}
+
+.trendyProductInfo {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  flex: 1;
+  padding: 15px 2px 19px;
+  border-bottom: 1px solid var(--home-border);
+}
+
+.trendyProductCategoryWishlist {
+  min-height: 24px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.trendyProductCategoryWishlist > * {
+  min-width: 0;
+}
+
+.trendyProductCategoryWishlist p,
+.trendyProductCategoryWishlist span {
+  margin: 0;
+  color: var(--home-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trendyProductCategoryWishlist span {
+  color: var(--home-wine);
+}
+
+.trendyProductNameInfo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 15px;
+  color: var(--home-ink);
+  text-decoration: none;
+}
+
+.trendyProductNameInfo h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(17px, 1.5vw, 22px);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.trendyProductNameInfo p {
+  margin: 0;
+  flex: 0 0 auto;
+  color: #403934;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trendyEmptyState {
+  width: 100%;
+  margin: 30px 0;
+  color: var(--home-muted);
+  text-align: center;
+}
+
+.discoverMore {
+  margin-top: 48px;
+  display: none;
+  justify-content: center;
+}
+
+@media (max-width: 730px) {
+  .trendyHeading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .trendyProductImages {
-    width: 100%;
-    height: 250px;
-  }
-
-  .trendyProductContainer h4 {
+  .trendyHeading > a {
     display: none;
   }
 
-  .trendyProductImagesCart {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    border-radius: 50%;
-    padding: 5px;
-    z-index: 8;
-    color: gray;
-  }
-}
-
-@media screen and (max-width: 768px) {
   .trendyMainContainer {
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 20px;
+    gap: 10px;
   }
 
-  .trendyProductImages {
-    width: 100%;
-    height: 240px;
+  .trendyProductContainer {
+    min-width: 160px;
+    flex-basis: calc((100% - 10px) / 2);
+  }
+
+  .trendyProductCategoryWishlist span {
+    display: none;
+  }
+
+  .trendyProductNameInfo {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .trendyViewPiece {
+    display: none;
+  }
+
+  .discoverMore {
+    display: flex;
   }
 }
 
-@media screen and (max-width: 450px) {
+@media (max-width: 480px) {
   .trendyProducts {
-    padding: 0 15px;
+    padding-inline: 14px;
   }
 
   .tabs {
-    gap: 30px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .trendyMainContainer {
-    grid-template-columns: repeat(2, 1fr);
+  .tabs::-webkit-scrollbar {
+    display: none;
   }
 
-  .trendyProductImages {
-    width: 100%;
-    height: 235px;
-  }
-}
-
-@media screen and (max-width: 320px) {
-  .trendyProductImages {
-    width: 100%;
-    height: 170px;
+  .tabs button {
+    flex: 0 0 auto;
   }
 
-  .trendyProductNameInfo h5 {
-    font-size: 14px;
+  .trendyWishButton {
+    top: 8px;
+    right: 8px;
+    width: 34px;
+    height: 34px;
   }
 
-  .trendyProductNameInfo p {
-    font-size: 12px;
-  }
-
-  .trendyProductRatingReviews {
-    display: flex;
-    gap: 5px;
-  }
-
-  .trendyProductRatingReviews span {
-    font-size: 12px;
-  }
-
-  .trendyProductRatingStar {
-    display: flex;
-    align-items: center;
-    gap: 2px;
+  .trendyCartButton {
+    top: auto;
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    min-height: 38px;
   }
 }
 
-.trendyProduct_front,
-.trendyProduct_back {
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
+@media (hover: none) {
+  .trendyViewPiece {
+    display: none;
+  }
 }

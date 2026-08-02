@@ -1,0 +1,39 @@
+.homePage {
+  --home-ink: #1d1715;
+  --home-muted: #746b65;
+  --home-wine: #671d2d;
+  --home-wine-dark: #351018;
+  --home-gold: #bd9452;
+  --home-cream: #f7f2eb;
+  --home-border: #e5ddd5;
+  width: 100%;
+  overflow: hidden;
+  color: var(--home-ink);
+  background: #fff;
+}
+
+.homePage *,
+.homePage *::before,
+.homePage *::after {
+  box-sizing: border-box;
+}
+
+.homePage button,
+.homePage a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.homePage img {
+  max-width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homePage *,
+  .homePage *::before,
+  .homePage *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

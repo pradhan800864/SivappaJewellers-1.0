@@ -7,7 +7,7 @@ import "swiper/css/navigation";
 import { Navigation } from "swiper/modules";
 
 import axios from "axios";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { FiHeart } from "react-icons/fi";
@@ -23,7 +23,6 @@ const currencyIN = (n) =>
 
 
 const RelatedProducts = () => {
-  const navigate = useNavigate();
   const { id } = useParams(); // current product id
   const [wishList, setWishList] = useState({});
   const [favoriteLoginProductId, setFavoriteLoginProductId] = useState(null);
@@ -126,9 +125,11 @@ const RelatedProducts = () => {
       />
       <div className="relatedProductSection">
         <div className="relatedProducts">
-          <h2>
-            RELATED <span>PRODUCTS</span>
-          </h2>
+          <div>
+            <p>Continue exploring</p>
+            <h2>You may also like</h2>
+          </div>
+          <Link to="/shop" onClick={scrollToTop}>View the collection <span aria-hidden="true">↗</span></Link>
         </div>
 
         <div className="relatedProductSlider">
@@ -165,28 +166,33 @@ const RelatedProducts = () => {
               return (
                 <SwiperSlide key={productID}>
                   <div className="rpContainer">
-                    <div
+                    <Link
+                      to={`/product/${productID}`}
                       className="rpImages"
                       onClick={() => {
                         scrollToTop();
-                        navigate(`/product/${productID}`);
                       }}
+                      aria-label={`View ${p.name}`}
                     >
                       <img src={resolveImageUrl(front)} alt={p.name} className="rpFrontImg" />
-                      <img src={resolveImageUrl(back)} alt={p.name} className="rpBackImg" />
-                      <h4>Add to Cart</h4>
-                    </div>
+                      <img src={resolveImageUrl(back)} alt="" className="rpBackImg" />
+                      <span>View piece</span>
+                    </Link>
+
+                    <button
+                      type="button"
+                      className="rpWishButton"
+                      onClick={(e) => handleWishlistClick(e, productID)}
+                      aria-label={wishList[productID] ? `Remove ${p.name} from favourites` : `Save ${p.name} to favourites`}
+                      aria-pressed={Boolean(wishList[productID])}
+                    >
+                      <FiHeart className={wishList[productID] ? "isFavorite" : ""} />
+                    </button>
 
                     <div className="relatedProductInfo">
                       <div className="rpCategoryWishlist">
-                        <p>Jewellery</p>
-                        <FiHeart
-                          onClick={(e) => handleWishlistClick(e, productID)}
-                          style={{
-                            color: wishList[productID] ? "red" : "#767676",
-                            cursor: "pointer",
-                          }}
-                        />
+                        <p>{p.type_name || p.product_type || "Jewellery"}</p>
+                        <span>View piece</span>
                       </div>
 
                       <div className="productNameInfo">
@@ -194,8 +200,6 @@ const RelatedProducts = () => {
                           <h5>{p.name}</h5>
                         </Link>
                         <p>{price}</p>
-
-                        
                       </div>
                     </div>
                   </div>

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../../Features/Cart/cartSlice";
 
 import { GoChevronLeft, GoChevronRight } from "react-icons/go";
-import { FiHeart } from "react-icons/fi";
+import { FiFileText, FiHeart, FiShield, FiTool } from "react-icons/fi";
 
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -91,6 +91,15 @@ const Product = () => {
         setLoading(false);
       });
   }, [id]);
+
+  useEffect(() => {
+    if (!product?.name) return undefined;
+    const previousTitle = document.title;
+    document.title = `${product.name} | Sai Suryaa Jewellers`;
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [product?.name]);
 
   // Build image list
   const images = useMemo(() => {
@@ -219,7 +228,7 @@ const Product = () => {
 
   if (loading) {
     return (
-      <div className="productSection">
+      <div className="productSection productSection--state">
         <OtpLoginModal
           isOpen={Boolean(favoriteLoginProductId)}
           title="Login to save favorite"
@@ -244,7 +253,7 @@ const Product = () => {
 
   if (error || !product) {
     return (
-      <div className="productSection">
+      <div className="productSection productSection--state">
         <div className="productShowCase">
           <div className="productDetails">
             <div className="productName">
@@ -261,19 +270,38 @@ const Product = () => {
 
   return (
     <>
-      <div className="productSection">
+      <OtpLoginModal
+        isOpen={Boolean(favoriteLoginProductId)}
+        title="Login to save favorite"
+        onClose={() => setFavoriteLoginProductId(null)}
+        onSuccess={() => {
+          const productId = favoriteLoginProductId;
+          setFavoriteLoginProductId(null);
+          if (productId) return saveFavorite(productId);
+          return undefined;
+        }}
+      />
+      <main className="productSection">
         <div className="productShowCase">
-          {/* Gallery */}
           <div className="productGallery">
-            <div className="productThumb">
+            <div className="productThumb" aria-label="Product images">
               {images.map((src, idx) => (
-                <img
+                <button
+                  type="button"
                   key={idx}
-                  src={resolveImageUrl(src)}
-                  onError={handleImgError}
                   onClick={() => setCurrentImg(idx)}
-                  alt={product.name || `image-${idx}`}
-                />
+                  className={currentImg === idx ? "active" : ""}
+                  aria-label={`View image ${idx + 1} of ${product.name}`}
+                  aria-current={currentImg === idx ? "true" : undefined}
+                >
+                  <img
+                    src={resolveImageUrl(src)}
+                    onError={handleImgError}
+                    alt=""
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                </button>
               ))}
             </div>
 
@@ -284,31 +312,52 @@ const Product = () => {
                 onError={handleImgError}
               />
 
-              <div className="buttonsGroup">
-                <button type="button" onClick={prevImg} className="directionBtn">
-                  <GoChevronLeft size={18} />
-                </button>
-                <button type="button" onClick={nextImg} className="directionBtn">
-                  <GoChevronRight size={18} />
-                </button>
+              {images.length > 1 && (
+                <div className="buttonsGroup">
+                  <button
+                    type="button"
+                    onClick={prevImg}
+                    className="directionBtn"
+                    aria-label="Previous product image"
+                  >
+                    <GoChevronLeft size={19} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={nextImg}
+                    className="directionBtn"
+                    aria-label="Next product image"
+                  >
+                    <GoChevronRight size={19} />
+                  </button>
+                </div>
+              )}
+
+              <div className="productImageCount" aria-live="polite">
+                {String(currentImg + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
               </div>
             </div>
           </div>
 
-          {/* Details */}
           <div className="productDetails">
             <div className="productBreadcrumb">
               <div className="breadcrumbLink">
-                <Link to="/">Home</Link>&nbsp;/&nbsp;
+                <Link to="/">Home</Link><span aria-hidden="true">/</span>
                 <Link to="/shop">The Shop</Link>
               </div>
             </div>
+
+            <p className="productEyebrow">
+              {product.type_name || product.product_type || product.type || "Jewellery"}
+              {product.purity ? ` · ${product.purity}` : ""}
+            </p>
 
             <div className="productName">
               <h1>{product.name}</h1>
             </div>
 
             <div className="productPrice">
+              <span>Store-confirmed catalogue price</span>
               <h3>{priceLabel}</h3>
             </div>
 
@@ -320,10 +369,9 @@ const Product = () => {
               </p>
             </div>
 
-            {/* ✅ These now get borders from Product.css */}
             <div className="infoBadges">
               <div className="featureItem">
-                <span className="featureIcon">🛠️</span>
+                <FiTool className="featureIcon" aria-hidden="true" />
                 <span className="featureText">
                   Made to Order
                   <span className="tooltipContainer">
@@ -338,30 +386,41 @@ const Product = () => {
               </div>
 
               <div className="infoBadge">
-                <span className="infoBadgeIcon">🛡️</span>
+                <FiShield className="infoBadgeIcon" aria-hidden="true" />
                 <span className="infoBadgeText">Store-Confirmed Fulfilment</span>
               </div>
 
-              <div
+              <button
+                type="button"
                 className="infoBadge"
                 onClick={() => {
                   const el = document.getElementById("priceBreakupSection");
                   if (el) el.scrollIntoView({ behavior: "smooth" });
                 }}
-                style={{ cursor: "pointer" }}
               >
-                <span className="infoBadgeIcon">💰</span>
+                <FiFileText className="infoBadgeIcon" aria-hidden="true" />
                 <span className="infoBadgeText">Price Break-Up</span>
-              </div>
+              </button>
             </div>
 
-            <div className="productCartQuantity">
+            <div className="productPurchasePanel">
+              <div className="productPurchaseHeading">
+                <span>Choose quantity</span>
+                {product.product_code && <small>Code: {product.product_code}</small>}
+              </div>
+              <div className="productCartQuantity">
               <div className="productQuantity">
-                <button type="button" onClick={decrement}>
+                <button type="button" onClick={decrement} aria-label="Decrease quantity">
                   -
                 </button>
-                <input type="text" value={quantity} onChange={handleQtyInput} />
-                <button type="button" onClick={increment}>
+                <input
+                  type="text"
+                  value={quantity}
+                  onChange={handleQtyInput}
+                  aria-label="Product quantity"
+                  inputMode="numeric"
+                />
+                <button type="button" onClick={increment} aria-label="Increase quantity">
                   +
                 </button>
               </div>
@@ -370,30 +429,27 @@ const Product = () => {
                   Add to Cart
                 </button>
               </div>
-            </div>
+              </div>
 
-            <div className="productWishShare">
-              <div className="productWishList">
+              <div className="productWishShare">
                 <button
                   type="button"
+                  className="productWishList"
                   onClick={(e) => toggleFavorite(e, product.id)}
+                  aria-pressed={Boolean(wishList[product.id])}
                 >
                   <FiHeart
-                    color={wishList[product.id] ? "red" : "#fff"}
+                    className={wishList[product.id] ? "isWishlisted" : ""}
                     size={17}
                   />
-                  <p>{wishList[product.id] ? "Wishlisted" : "Add to Wishlist"}</p>
+                  <span>{wishList[product.id] ? "Wishlisted" : "Add to Wishlist"}</span>
                 </button>
+                <p>No payment is collected online. Your selected store confirms final details.</p>
               </div>
             </div>
-
-            {/* If you have a breakup section in this page, these computed values can be used:
-                metalValue, vaddAmount, stonePrice, and final rupee priceNumber */}
-            {/* Example ids are kept compatible with your scroll behavior */}
-            {/* <div id="priceBreakupSection">...</div> */}
           </div>
         </div>
-      </div>
+      </main>
     </>
   );
 };

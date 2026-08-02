@@ -105,8 +105,11 @@ export default function ReferralTree({ userId }) {
   return (
     <div
       ref={containerRef}
+      className="referralTreeCanvas"
       style={{
-        width: '82vw',
+        width: '100%',
+        maxWidth: '100%',
+        minWidth: 0,
         height: '50vh',
         position: 'relative',
         background: '#f9f9f9',

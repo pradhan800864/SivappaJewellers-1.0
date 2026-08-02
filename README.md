@@ -1,5 +1,9 @@
 # UOMO E-commerce Website Using ReactJS
 
+## Sai Suryaa Jewellers customer manual
+
+See the current [Customer Application User Manual](docs/CUSTOMER_USER_MANUAL.md) for customer account, catalogue, favourites, store-request, invoice, wallet, referral, and backend-validation behavior.
+
 ![uomo-ecommerce-website-reactjs](https://socialify.git.ci/shakti177/uomo-ecommerce-website-reactjs/image?description=1&font=Inter&forks=1&issues=1&language=1&name=1&owner=1&pattern=Solid&pulls=1&stargazers=1&theme=Auto)
 
 ## 📌 Live Demo

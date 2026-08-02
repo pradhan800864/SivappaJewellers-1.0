@@ -1,83 +1,61 @@
 .instagram {
-  padding: 0 11%;
-  margin: 100px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
+  width: min(1600px, 100%);
+  margin: 0 auto;
+  padding: clamp(80px, 9vw, 132px) clamp(24px, 3vw, 48px);
+  text-align: center;
 }
 
-.instagram h2 {
-  font-size: 35px;
-  font-weight: 600;
+.instagram > h2 {
+  margin: 0 0 clamp(28px, 3vw, 46px);
+  color: var(--home-ink);
+  font-size: clamp(25px, 2.7vw, 38px);
+  font-weight: 750;
+  letter-spacing: 0.015em;
 }
 
 .instagramTiles {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 8px; /* slightly more spacing for breathing room */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .instagramtile {
-  transition: 0.3s ease-in-out;
-  border-radius: 6px; /* smoother corners */
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  aspect-ratio: 1 / 1; /* makes all tiles square and consistent */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.instagramtile:hover {
-  opacity: 0.85;
-  transform: scale(1.03);
+  border-radius: 6px;
+  background: #ece6e0;
+  box-shadow: 0 5px 18px rgba(45, 25, 20, 0.08);
 }
 
 .instagramtile img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* ensures consistent framing */
-  transition: transform 0.4s ease;
+  display: block;
+  object-fit: cover;
+  transition: transform 650ms ease;
 }
 
 .instagramtile:hover img {
-  transform: scale(1.07);
+  transform: scale(1.035);
 }
 
-@media screen and (max-width: 1210px) {
+@media (max-width: 900px) {
+  .instagramTiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
   .instagram {
-    padding: 0 7%;
+    padding-inline: 14px;
   }
 
   .instagramTiles {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .instagramTiles {
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 6px;
-  }
-
-  .instagram h2 {
-    font-size: 26px;
-  }
-}
-
-@media screen and (max-width: 450px) {
-  .instagram {
-    padding: 0 4%;
-  }
-
-  .instagramTiles {
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    grid-auto-rows: 100px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 5px;
-  }
-
-  .instagramtile {
-    aspect-ratio: 1 / 1;
   }
 }

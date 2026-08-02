@@ -1,83 +1,118 @@
 .relatedProductSection {
-  margin-top: 20px;
-  padding: 0px 160px;
+  --rp-ink: #171310;
+  --rp-muted: #7a726b;
+  --rp-border: #e4ddd6;
+  --rp-wine: #671d2d;
+  width: min(1500px, 100%);
+  margin: 0 auto;
+  padding: clamp(82px, 9vw, 132px) clamp(24px, 5vw, 82px) clamp(90px, 9vw, 140px);
+  color: var(--rp-ink);
+}
+
+.relatedProductSection,
+.relatedProductSection * {
+  box-sizing: border-box;
+}
+
+.relatedProducts {
+  margin-bottom: 44px;
+  padding-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  border-bottom: 1px solid var(--rp-border);
+}
+
+.relatedProducts p {
+  margin: 0 0 9px;
+  color: var(--rp-wine);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .relatedProducts h2 {
-  text-transform: uppercase;
-  font-size: 26px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(40px, 4vw, 58px);
   font-weight: 500;
-  margin-bottom: 30px;
+  letter-spacing: -0.035em;
+  line-height: 1.03;
 }
 
-.relatedProducts h2 span {
-  font-weight: 700;
+.relatedProducts > a {
+  padding-bottom: 5px;
+  border-bottom: 1px solid currentColor;
+  color: var(--rp-wine);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .relatedProductSlider {
   position: relative;
 }
 
-.swiper-button {
-  display: flex;
+.relatedProductSection .swiper-button {
   position: absolute;
-  top: calc(50% - 12px);
+  top: 42%;
   z-index: 10;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rp-border);
+  border-radius: 50%;
+  color: var(--rp-ink);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(29, 16, 13, 0.08);
   cursor: pointer;
 }
 
-.swiper-button svg {
-  background-color: white;
-  border: 1px solid #e4e4e4;
-  display: flex;
-  border-radius: 50%;
-  padding: 8px;
-  outline: none;
-  color: #767676;
+.relatedProductSection .swiper-button svg {
+  font-size: 19px;
 }
 
 .image-swiper-button-prev {
-  left: -15px;
+  left: -20px;
 }
 
 .image-swiper-button-next {
-  right: -15px;
+  right: -20px;
 }
 
 .rpContainer {
   position: relative;
+  min-width: 0;
 }
 
-/* Ensure every product card has uniform height */
 .rpImages {
   position: relative;
   width: 100%;
-  height: 260px; /* fixed consistent height */
+  aspect-ratio: 4 / 3;
+  display: block;
   overflow: hidden;
-  border-radius: 10px;
-  cursor: pointer;
-  background-color: #f9f9f9; /* fallback for transparent images */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #f3efea;
+  text-decoration: none;
 }
 
-/* Both front and back images share same behavior */
 .rpFrontImg,
 .rpBackImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;      /* ensures consistent fill without distortion */
-  transition: opacity 0.4s ease;
-  border-radius: 10px;
   display: block;
+  object-fit: cover;
+  transition: opacity 360ms ease, transform 600ms ease;
 }
 
-/* Back image for hover effect */
 .rpBackImg {
-  position: absolute;
-  top: 0;
-  left: 0;
   opacity: 0;
 }
 
@@ -89,162 +124,188 @@
   opacity: 0;
 }
 
-.rpContainer h4 {
-  position: relative;
-  top: 320px;
-  text-align: center;
-  padding: 10px;
-  background-color: rgb(253, 253, 253);
-  transition: all 0.2s cubic-bezier(0.99, 0.99, 0, 0.61);
-  margin: 0 10px;
-  text-transform: uppercase;
-  font-weight: 500;
-  font-size: 14px;
-  z-index: 3;
+.rpImages:hover img {
+  transform: scale(1.035);
 }
 
-.rpContainer:hover h4 {
-  top: 260px;
+.rpImages > span {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 3;
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(69, 15, 27, 0.94);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 170ms ease, transform 170ms ease;
+}
+
+.rpImages:hover > span,
+.rpImages:focus-visible > span {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.rpWishButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #4b433d;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 5px 18px rgba(27, 14, 12, 0.1);
+  cursor: pointer;
+}
+
+.rpWishButton svg {
+  font-size: 18px;
+}
+
+.rpWishButton .isFavorite {
+  color: var(--rp-wine);
+  fill: var(--rp-wine);
 }
 
 .relatedProductInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  padding: 15px 2px 20px;
+  border-bottom: 1px solid var(--rp-border);
 }
 
 .rpCategoryWishlist {
+  margin-bottom: 7px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.rpCategoryWishlist p {
-  color: #767676;
-  font-size: 14px;
+.rpCategoryWishlist p,
+.rpCategoryWishlist span {
+  margin: 0;
+  color: var(--rp-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.rpCategoryWishlist span {
+  color: var(--rp-wine);
+  opacity: 0;
+}
+
+.rpContainer:hover .rpCategoryWishlist span {
+  opacity: 1;
 }
 
 .productNameInfo {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 7px;
+}
+
+.productNameInfo a {
+  color: var(--rp-ink);
+  text-decoration: none;
 }
 
 .productNameInfo h5 {
-  font-weight: 400;
-  font-size: 16px;
-  text-align: left;
-  cursor: pointer;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(17px, 1.45vw, 21px);
+  font-weight: 500;
+  line-height: 1.25;
 }
 
-.productRatingReviews {
-  display: flex;
-  gap: 10px;
+.productNameInfo p {
+  margin: 0;
+  color: #403934;
+  font-size: 13px;
+  font-weight: 650;
 }
 
-.productRatingReviews span {
-  color: #767676;
-  font-size: 14px;
-}
-
-.productRatingStar {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-@media screen and (max-width: 1210px) {
-  .relatedProductSection {
-    padding: 0px 60px;
+@media (max-width: 760px) {
+  .relatedProducts {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .rpContainer:hover h4 {
-    top: 260px;
-  }
-}
-
-@media screen and (max-width: 450px) {
-  .relatedProductSection {
-    padding: 0px 15px;
-  }
-
-  .rpImages {
-    width: 100%;
-    height: 250px;
-  }
-
-  .rpContainer:hover h4 {
-    top: 200px;
+  .relatedProductSection .swiper-button {
+    width: 38px;
+    height: 38px;
   }
 
   .image-swiper-button-prev {
-    left: -10px;
+    left: -12px;
   }
 
   .image-swiper-button-next {
-    right: -10px;
-  }
-}
-
-@media screen and (max-width: 320px) {
-  .rpImages {
-    width: 100%;
-    height: 170px;
-  }
-
-  .rpContainer h4 {
-    font-size: 12px;
-  }
-
-  .rpContainer:hover h4 {
-    top: 125px;
-  }
-
-  .productNameInfo h5 {
-    font-size: 14px;
-  }
-
-  .productRatingReviews {
-    display: flex;
-    gap: 5px;
-  }
-
-  .productRatingReviews span {
-    font-size: 12px;
-  }
-
-  .productRatingStar {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-
-  .swiper-button svg {
-    background-color: white;
-    border: 1px solid #e4e4e4;
-    display: flex;
-    border-radius: 50%;
-    padding: 6px;
-    outline: none;
-    color: #767676;
-  }
-}
-
-@media (max-width: 1024px) {
-  .rpImages {
-    height: 220px;
-  }
-}
-
-@media (max-width: 768px) {
-  .rpImages {
-    height: 200px;
+    right: -12px;
   }
 }
 
 @media (max-width: 480px) {
+  .relatedProductSection {
+    padding-inline: 14px;
+  }
+
+  .relatedProducts h2 {
+    font-size: 40px;
+  }
+
   .rpImages {
-    height: 180px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .rpWishButton {
+    top: 8px;
+    right: 8px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .rpImages > span {
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    min-height: 36px;
+    opacity: 1;
+    transform: none;
+  }
+
+  .productNameInfo h5 {
+    font-size: 16px;
+  }
+}
+
+@media (hover: none) {
+  .rpImages > span {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rpFrontImg,
+  .rpBackImg,
+  .rpImages > span {
+    transition: none;
   }
 }

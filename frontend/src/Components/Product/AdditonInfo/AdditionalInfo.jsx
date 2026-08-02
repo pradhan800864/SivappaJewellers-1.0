@@ -81,11 +81,19 @@ const AdditionalInfo = () => {
   return (
     <div id="priceBreakupSection" className="priceBreakupAnchor">
       <div className="productAdditionalInfo">
-        <h2 className="aiTitle">Product Information</h2>
+        <div className="aiHeading">
+          <p>Details that matter</p>
+          <h2 className="aiTitle">Materials, weight &amp; pricing</h2>
+          <span>
+            Review the product specifications and catalogue-price composition before
+            sending your request to a store.
+          </span>
+        </div>
 
         <div className="aiInfoGrid">
           {/* LEFT – Summary */}
           <aside className="aiCard aiSummary">
+            <p className="aiCardEyebrow">At a glance</p>
             <h4>Product Summary</h4>
 
             <div className="aiKV">
@@ -130,15 +138,13 @@ const AdditionalInfo = () => {
             </p>
 
             <div className="aiHelp">
-              <p className="aiHelpTitle">
-                Need help to find the best jewellery for you ?
-              </p>
-              <p className="aiHelpSub">We are available for your assistance</p>
+              <p className="aiHelpTitle">Need help choosing?</p>
+              <p className="aiHelpSub">Our team can help you understand the details.</p>
               <div className="aiHelpBtns">
-                <button onClick={() => navigate("/contact")}>
+                <button type="button" onClick={() => navigate("/contact")}>
                   📞 Speak with Experts
                 </button>
-                <button onClick={() => navigate("/contact")}>
+                <button type="button" onClick={() => navigate("/contact")}>
                   💬 Chat with Experts
                 </button>
               </div>
@@ -150,7 +156,9 @@ const AdditionalInfo = () => {
             {/* PRICE BREAKUP */}
             <div className="aiAcc">
               <button
+                type="button"
                 className="aiAccHeader"
+                aria-expanded={open.price}
                 onClick={() =>
                   setOpen({ price: !open.price, metal: false, diamond: false })
                 }
@@ -181,7 +189,9 @@ const AdditionalInfo = () => {
             {/* METAL DETAILS */}
             <div className="aiAcc">
               <button
+                type="button"
                 className="aiAccHeader"
+                aria-expanded={open.metal}
                 onClick={() =>
                   setOpen({ price: false, metal: !open.metal, diamond: false })
                 }
@@ -212,7 +222,9 @@ const AdditionalInfo = () => {
             {/* DIAMOND DETAILS */}
             <div className="aiAcc">
               <button
+                type="button"
                 className="aiAccHeader"
+                aria-expanded={open.diamond}
                 onClick={() =>
                   setOpen({
                     price: false,

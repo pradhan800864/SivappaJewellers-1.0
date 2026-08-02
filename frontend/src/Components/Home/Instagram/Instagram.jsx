@@ -14,50 +14,25 @@ import insta11 from "../../../Assets/Instagram/inst11.png";
 import insta12 from "../../../Assets/Instagram/inst12.png";
 
 const Instagram = () => {
+  const moments = [insta1, insta2, insta9, insta4, insta5, insta6, insta7, insta8, insta10, insta12, insta11, insta3];
+
   return (
-    <>
-      <div className="instagram">
-        <h2>@SAI SURYAA JEWELLERS</h2>
-        <div className="instagramTiles">
-          <div className="instagramtile">
-            <img src={insta1} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta2} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta9} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta4} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta5} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta6} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta7} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta8} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta10} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta12} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta11} alt="" />
-          </div>
-          <div className="instagramtile">
-            <img src={insta3} alt="" />
-          </div>
-        </div>
+    <section className="instagram" aria-labelledby="instagramTitle">
+      <h2 id="instagramTitle">@SAI SURYAA JEWELLERS</h2>
+
+      <div className="instagramTiles">
+        {moments.map((src, index) => (
+          <figure className="instagramtile" key={src}>
+            <img
+              src={src}
+              alt={`Sai Suryaa Jewellers jewellery inspiration ${String(index + 1).padStart(2, "0")}`}
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
+        ))}
       </div>
-    </>
+    </section>
   );
 };
 

@@ -1,223 +1,180 @@
 .collection {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 30px;
-  height: 30rem;
-  padding: 0 160px;
-  margin: 85px 0;
+  width: min(1600px, 100%);
+  margin: 0 auto;
+  padding: clamp(94px, 10vw, 150px) clamp(24px, 5vw, 82px);
 }
 
-.collectionLeft {
-  background-image: url("../../../Assets/Collection/collection1.jpg");
-  background-size:cover; /* ✅ Ensures full image fits inside */
-  background-repeat: no-repeat; /* ✅ Prevents repeating */
-  background-position: 50% 80%;
-  padding: 30px;
+.collectionHeading {
+  margin-bottom: clamp(43px, 5vw, 72px);
+  padding-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 36px;
+  border-bottom: 1px solid var(--home-border);
+}
+
+.collectionHeading > div > p,
+.collectionCardContent > p {
+  margin: 0 0 10px;
+  color: var(--home-wine);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.collectionHeading h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(44px, 5vw, 72px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.collectionIntro {
+  max-width: 430px;
+  margin: 0;
+  color: var(--home-muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.collectionGrid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-rows: 360px 360px;
+  gap: 18px;
+}
+
+.collectionCard {
+  position: relative;
+  min-height: 0;
+  padding: clamp(23px, 3vw, 42px);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  background-color: #eff0f1;
-  align-items: flex-end; /* aligns to right side */
-  text-align: right;     /* aligns text content */
+  justify-content: space-between;
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+  background-position: center;
+  background-size: cover;
+  text-decoration: none;
 }
 
-.col-link {
-  display: flex;
-}
-
-.col-link a {
-  position: relative;
-}
-
-.col-link a::after {
+.collectionCard::before {
   content: "";
   position: absolute;
-  left: 0;
-  bottom: -5px;
-  width: 50%;
-  border-bottom: 2px solid black;
-  transition: width 0.2s ease;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(15, 8, 7, 0.08) 25%, rgba(21, 9, 10, 0.78) 100%);
 }
 
-.col-link a:hover::after {
-  width: 100%;
+.collectionCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: inherit;
+  background-position: inherit;
+  background-size: inherit;
+  transition: transform 650ms ease;
 }
 
-.collectionRight {
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-  grid-gap: 30px;
+.collectionCard:hover::after {
+  transform: scale(1.04);
 }
 
-.collectionTop {
-  background-image: url("../../../Assets/Collection/men_collections.jpg");
-  background-size: cover;
+.collectionCard--heritage {
+  grid-row: 1 / span 2;
+  background-image: url("../../../Assets/Collection/bridal-temple-v2.webp");
+  background-position: center 38%;
+}
+
+.collectionCard--men {
+  background-image: url("../../../Assets/Collection/for-him-v2.webp");
   background-position: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 30px;
-  background-color: #eff0f1;
-  align-items: flex-end; /* aligns to right side */
-  text-align: right;     /* aligns text content */
 }
 
-.collectionBottom {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 30px;
-}
-
-.box1 {
-  background-image: url("../../../Assets/Collection/collection3.jpg");
-  background-size: cover;
-  background-position: 100% 90%; /* ✅ Moves image 10% to the right */
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 30px;
-  background-color: #eff0f1;
-  align-items: flex-end; /* ✅ Aligns everything to the right */
-  text-align: right; /* ✅ Aligns text from right to left */
-}
-
-.box2 {
-  background-image: url("../../../Assets/Collection/collection_giftcard2.jpg");
-  background-size: cover;
+.collectionCard--everyday {
+  background-image: url("../../../Assets/Collection/everyday-gold-v2.webp");
   background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-start; /* keep text on left side */
-  padding: 30px;
-  color: white; /* ✅ makes all text inside white */
 }
 
-/* ✅ ensures links and underline are also white */
-.box2 .col-link a {
-  color: white;
+.collectionNumber {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 50%;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 13px;
 }
 
-.box2 .col-link a::after {
-  border-bottom: 2px solid white;
+.collectionCardContent > p {
+  color: #e3c37e;
 }
 
-/* text in box style */
-
-.col-p {
-  text-transform: uppercase;
-  font-size: 15px;
-}
-
-.col-h3 {
-  text-transform: uppercase;
-  font-size: 26px;
+.collectionCardContent h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(35px, 4.2vw, 62px);
   font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
 }
 
-.col-h3 span {
-  font-weight: bolder;
-}
-
-.collection h5 {
-  font-size: 14px;
+.collectionCardLink {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  font-weight: 500;
 }
 
-.collection a {
-  text-decoration: none;
-  color: black;
+@media (max-width: 900px) {
+  .collectionHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .collectionGrid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 540px 300px;
+  }
+
+  .collectionCard--heritage {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .collectionCard--men,
+  .collectionCard--everyday {
+    grid-row: 2;
+  }
 }
 
-@media screen and (max-width: 1210px) {
+@media (max-width: 580px) {
   .collection {
+    padding-inline: 14px;
+  }
+
+  .collectionGrid {
     grid-template-columns: 1fr;
-    grid-gap: 30px;
-    padding: 0 60px;
-    height: auto;
+    grid-template-rows: 480px 280px 280px;
   }
 
-  .collectionLeft {
-    background-position: top center;
-    height: 150px;
-  }
-}
-
-@media screen and (max-width: 450px) {
-  .collection {
-    padding: 0 15px;
-    grid-gap: 10px;
+  .collectionCard--men,
+  .collectionCard--everyday {
+    grid-row: auto;
   }
 
-  .collectionRight {
-    grid-gap: 10px;
-    grid-template-rows: 1fr;
-  }
-
-  .collectionTop {
-    height: 150px;
-  }
-
-  .collectionBottom {
-    grid-template-columns: 1fr;
-    grid-gap: 10px;
-  }
-  .box1 {
-    background-position: center top;
-    background-size: cover;
-    height: 150px;
-  }
-
-  .box2 {
-    height: 150px;
-  }
-}
-
-/* ✅ Men Collection: white and right-aligned */
-.collectionTop {
-  align-items: flex-end;
-  text-align: right;
-}
-
-.collectionTop .col-p,
-.collectionTop .col-h3,
-.collectionTop .col-link a {
-  color: white;
-}
-
-.collectionTop .col-link a::after {
-  border-bottom: 2px solid white;
-}
-
-/* ✅ All other boxes: left-aligned normal text */
-.collectionLeft,
-.box1,
-.box2 {
-  align-items: flex-start;
-  text-align: left;
-}
-@media screen and (max-width: 450px) {
-  /* Men collection box: keep text inside */
-  .collectionTop {
-    padding: 8px;             /* reduce padding from 30px */
-    background-position: center;
-    overflow: hidden;          /* prevents spill outside */
-  }
-
-  /* reduce heading size on mobile */
-  .collectionTop .col-h3 {
-    font-size: 18px;
-    line-height: 1.15;
-    max-width: 100%;
-    word-break: break-word;    /* safe wrap */
-  }
-
-  /* If you have any extra text like "FOR MENS" as a <p> or <h5>, keep it small */
-  .collectionTop p,
-  .collectionTop h5 {
-    font-size: 12px;
-    max-width: 100%;
+  .collectionCardContent h3 {
+    font-size: 38px;
   }
 }

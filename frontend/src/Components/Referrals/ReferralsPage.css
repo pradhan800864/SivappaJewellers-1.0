@@ -3,6 +3,9 @@
 /* Page layout */
 .referralList {
   display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   gap: 12px;
 }
 
@@ -92,6 +95,15 @@
   padding: 12px;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.referralTreeCanvas {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* ✅ KEY FIX: make the graph use full width and NOT shrink */
@@ -134,4 +146,3 @@
     width: 100%;
   }
 }
-

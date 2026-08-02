@@ -1,44 +1,107 @@
 .services {
+  padding: clamp(92px, 10vw, 146px) clamp(24px, 5vw, 82px);
+  color: #fff;
+  background:
+    radial-gradient(circle at 92% 5%, rgba(190, 147, 80, 0.16), transparent 26%),
+    var(--home-wine-dark);
+}
+
+.servicesHeading {
+  width: min(1436px, 100%);
+  margin: 0 auto clamp(44px, 5vw, 72px);
+  padding-bottom: 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.servicesHeading > p {
+  margin: 0 0 12px;
+  color: #dbb66e;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.servicesHeading h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(44px, 5vw, 70px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.servicesGrid {
+  width: min(1436px, 100%);
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  justify-items: center;
-  padding: 0px 160px;
-  grid-gap: 40px;
-  margin: 80px 0px;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .serviceBox {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
+  min-height: 265px;
+  padding: clamp(27px, 3.2vw, 48px);
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
 }
 
-.services h3 {
-  text-align: center;
-  text-transform: uppercase;
+.serviceBoxTopline {
+  margin-bottom: 37px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.serviceBoxTopline svg {
+  width: 27px;
+  height: 27px;
+  color: #dbb66e;
+}
+
+.serviceBoxTopline span {
+  color: rgba(255, 255, 255, 0.38);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 13px;
+}
+
+.serviceBox h3 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 23px;
   font-weight: 500;
 }
 
-.services p {
-  text-align: center;
-  color: #767676;
+.serviceBox p {
+  max-width: 330px;
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  line-height: 1.75;
 }
 
-.services p a {
-  color: #5f2630;
-  text-underline-offset: 3px;
+.serviceBox a {
+  color: inherit;
+  text-underline-offset: 4px;
 }
 
-@media screen and (max-width: 1210px) {
-  .services {
-    padding: 0 60px;
+@media (max-width: 900px) {
+  .servicesGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media screen and (max-width: 450px) {
+@media (max-width: 560px) {
   .services {
-    padding: 0px 15px;
+    padding-inline: 14px;
+  }
+
+  .servicesGrid {
     grid-template-columns: 1fr;
+  }
+
+  .serviceBox {
+    min-height: 230px;
   }
 }

@@ -776,3 +776,844 @@
 .levelReportDownload:hover {
   background: #f8fafc;
 }
+
+/* =========================================================
+   Storefront account experience
+   Referrals retain their existing component-level treatment.
+========================================================= */
+.profilePage {
+  --profile-wine: #681a2a;
+  --profile-wine-dark: #45101c;
+  --profile-gold: #b98b39;
+  --profile-ink: #281c1b;
+  --profile-muted: #746763;
+  --profile-border: #e7dcd0;
+  min-height: 70vh;
+  color: var(--profile-ink);
+  background:
+    radial-gradient(circle at 92% 4%, rgba(185, 139, 57, 0.08), transparent 24%),
+    #fffdf9;
+}
+
+.profilePage,
+.profilePage * {
+  box-sizing: border-box;
+}
+
+.profileWelcome {
+  width: min(1600px, 100%);
+  margin: 0 auto;
+  padding: clamp(52px, 6vw, 84px) clamp(24px, 5vw, 82px) 40px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 36px;
+  border-bottom: 1px solid var(--profile-border);
+}
+
+.profileWelcome > div > p,
+.profileDetailsHeader > p,
+.accountKicker,
+.orderDetailsHead > div > span {
+  margin: 0 0 10px;
+  color: var(--profile-wine);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.profileWelcome h1 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 5vw, 70px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.profileWelcome > p {
+  max-width: 430px;
+  margin: 0;
+  color: var(--profile-muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.profilePage .profileSection {
+  width: min(1600px, 100%);
+  margin: 0 auto;
+  padding: 46px clamp(24px, 5vw, 82px) clamp(88px, 9vw, 138px);
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(38px, 5vw, 76px);
+  max-width: 1600px;
+}
+
+.profilePage .profileSidebar {
+  width: auto;
+  padding: 0;
+  position: sticky;
+  top: 112px;
+  overflow: hidden;
+  border: 1px solid var(--profile-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 54px rgba(62, 27, 26, 0.065);
+}
+
+.profileIdentity {
+  padding: 23px 20px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  color: #fff8ee;
+  background:
+    radial-gradient(circle at 100% 0, rgba(219, 179, 96, 0.24), transparent 40%),
+    var(--profile-wine-dark);
+}
+
+.profileIdentityAvatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(232, 198, 126, 0.52);
+  border-radius: 50%;
+  color: #f1d99e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+}
+
+.profileIdentity span,
+.profileIdentity strong {
+  display: block;
+}
+
+.profileIdentity span {
+  margin-bottom: 4px;
+  color: #d7bfc0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.profileIdentity strong {
+  max-width: 145px;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profilePage .profileCategories {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profilePage .profileCategories button {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  border-radius: 10px;
+  color: #514541;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+
+.profilePage .profileCategories button svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+.profilePage .profileCategories button:hover {
+  color: var(--profile-wine);
+  background: #fbf3ee;
+}
+
+.profilePage .profileCategories button.active {
+  color: #fff;
+  background: var(--profile-wine);
+  box-shadow: 0 8px 20px rgba(104, 26, 42, 0.16);
+}
+
+.profilePage .profileCategories .logout {
+  margin-top: 8px;
+  padding-top: 11px;
+  color: #a33b3b;
+  border-top: 1px solid var(--profile-border);
+  border-radius: 0 0 10px 10px;
+  font-weight: 650;
+}
+
+.profilePage .profileDetails {
+  min-width: 0;
+  padding: 0;
+}
+
+.profileDetailsHeader {
+  margin-bottom: 26px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--profile-border);
+}
+
+.profileDetailsHeader > p {
+  margin-bottom: 8px;
+}
+
+.profileDetailsHeader h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(34px, 3.5vw, 50px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.profileDetailsHeader > span {
+  margin-top: 9px;
+  display: block;
+  color: var(--profile-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.profilePage .profileEmptyState {
+  min-height: 280px;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 1px dashed #d9c8b9;
+  border-radius: 18px;
+  color: var(--profile-muted);
+  background: rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+.profileEmptyState > svg {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 18px;
+  color: var(--profile-wine);
+}
+
+.profileEmptyState h4,
+.profileEmptyState p {
+  margin: 0;
+}
+
+.profileEmptyState h4 {
+  color: var(--profile-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.profileEmptyState p {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+/* Orders */
+.ordersList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.orderHistoryCard {
+  min-height: 112px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  border: 1px solid var(--profile-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 40px rgba(62, 27, 26, 0.045);
+  transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.orderHistoryCard:hover {
+  border-color: #ccb7a7;
+  box-shadow: 0 18px 48px rgba(62, 27, 26, 0.08);
+  transform: translateY(-2px);
+}
+
+.orderHistoryInvoice {
+  padding: 14px;
+  border-radius: 11px;
+  background: #f8eee8;
+}
+
+.orderHistoryInvoice span,
+.orderHistoryMeta dt {
+  display: block;
+  color: var(--profile-muted);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.orderHistoryInvoice strong {
+  margin-top: 7px;
+  display: block;
+  color: var(--profile-wine-dark);
+  font-size: 14px;
+}
+
+.orderHistoryMeta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  gap: 20px;
+}
+
+.orderHistoryMeta div {
+  min-width: 0;
+}
+
+.orderHistoryMeta dd {
+  margin: 7px 0 0;
+  color: var(--profile-ink);
+  font-size: 14px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.profilePage .invoiceViewBtn,
+.profilePage .orderBackBtn {
+  min-height: 42px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--profile-wine);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--profile-wine);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.profilePage .invoiceViewBtn:hover {
+  color: var(--profile-wine);
+  background: #fff;
+}
+
+.profilePage .ordersPager {
+  margin-top: 22px;
+}
+
+.profilePage .pagerBtn {
+  min-width: 86px;
+  border-color: var(--profile-border);
+  color: var(--profile-wine);
+  background: #fff;
+}
+
+.profilePage .pagerBtn:not(:disabled):hover {
+  border-color: var(--profile-wine);
+}
+
+.profilePage .pagerBtn:disabled {
+  color: #8f8580;
+  background: #f0ece8;
+}
+
+.profilePage .pagerInfo {
+  color: var(--profile-muted);
+  font-size: 12px;
+}
+
+.profilePage .orderDetailsCard {
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid var(--profile-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 56px rgba(62, 27, 26, 0.06);
+}
+
+.profilePage .orderDetailsHead {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--profile-border);
+}
+
+.profilePage .orderDetailsHead h4 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  font-weight: 500;
+}
+
+.profilePage .orderBackBtn {
+  color: var(--profile-wine);
+  background: transparent;
+}
+
+.profilePage .odGrid {
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.profilePage .odBox {
+  padding: 19px;
+  border-color: var(--profile-border);
+  border-radius: 14px;
+  background: #fffcf8;
+}
+
+.profilePage .odBox h5 {
+  margin-bottom: 13px;
+  color: var(--profile-wine);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profilePage .odBox p {
+  margin: 8px 0;
+  color: #5a4d48;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.profilePage .commissionPill {
+  min-width: 145px;
+  padding: 13px 15px;
+  border-color: #ddcdbf;
+  background: #f8eee8;
+}
+
+.profilePage .ordersTableWrap {
+  border-color: var(--profile-border);
+  border-radius: 14px;
+}
+
+.profilePage .ordersTable th {
+  color: #6c5a54;
+  background: #f8eee8;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.profilePage .ordersTable td {
+  color: #4e423e;
+  font-size: 12px;
+}
+
+/* Favorites */
+.profilePage .favGrid {
+  margin-top: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.profilePage .favCard {
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--profile-border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 14px 44px rgba(62, 27, 26, 0.055);
+}
+
+.profilePage .favImgWrap {
+  position: relative;
+  width: 100%;
+  padding: 0;
+  display: block;
+  aspect-ratio: 4 / 4.5;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #eee7e0;
+  cursor: pointer;
+}
+
+.profilePage .favImg {
+  transition: transform 600ms ease;
+}
+
+.profilePage .favCard:hover .favImg {
+  transform: scale(1.035);
+}
+
+.favImgWrap > span {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(69, 16, 28, 0.88);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profilePage .favInfo {
+  margin: 0;
+  padding: 16px 16px 12px;
+}
+
+.profilePage .favName {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.profilePage .favMeta {
+  margin-top: 7px;
+  color: var(--profile-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.favActions {
+  padding: 0 16px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.profilePage .favViewBtn,
+.profilePage .favRemoveBtn {
+  min-height: 39px;
+  margin: 0;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.profilePage .favViewBtn {
+  border: 1px solid var(--profile-wine);
+  color: #fff;
+  background: var(--profile-wine);
+}
+
+.profilePage .favRemoveBtn {
+  width: auto;
+  border: 1px solid var(--profile-border);
+  color: #8f3c44;
+  background: #fff;
+}
+
+.profilePage .favRemoveBtn:hover {
+  border-color: #b46d73;
+  color: #fff;
+  background: #8f3c44;
+}
+
+/* Account settings */
+.profilePage .accountSummaryCard {
+  max-width: none;
+  padding: clamp(20px, 3vw, 34px);
+  border-color: var(--profile-border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 56px rgba(62, 27, 26, 0.06);
+}
+
+.profilePage .accountSummaryHeader {
+  gap: 18px;
+  padding-bottom: 24px;
+  border-color: var(--profile-border);
+}
+
+.profilePage .accountAvatar {
+  width: 66px;
+  height: 66px;
+  border: 1px solid #d7b86f;
+  color: #f1d99e;
+  background: var(--profile-wine-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+}
+
+.profilePage .accountSummaryHeader h4 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.profilePage .accountSummaryHeader p {
+  color: var(--profile-muted);
+  font-size: 13px;
+}
+
+.profilePage .accountKicker {
+  margin-bottom: 5px;
+  display: block;
+  font-size: 8px;
+}
+
+.profilePage .profileCompletionNotice {
+  border-color: #e6c98d;
+  color: #704f13;
+  background: #fff8e9;
+}
+
+.profilePage .accountInfoGrid {
+  gap: 13px;
+  margin-top: 22px;
+}
+
+.profilePage .accountInfoItem {
+  min-height: 92px;
+  padding: 17px;
+  border-color: var(--profile-border);
+  border-radius: 13px;
+  background: #fffcf8;
+}
+
+.profilePage .accountInfoItem span,
+.profilePage .profileEditGrid label span {
+  color: var(--profile-wine);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.profilePage .accountInfoItem strong {
+  color: var(--profile-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.profilePage .profileButtons {
+  margin-top: 22px;
+}
+
+.profilePage .editButton,
+.profilePage .saveButton,
+.profilePage .cancelButton {
+  min-height: 44px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--profile-wine);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profilePage .editButton,
+.profilePage .saveButton {
+  color: #fff;
+  background: var(--profile-wine);
+}
+
+.profilePage .cancelButton {
+  color: var(--profile-wine);
+  background: #fff;
+}
+
+.profilePage .editButton:hover,
+.profilePage .saveButton:hover {
+  border-color: var(--profile-wine-dark);
+  background: var(--profile-wine-dark);
+}
+
+.profilePage .profileEditGrid {
+  gap: 18px 14px;
+}
+
+.profilePage .profileDetails input {
+  min-height: 48px;
+  margin: 0;
+  padding: 0 14px;
+  border-color: var(--profile-border);
+  border-radius: 10px;
+  color: var(--profile-ink);
+  background: #fffcf8;
+}
+
+.profilePage .profileDetails input:focus {
+  border-color: var(--profile-wine);
+  box-shadow: 0 0 0 3px rgba(104, 26, 42, 0.08);
+}
+
+@media (max-width: 1100px) {
+  .profileWelcome {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profilePage .profileSection {
+    grid-template-columns: 1fr;
+  }
+
+  .profilePage .profileSidebar {
+    position: static;
+  }
+
+  .profileIdentity {
+    display: none;
+  }
+
+  .profilePage .profileCategories {
+    flex-direction: row;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .profilePage .profileCategories::-webkit-scrollbar {
+    display: none;
+  }
+
+  .profilePage .profileCategories button {
+    width: auto;
+    flex: 0 0 auto;
+    padding-inline: 15px;
+  }
+
+  .profilePage .profileCategories .logout {
+    margin: 0 0 0 auto;
+    padding-top: 0;
+    border-top: 0;
+    border-left: 1px solid var(--profile-border);
+    border-radius: 0 10px 10px 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .profileWelcome {
+    padding-inline: 18px;
+  }
+
+  .profilePage .profileSection {
+    padding: 28px 14px 80px;
+    gap: 30px;
+  }
+
+  .profilePage .profileCategories button {
+    min-height: 42px;
+  }
+
+  .profilePage .profileCategories button svg {
+    display: none;
+  }
+
+  .orderHistoryCard {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .orderHistoryMeta {
+    gap: 12px;
+  }
+
+  .profilePage .invoiceViewBtn {
+    width: 100%;
+  }
+
+  .profilePage .favGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .profilePage .accountInfoGrid,
+  .profilePage .profileEditGrid,
+  .profilePage .odGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .profilePage .profileEditFull {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .profileWelcome h1 {
+    font-size: 42px;
+  }
+
+  .profilePage .profileCategories {
+    padding: 7px;
+  }
+
+  .profilePage .profileCategories button {
+    padding-inline: 12px;
+    font-size: 11px;
+  }
+
+  .profilePage .profileCategories .logout {
+    margin-left: 0;
+  }
+
+  .orderHistoryMeta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .orderHistoryMeta div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .profilePage .favGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .profilePage .favImgWrap {
+    aspect-ratio: 4 / 3.8;
+  }
+
+  .profilePage .accountSummaryHeader {
+    align-items: center;
+  }
+
+  .profilePage .accountAvatar {
+    width: 52px;
+    height: 52px;
+  }
+
+  .profilePage .ordersPager {
+    gap: 8px;
+  }
+
+  .profilePage .pagerBtn {
+    min-width: 72px;
+    padding-inline: 10px;
+  }
+}

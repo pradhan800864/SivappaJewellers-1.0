@@ -3,6 +3,7 @@ import "./ShoppingCart.css";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-hot-toast";
 import { MdOutlineClose } from "react-icons/md";
+import { MdOutlineShoppingBag, MdOutlineStorefront, MdOutlineVerified } from "react-icons/md";
 import { devBypassLogin, requestLoginOtp, verifyLoginOtp } from "../../utils/auth";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext"; // Update the path as per your project
@@ -223,6 +224,14 @@ const ShoppingCart = () => {
   );
   const placedGst = placedSubtotal * 0.03;
   const placedTotal = placedSubtotal + placedGst;
+  const cartSubtotal = cartItems.reduce(
+    (sum, item) => sum + Number(item.final_price || 0) * item.quantity,
+    0
+  );
+  const cartTotalQuantity = cartItems.reduce(
+    (sum, item) => sum + Number(item.quantity || 0),
+    0
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -357,9 +366,18 @@ const ShoppingCart = () => {
   // Radio Button Data
 
   return (
-    <div>
+    <div className="cartPage">
       <div className="shoppingCartSection">
-        <h2>Request Bag</h2>
+        <header className="cartPageHeader">
+          <div>
+            <p className="cartEyebrow">Your jewellery request</p>
+            <h1>From your edit to your store.</h1>
+          </div>
+          <p className="cartPageHeaderCopy">
+            Review your pieces, choose the store you trust, and send a no-obligation
+            request for final availability and pricing.
+          </p>
+        </header>
 
         <div className="shoppingCartTabsContainer">
           <div className={`shoppingCartTabs ${activeTab}`}>
@@ -371,10 +389,11 @@ const ShoppingCart = () => {
               }}
             >
               <div className="shoppingCartTabsNumber">
-                <h3>01</h3>
+                <span className="cartStepIcon"><MdOutlineShoppingBag /></span>
                 <div className="shoppingCartTabsHeading">
-                  <h3>Request Bag</h3>
-                  <p>Review Selected Items</p>
+                  <span>01</span>
+                  <h3>Request bag</h3>
+                  <p>Review your selected pieces</p>
                 </div>
               </div>
             </button>
@@ -387,10 +406,11 @@ const ShoppingCart = () => {
               disabled={cartItems.length === 0}
             >
               <div className="shoppingCartTabsNumber">
-                <h3>02</h3>
+                <span className="cartStepIcon"><MdOutlineStorefront /></span>
                 <div className="shoppingCartTabsHeading">
-                  <h3>Details & Store</h3>
-                  <p>Choose Where To Send The Request</p>
+                  <span>02</span>
+                  <h3>Details & store</h3>
+                  <p>Choose where to send it</p>
                 </div>
               </div>
             </button>
@@ -402,10 +422,11 @@ const ShoppingCart = () => {
               disabled={cartItems.length === 0 || payments === false}
             >
               <div className="shoppingCartTabsNumber">
-                <h3>03</h3>
+                <span className="cartStepIcon"><MdOutlineVerified /></span>
                 <div className="shoppingCartTabsHeading">
-                  <h3>Request Submitted</h3>
-                  <p>Store Follow-Up Details</p>
+                  <span>03</span>
+                  <h3>Request submitted</h3>
+                  <p>See what happens next</p>
                 </div>
               </div>
             </button>
@@ -415,185 +436,109 @@ const ShoppingCart = () => {
             {activeTab === "cartTab1" && (
               <div className="shoppingBagSection">
                 <div className="shoppingBagTableSection">
-                  {/* For Desktop Devices */}
-                  <table className="shoppingBagTable">
-                    <thead>
-                      <tr>
-                        <th>Product</th>
-                        <th>Name</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        {/* <th>Subtotal</th> */}
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cartItems.length > 0 ? (
-                        cartItems.map((item) => (
-                          <tr key={item.productID}>
-                            <td data-label="Product">
-                              <div className="shoppingBagTableImg">
+                  <div className="cartSectionHeading">
+                    <div>
+                      <p className="cartEyebrow">The pieces you chose</p>
+                      <h2>Your request bag</h2>
+                    </div>
+                    <span>{cartTotalQuantity} {cartTotalQuantity === 1 ? "piece" : "pieces"}</span>
+                  </div>
+                  {cartItems.length > 0 ? (
+                    <div className="cartItemList">
+                      {cartItems.map((item) => (
+                        <article className="cartItemCard" key={item.productID}>
+                          <Link
+                            className="cartItemImage"
+                            to={`/product/${item.productID}`}
+                            onClick={scrollToTop}
+                          >
+                            <img
+                              src={resolveImageUrl(item.frontImg)}
+                              alt={item.productName || item.name}
+                            />
+                          </Link>
+                          <div className="cartItemContent">
+                            <div className="cartItemTopline">
+                              <div>
+                                <p className="cartItemLabel">Selected piece</p>
                                 <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
-                                  <img src={resolveImageUrl(item.frontImg)} alt="" />
+                                  <h3>{item.productName || item.name}</h3>
                                 </Link>
                               </div>
-                            </td>
-                            <td data-label="">
-                              <div className="shoppingBagTableProductDetail">
-                                <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
-                                  <h4>{item.name}</h4>
-                                </Link>
-                                <p>{item.productReviews}</p>
-                              </div>
-                            </td>
-                            <td className="cartPriceCell"
-                              data-label="Price"
-                              style={{ textAlign: "center" }}
-                            >
-                              <div className="cartPriceWrapper">
-                                ₹{Number(item.final_price).toLocaleString("en-IN")}
-                              </div>
-                            </td>
-                            <td data-label="Quantity">
-                              <div className="ShoppingBagTableQuantity">
-                                <button
-                                  onClick={() =>
-                                    handleQuantityChange(
-                                      item.productID,
-                                      item.quantity - 1
-                                    )
-                                  }
-                                >
-                                  <span style={{ color: "black", fontSize: "20px" }}>-</span>
-                                </button>
-                                <input
-                                  type="text"
-                                  min="1"
-                                  max="20"
-                                  value={item.quantity}
-                                  onChange={(e) =>
-                                    handleQuantityChange(
-                                      item.productID,
-                                      parseInt(e.target.value)
-                                    )
-                                  }
-                                />
-                                <button
-                                  onClick={() =>
-                                    handleQuantityChange(
-                                      item.productID,
-                                      item.quantity + 1
-                                    )
-                                  }
-                                >
-                                  <span style={{ color: "black", fontSize: "20px" }}>+</span>
-                                </button>
-                              </div>
-                            </td>
-                            <td data-label="">
-                              <MdOutlineClose
-                                onClick={() =>
-                                  dispatch(removeFromCart(item.productID))
-                                }
-                              />
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="6">
-                            <div className="shoppingCartEmpty">
-                              <span>Your cart is empty!</span>
-                              <Link to="/shop" onClick={scrollToTop}>
-                                <button>Shop Now</button>
-                              </Link>
+                              <button
+                                className="cartRemoveButton"
+                                type="button"
+                                aria-label={`Remove ${item.productName || item.name}`}
+                                onClick={() => dispatch(removeFromCart(item.productID))}
+                              >
+                                <MdOutlineClose />
+                              </button>
                             </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-
-                  {/* For Mobile devices */}
-
-                  <div className="shoppingBagTableMobile">
-                    {cartItems.length > 0 ? (
-                      <>
-                        {cartItems.map((item) => (
-                          <div key={item.productID}>
-                            <div className="shoppingBagTableMobileItems">
-                              <div className="shoppingBagTableMobileItemsImg">
-                                <Link to="/product" onClick={scrollToTop}>
-                                  <img src={resolveImageUrl(item.frontImg)} alt="" />
-                                </Link>
+                            {item.productReviews && <p className="cartItemReview">{item.productReviews}</p>}
+                            <div className="cartItemMeta">
+                              <div>
+                                <span>Price</span>
+                                <strong>₹{Number(item.final_price).toLocaleString("en-IN")}</strong>
                               </div>
-                              <div className="shoppingBagTableMobileItemsDetail">
-                                <div className="shoppingBagTableMobileItemsDetailMain">
-                                <Link to={`/product/${item.productID}`} onClick={scrollToTop}>
-                                  <h4>{item.productName || item.name}</h4>
-                                </Link>
-                                  <p>{item.productReviews}</p>
-                                  <div className="shoppingBagTableMobileQuantity">
-                                    <button
-                                      onClick={() =>
-                                        handleQuantityChange(
-                                          item.productID,
-                                          item.quantity - 1
-                                        )
-                                      }
-                                    >
-                                      -
-                                    </button>
-                                    <input
-                                      type="text"
-                                      min="1"
-                                      max="20"
-                                      value={item.quantity}
-                                      onChange={(e) =>
-                                        handleQuantityChange(
-                                          item.productID,
-                                          parseInt(e.target.value)
-                                        )
-                                      }
-                                    />
-                                    <button
-                                      onClick={() =>
-                                        handleQuantityChange(
-                                          item.productID,
-                                          item.quantity + 1
-                                        )
-                                      }
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                  <span>₹{Number(item.final_price).toLocaleString("en-IN")}</span>
-                                </div>
-                                <div className="shoppingBagTableMobileItemsDetailTotal">
-                                  <MdOutlineClose
-                                    size={20}
-                                    onClick={() =>
-                                      dispatch(removeFromCart(item.productID))
+                              <div>
+                                <span>Quantity</span>
+                                <div className="ShoppingBagTableQuantity">
+                                  <button
+                                    type="button"
+                                    aria-label="Decrease quantity"
+                                    onClick={() => handleQuantityChange(item.productID, item.quantity - 1)}
+                                  >−</button>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    aria-label={`Quantity for ${item.productName || item.name}`}
+                                    min="1"
+                                    max="20"
+                                    value={item.quantity}
+                                    onChange={(event) =>
+                                      handleQuantityChange(item.productID, parseInt(event.target.value))
                                     }
                                   />
-                                  <p>₹{Number(item.quantity * item.final_price).toLocaleString("en-IN")}</p>
+                                  <button
+                                    type="button"
+                                    aria-label="Increase quantity"
+                                    onClick={() => handleQuantityChange(item.productID, item.quantity + 1)}
+                                  >+</button>
                                 </div>
+                              </div>
+                              <div className="cartItemTotal">
+                                <span>Estimated subtotal</span>
+                                <strong>
+                                  ₹{Number(item.quantity * item.final_price).toLocaleString("en-IN")}
+                                </strong>
                               </div>
                             </div>
                           </div>
-                        ))}
-                      </>
-                    ) : (
-                      <div className="shoppingCartEmpty">
-                        <span>Your cart is empty!</span>
-                        <Link to="/shop" onClick={scrollToTop}>
-                          <button>Shop Now</button>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="shoppingCartEmpty">
+                      <span className="cartEmptyIcon"><MdOutlineShoppingBag /></span>
+                      <p>Your request bag is waiting for something special.</p>
+                      <Link to="/shop" onClick={scrollToTop}>Explore jewellery</Link>
+                    </div>
+                  )}
                 </div>
                 <div className="shoppingBagTotal">
+                  <p className="cartEyebrow">Request overview</p>
+                  <h3>Ready for the next step?</h3>
+                  <div className="cartSummaryRow">
+                    <span>Selected pieces</span>
+                    <strong>{cartTotalQuantity}</strong>
+                  </div>
+                  <div className="cartSummaryRow total">
+                    <span>Estimated subtotal</span>
+                    <strong>₹{cartSubtotal.toLocaleString("en-IN")}</strong>
+                  </div>
+                  <p className="cartSummaryNote">
+                    Final weight, live metal rate, charges and tax will be confirmed by your selected store.
+                  </p>
                   <button
                     onClick={() => {
                       handleTabClick("cartTab2");
@@ -601,7 +546,7 @@ const ShoppingCart = () => {
                     }}
                     disabled={cartItems.length === 0}
                   >
-                    Continue to Store Selection
+                    Choose your store <span aria-hidden="true">→</span>
                   </button>
                 </div>
               </div>
@@ -611,7 +556,13 @@ const ShoppingCart = () => {
             {activeTab === "cartTab2" && (
               <div className="checkoutSection">
                 <div className="checkoutDetailsSection">
-                  <h4>Customer & Store Details</h4>
+                  <div className="checkoutSectionIntro">
+                    <p className="cartEyebrow">Where should we send it?</p>
+                    <h2>Choose your trusted store.</h2>
+                    <p>
+                      We use your saved profile to connect this request with a nearby Sai Suryaa store.
+                    </p>
+                  </div>
 
                   <div className="checkoutDetailsForm">
                     {loading ? (
@@ -733,7 +684,14 @@ const ShoppingCart = () => {
                       </>
                     ) : (
                       // ✅ Login form
-                      <form>
+                      <form className="checkoutLoginForm">
+                        <div className="checkoutLoginIntro">
+                          <span><MdOutlineVerified /></span>
+                          <div>
+                            <h3>Sign in to continue</h3>
+                            <p>We will verify your mobile number before sending this request.</p>
+                          </div>
+                        </div>
                         <input
                           type="tel"
                           placeholder="Mobile Number"
@@ -754,25 +712,17 @@ const ShoppingCart = () => {
                         {loginOtpSent && (
                           <button
                             type="button"
+                            className="checkoutSecondaryButton"
                             onClick={() => {
                               setLoginOtpSent(false);
                               setLoginOtp("");
-                            }}
-                            style={{
-                              backgroundColor: "white",
-                              color: "black",
-                              padding: "10px 20px",
-                              border: "1px solid #d1d5db",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              marginTop: "10px"
                             }}
                           >
                             Change Mobile Number
                           </button>
                         )}
                         {loginOtpSent && (
-                          <p style={{ color: "#767676", fontSize: "14px", marginTop: "8px" }}>
+                          <p className="checkoutOtpHint">
                             {loginResendSeconds > 0
                               ? `You can request a new OTP in ${formatLoginCountdown(loginResendSeconds)}.`
                               : "Didn't receive the OTP?"}
@@ -781,16 +731,8 @@ const ShoppingCart = () => {
                         {loginOtpSent && loginResendSeconds <= 0 && (
                           <button
                             type="button"
+                            className="checkoutSecondaryButton"
                             onClick={handleResendCheckoutOtp}
-                            style={{
-                              backgroundColor: "white",
-                              color: "black",
-                              padding: "10px 20px",
-                              border: "1px solid #d1d5db",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              marginTop: "10px"
-                            }}
                           >
                             Request New OTP
                           </button>
@@ -802,32 +744,16 @@ const ShoppingCart = () => {
                         </p>
                         <button
                           type="button"
+                          className="checkoutPrimaryButton"
                           onClick={loginOtpSent ? handleLogin : handleRequestLoginOtp}
-                          style={{
-                            backgroundColor: "black",
-                            color: "white",
-                            padding: "10px 20px",
-                            border: "none",
-                            borderRadius: "4px",
-                            cursor: "pointer",
-                            marginTop: "10px"
-                          }}
                         >
                           {loginOtpSent ? "Verify OTP & Login" : "Send OTP"}
                         </button>
                         {isDevLoginEnabled && !loginOtpSent && (
                           <button
                             type="button"
+                            className="checkoutSecondaryButton"
                             onClick={handleDevBypassCheckoutLogin}
-                            style={{
-                              backgroundColor: "white",
-                              color: "black",
-                              padding: "10px 20px",
-                              border: "1px solid #d1d5db",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              marginTop: "10px"
-                            }}
                           >
                             Local Test Login
                           </button>
@@ -841,7 +767,8 @@ const ShoppingCart = () => {
 
                 <div className="checkoutPaymentSection">
                 <div className="checkoutTotalContainer">
-                  <h3>Request Summary</h3>
+                  <p className="cartEyebrow">Your selection</p>
+                  <h3>Request summary</h3>
                   <div className="checkoutItems">
                     <table>
                       <thead>
@@ -917,11 +844,12 @@ const ShoppingCart = () => {
                   
                 <button
                   type="button"
+                  className="submitRequestButton"
                   onClick={handlePlaceOrder}
                   disabled={!isAuthenticatedFromContext || !selectedStore || !isCustomerProfileComplete || !acceptedOrderRequestTerms}
                   
                 >
-                  Submit Order Request
+                  Submit order request <span aria-hidden="true">→</span>
                 </button>
 
                 </div>
@@ -934,10 +862,11 @@ const ShoppingCart = () => {
                 <div className="orderComplete">
                   <div className="orderCompleteMessage">
                     <div className="orderCompleteMessageImg">
-                      <img src={resolveImageUrl(success)} alt="" />
+                      <img src={resolveImageUrl(success)} alt="" aria-hidden="true" />
                     </div>
-                    <h3>Your order request has been submitted!</h3>
-                    <p>Thank you. We have sent your request to the selected store.</p>
+                    <p className="cartEyebrow">Request received</p>
+                    <h2>Your pieces are on their way to the store.</h2>
+                    <p>Thank you. Your selected store now has everything it needs to follow up.</p>
                     {selectedStore && (
                       <div className="orderNextSteps">
                         <p>
@@ -976,13 +905,16 @@ const ShoppingCart = () => {
                       <h4>{formatDate(currentDate)}</h4>
                     </div>
                     <div className="orderInfoItem">
-                      <p>Estimated Total</p>
+                      <p>Estimated total</p>
                       <h4>₹{placedTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</h4>
                     </div>
                    
                   </div>
                   <div className="orderTotalContainer">
-                    <h3>Requested Items</h3>
+                    <div className="orderTotalHeading">
+                      <p className="cartEyebrow">A copy for you</p>
+                      <h3>Requested items</h3>
+                    </div>
                     <div className="orderItems">
                       <table>
                         <thead>

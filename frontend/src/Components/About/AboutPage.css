@@ -1,161 +1,686 @@
-.aboutSection {
+.about-page {
+  --about-ink: #171310;
+  --about-muted: #6d655f;
+  --about-wine: #5b1725;
+  --about-wine-dark: #321017;
+  --about-cream: #f7f2eb;
+  --about-gold: #c9a55d;
+  overflow: hidden;
+  color: var(--about-ink);
+  background: #fff;
+}
+
+.about-page * {
+  box-sizing: border-box;
+}
+
+.about-shell {
+  width: min(1440px, 100%);
+  margin-inline: auto;
+  padding-inline: clamp(24px, 6vw, 96px);
+}
+
+.about-hero {
+  position: relative;
+  min-height: clamp(590px, 75vh, 780px);
+  margin: 20px 24px 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--about-wine-dark);
+}
+
+.about-hero__image,
+.about-hero__shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.about-hero__image {
+  z-index: -2;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.01);
+}
+
+.about-hero__shade {
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(20, 8, 8, 0.89) 0%, rgba(28, 9, 12, 0.66) 40%, rgba(20, 7, 9, 0.08) 72%),
+    linear-gradient(0deg, rgba(19, 5, 7, 0.52) 0%, transparent 35%);
+}
+
+.about-hero__content {
+  width: min(720px, 58%);
+  min-height: inherit;
+  padding: clamp(72px, 9vw, 140px) clamp(32px, 7vw, 120px);
   display: flex;
   flex-direction: column;
-  padding: 0 160px;
+  justify-content: center;
+  align-items: flex-start;
+  color: #fff;
 }
 
-.aboutSection h2 {
-  font-size: 35px;
-  font-weight: 700;
+.about-eyebrow,
+.about-section-label {
+  margin: 0;
+  color: var(--about-wine);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  line-height: 1.5;
   text-transform: uppercase;
-  padding: 30px;
-  padding-left: 100px;
 }
 
-.aboutSection img {
-  margin-bottom: 40px;
+.about-eyebrow {
+  color: #e2c483;
 }
 
-.aboutContent {
-  padding: 0 100px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.aboutContent h3 {
-  text-transform: uppercase;
-  font-size: 26px;
-  font-weight: 600;
-}
-
-.aboutContent h4 {
+.about-hero h1,
+.about-page h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
   font-weight: 500;
-  line-height: 28px;
+  letter-spacing: -0.035em;
 }
 
-.aboutContent p {
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 28px;
+.about-hero h1 {
+  max-width: 680px;
+  margin-top: 22px;
+  font-size: clamp(52px, 6.4vw, 92px);
+  line-height: 0.98;
 }
 
-.content1 {
-  display: flex;
-  gap: 40px;
+.about-hero__content > p:not(.about-eyebrow) {
+  max-width: 600px;
+  margin: 30px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.75;
 }
 
-.contentBox {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.content1 h5 {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.content1 p {
-  font-weight: 400;
-}
-
-.content2 {
+.about-hero__actions {
+  margin-top: 38px;
   display: flex;
   align-items: center;
-  gap: 40px;
+  flex-wrap: wrap;
+  gap: 24px;
 }
 
-.textContent {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.textContent h5 {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.textContent p {
-  font-weight: 400;
-  line-height: 28px;
-}
-
-.companyPartners {
-  padding: 0 250px;
-}
-
-.companyPartners h5 {
-  font-size: 18px;
-  font-weight: 600;
-  padding-left: 10px;
-  margin-bottom: 40px;
-}
-
-.aboutBrands {
-  display: flex;
+.about-button {
+  min-height: 52px;
+  padding: 0 28px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid var(--about-wine);
+  color: #fff;
+  background: var(--about-wine);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.about-button:hover {
+  color: #fff;
+  background: var(--about-wine-dark);
+  border-color: var(--about-wine-dark);
+}
+
+.about-button--light {
+  color: var(--about-ink);
+  background: #fff;
+  border-color: #fff;
+}
+
+.about-button--light:hover {
+  color: #fff;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+.about-text-link {
+  width: fit-content;
+  padding-bottom: 5px;
+  border-bottom: 1px solid currentColor;
+  color: var(--about-wine);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.about-text-link:hover {
+  color: var(--about-ink);
+}
+
+.about-text-link span {
+  margin-left: 5px;
+}
+
+.about-text-link--light {
+  color: #fff;
+}
+
+.about-text-link--light:hover {
+  color: #e2c483;
+}
+
+.about-hero__note {
+  position: absolute;
+  right: clamp(30px, 5vw, 78px);
+  bottom: clamp(28px, 4vw, 58px);
+  width: min(300px, 30vw);
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.44);
+  color: #fff;
+}
+
+.about-hero__note span {
+  color: #e2c483;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.about-hero__note strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(18px, 1.55vw, 24px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.about-intro {
+  padding-top: clamp(88px, 10vw, 150px);
+  padding-bottom: clamp(88px, 9vw, 130px);
+  display: grid;
+  grid-template-columns: 0.55fr 2fr;
+  gap: clamp(44px, 8vw, 130px);
+}
+
+.about-intro__copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.8fr);
+  gap: clamp(38px, 6vw, 100px);
+  align-items: start;
+}
+
+.about-intro h2,
+.about-craft h2,
+.about-experience h2,
+.about-company h2,
+.about-cta h2 {
+  font-size: clamp(40px, 4.7vw, 68px);
+  line-height: 1.06;
+}
+
+.about-intro__copy p,
+.about-craft__content > p,
+.about-experience__content > p,
+.about-company__details p {
+  margin: 0;
+  color: var(--about-muted);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.about-intro__copy p + p {
+  margin-top: 22px;
+}
+
+.about-craft {
+  padding-bottom: clamp(100px, 11vw, 170px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.16fr) minmax(340px, 0.84fr);
+  gap: clamp(46px, 8vw, 120px);
+  align-items: center;
+}
+
+.about-craft__image-wrap {
+  position: relative;
+}
+
+.about-craft__image-wrap img {
   width: 100%;
-  margin-bottom: 20px;
+  aspect-ratio: 4 / 3;
+  display: block;
+  object-fit: cover;
 }
 
-.aboutBrands img {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  background: none !important;
+.about-image-caption {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 14px 20px;
+  color: #fff;
+  background: var(--about-wine);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-@media screen and (max-width: 1210px) {
-  .aboutSection {
-    padding: 0 60px;
+.about-craft__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.about-craft h2 {
+  margin-top: 22px;
+}
+
+.about-craft__content > p {
+  margin-top: 28px;
+}
+
+.about-craft blockquote {
+  margin: 38px 0 30px;
+  padding: 26px 0 26px 28px;
+  border-left: 2px solid var(--about-gold);
+  color: #342a24;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(22px, 2.1vw, 30px);
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.about-values {
+  padding: clamp(92px, 10vw, 145px) 0;
+  color: #fff;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(201, 165, 93, 0.16), transparent 28%),
+    var(--about-wine-dark);
+}
+
+.about-values > .about-shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.65fr);
+  gap: clamp(70px, 10vw, 150px);
+}
+
+.about-section-label--light {
+  color: #dfbf7a;
+}
+
+.about-values__heading h2 {
+  margin-top: 22px;
+  font-size: clamp(42px, 4.8vw, 68px);
+  line-height: 1.06;
+}
+
+.about-values__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.about-value-card {
+  min-height: 310px;
+  padding: 34px 28px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.about-value-card:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.about-value-card > span {
+  color: #dfbf7a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+}
+
+.about-value-card h3 {
+  margin: auto 0 14px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(24px, 2vw, 31px);
+  font-weight: 500;
+}
+
+.about-value-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 14px;
+  line-height: 1.72;
+}
+
+.about-experience {
+  padding-top: clamp(100px, 11vw, 170px);
+  padding-bottom: clamp(100px, 11vw, 170px);
+  display: grid;
+  grid-template-columns: minmax(320px, 0.92fr) minmax(360px, 1.08fr);
+  gap: clamp(58px, 10vw, 150px);
+  align-items: center;
+}
+
+.about-experience h2 {
+  margin-top: 22px;
+}
+
+.about-experience__content > p {
+  max-width: 600px;
+  margin-top: 28px;
+}
+
+.about-journey {
+  margin: 44px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid #dcd3cb;
+}
+
+.about-journey li {
+  padding: 19px 0;
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  align-items: center;
+  border-bottom: 1px solid #dcd3cb;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.about-journey li span {
+  color: var(--about-wine);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+}
+
+.about-experience__portrait {
+  position: relative;
+  width: min(100%, 620px);
+  justify-self: end;
+  padding: 22px 22px 88px;
+  background: var(--about-cream);
+}
+
+.about-experience__portrait img {
+  width: 100%;
+  aspect-ratio: 4 / 4.85;
+  display: block;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.about-experience__portrait > div {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: min(84%, 470px);
+  min-height: 110px;
+  padding: 22px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  color: #fff;
+  background: var(--about-wine);
+}
+
+.about-experience__portrait span {
+  color: #e5c982;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.about-experience__portrait strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(19px, 1.8vw, 27px);
+  font-weight: 500;
+}
+
+.about-company {
+  padding-top: clamp(70px, 7vw, 100px);
+  padding-bottom: clamp(70px, 7vw, 100px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  border-top: 1px solid #ded7d0;
+}
+
+.about-company h2 {
+  margin-top: 18px;
+}
+
+.about-company__details {
+  max-width: 520px;
+  padding-top: 5px;
+  justify-self: end;
+}
+
+.about-company__details strong {
+  display: block;
+  margin-bottom: 14px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.about-company__details p + p {
+  margin-top: 5px;
+}
+
+.about-company__details .about-text-link {
+  margin-top: 24px;
+  display: inline-block;
+}
+
+.about-cta {
+  width: min(calc(100% - 48px), 1248px);
+  margin-bottom: 90px;
+  padding: clamp(48px, 6vw, 78px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  color: #fff;
+  background:
+    linear-gradient(110deg, rgba(59, 12, 22, 0.98), rgba(91, 23, 37, 0.88)),
+    var(--about-wine);
+}
+
+.about-cta h2 {
+  max-width: 720px;
+  margin-top: 18px;
+  font-size: clamp(38px, 4.5vw, 62px);
+}
+
+@media (max-width: 1100px) {
+  .about-hero__content {
+    width: 68%;
   }
 
-  .aboutSection h2 {
-    padding-left: 0;
+  .about-hero__note {
+    width: 260px;
   }
 
-  .aboutContent {
-    padding: 0;
+  .about-intro {
+    grid-template-columns: 1fr;
+    gap: 28px;
   }
 
-  .content2 {
-    flex-wrap: wrap;
-    gap: 5px;
+  .about-values > .about-shell {
+    grid-template-columns: 1fr;
+    gap: 60px;
   }
 
-  .companyPartners {
-    padding: 0 60px;
-  }
-
-  .companyPartners h5 {
-    padding-left: 0;
+  .about-values__heading {
+    max-width: 680px;
   }
 }
 
-@media screen and (max-width: 450px) {
-  .aboutSection {
-    padding: 0 15px;
+@media (max-width: 860px) {
+  .about-hero {
+    min-height: 680px;
+    margin-inline: 14px;
   }
 
-  .content1 {
-    flex-wrap: wrap;
+  .about-hero__image {
+    object-position: 65% center;
   }
 
-  .content2 {
-    flex-wrap: wrap;
-    gap: 5px;
+  .about-hero__shade {
+    background: linear-gradient(90deg, rgba(20, 8, 8, 0.9) 0%, rgba(24, 7, 10, 0.63) 68%, rgba(20, 7, 9, 0.15));
   }
 
-  .content2 img {
+  .about-hero__content {
+    width: 78%;
+  }
+
+  .about-hero__note {
+    display: none;
+  }
+
+  .about-intro__copy,
+  .about-craft,
+  .about-experience,
+  .about-company {
+    grid-template-columns: 1fr;
+  }
+
+  .about-craft__content {
+    padding-inline: clamp(4px, 4vw, 24px);
+  }
+
+  .about-values__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-value-card,
+  .about-value-card:first-child {
+    min-height: 210px;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .about-value-card h3 {
+    margin-top: 50px;
+  }
+
+  .about-experience__portrait {
+    justify-self: center;
+  }
+
+  .about-company__details {
+    justify-self: start;
+  }
+
+  .about-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-shell {
+    padding-inline: 20px;
+  }
+
+  .about-hero {
+    min-height: 650px;
+    margin: 10px 0 0;
+  }
+
+  .about-hero__image {
+    object-position: 69% center;
+  }
+
+  .about-hero__shade {
+    background:
+      linear-gradient(90deg, rgba(18, 6, 8, 0.93), rgba(24, 7, 10, 0.58)),
+      linear-gradient(0deg, rgba(18, 6, 8, 0.48), transparent 45%);
+  }
+
+  .about-hero__content {
     width: 100%;
+    padding: 68px 24px;
+    justify-content: flex-end;
   }
 
-  .companyPartners {
-    padding: 0 15px;
+  .about-hero h1 {
+    font-size: clamp(47px, 14vw, 64px);
+  }
+
+  .about-hero__content > p:not(.about-eyebrow) {
+    font-size: 15px;
+  }
+
+  .about-hero__actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .about-intro__copy {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .about-intro h2,
+  .about-craft h2,
+  .about-experience h2,
+  .about-company h2,
+  .about-cta h2,
+  .about-values__heading h2 {
+    font-size: 42px;
+  }
+
+  .about-craft {
+    padding-inline: 0;
+  }
+
+  .about-craft__content {
+    padding-inline: 20px;
+  }
+
+  .about-craft blockquote {
+    font-size: 22px;
+  }
+
+  .about-values > .about-shell {
+    padding-inline: 20px;
+  }
+
+  .about-experience__portrait {
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    padding: 14px 14px 78px;
+  }
+
+  .about-experience__portrait > div {
+    width: 88%;
+    min-height: 100px;
+    padding: 18px 22px;
+  }
+
+  .about-company {
+    gap: 36px;
+  }
+
+  .about-cta {
+    width: calc(100% - 28px);
+    margin-bottom: 58px;
+    padding: 46px 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-button {
+    transition: none;
   }
 }

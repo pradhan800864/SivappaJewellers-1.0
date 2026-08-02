@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../../Features/Cart/cartSlice";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { FiHeart } from "react-icons/fi";
-import { FaStar, FaCartPlus } from "react-icons/fa";
+import { FiArrowUpRight, FiHeart, FiShoppingBag } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { resolveImageUrl } from "../../../utils/resolveImageUrl";
 import OtpLoginModal from "../../Authentication/OtpLoginModal/OtpLoginModal";
@@ -396,7 +395,12 @@ const Trendy = () => {
   };
 
   const tabAll = useMemo(
-    () => pickRandom(products.filter((product) => product.labelCategories.includes("trendy")), 8),
+    () => {
+      const trendy = products.filter((product) =>
+        product.labelCategories.includes("trendy")
+      );
+      return pickRandom(trendy.length ? trendy : products, 8);
+    },
     [products]
   );
   const tabNew = useMemo(
@@ -415,9 +419,13 @@ const Trendy = () => {
   const renderGrid = (items) => (
     <div className="trendyMainContainer">
       {items.map((product) => (
-        <div className="trendyProductContainer" key={product.id}>
+        <article className="trendyProductContainer" key={product.id}>
           <div className="trendyProductImages">
-            <Link to={`/product/${product.id}`} onClick={scrollToTop}>
+            <Link
+              to={`/product/${product.id}`}
+              onClick={scrollToTop}
+              aria-label={`View ${product.productName}`}
+            >
               <img
                 src={resolveImageUrl(product.frontImg)}
                 alt={product.productName}
@@ -432,47 +440,49 @@ const Trendy = () => {
                 loading="lazy"
                 decoding="async"
               />
+              <span className="trendyViewPiece">
+                View piece <FiArrowUpRight aria-hidden="true" />
+              </span>
             </Link>
-            <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>
-          </div>
-
-          <div className="trendyProductImagesCart" onClick={() => handleAddToCart(product)}>
-            <FaCartPlus />
+            <button
+              type="button"
+              className="trendyWishButton"
+              onClick={(e) => toggleFavorite(e, product.productID)}
+              aria-label={`${wishList[product.productID] ? "Remove" : "Save"} ${product.productName} ${wishList[product.productID] ? "from" : "to"} favourites`}
+              aria-pressed={Boolean(wishList[product.productID])}
+            >
+              <FiHeart className={wishList[product.productID] ? "isFavorite" : ""} />
+            </button>
+            <button
+              type="button"
+              className="trendyCartButton"
+              onClick={() => handleAddToCart(product)}
+            >
+              <FiShoppingBag aria-hidden="true" />
+              <span>Add to cart</span>
+            </button>
           </div>
 
           <div className="trendyProductInfo">
             <div className="trendyProductCategoryWishlist">
               <p>{product.productType}</p>
-
-              <FiHeart
-                onClick={(e) => toggleFavorite(e, product.productID)}
-                style={{
-                  color: wishList[product.productID] ? "red" : "#767676",
-                  cursor: "pointer",
-                }}
-              />
+              <span>Store confirmed</span>
             </div>
 
-            <div className="trendyProductNameInfo">
-              <Link to={`/product/${product.id}`} onClick={scrollToTop}>
-                <h5>{product.productName}</h5>
-              </Link>
-
-              {/* ✅ no decimals */}
+            <Link
+              className="trendyProductNameInfo"
+              to={`/product/${product.id}`}
+              onClick={scrollToTop}
+            >
+              <h3>{product.productName}</h3>
               <p>₹{formatINR(product.productPrice)}</p>
-
-              <div className="trendyProductRatingReviews">
-                <div className="trendyProductRatingStar">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar key={i} color="#FEC78A" size={10} />
-                  ))}
-                </div>
-                <span>{product.productReviews}</span>
-              </div>
-            </div>
+            </Link>
           </div>
-        </div>
+        </article>
       ))}
+      {!items.length && (
+        <p className="trendyEmptyState">No pieces are available in this edit yet.</p>
+      )}
     </div>
   );
 
@@ -480,7 +490,7 @@ const Trendy = () => {
   if (err) return <div className="trendyProducts text-red-600">Error: {err}</div>;
 
   return (
-    <div className="trendyProducts">
+    <section className="trendyProducts" aria-labelledby="trendyTitle">
       <OtpLoginModal
         isOpen={Boolean(favoriteLoginProductId)}
         title="Login to save favorite"
@@ -492,27 +502,33 @@ const Trendy = () => {
           return undefined;
         }}
       />
-      <h2>
-        Our Trendy <span>Products</span>
-      </h2>
+      <div className="trendyHeading">
+        <div>
+          <p>Curated from our catalogue</p>
+          <h2 id="trendyTitle">The current edit.</h2>
+        </div>
+        <Link to="/shop" onClick={scrollToTop}>
+          View all jewellery <FiArrowUpRight aria-hidden="true" />
+        </Link>
+      </div>
 
       <div className="trendyTabs">
-        <div className="tabs">
-          <p onClick={() => handleTabClick("tab1")} className={activeTab === "tab1" ? "active" : ""}>
+        <div className="tabs" role="tablist" aria-label="Product edits">
+          <button type="button" role="tab" aria-selected={activeTab === "tab1"} onClick={() => handleTabClick("tab1")} className={activeTab === "tab1" ? "active" : ""}>
             All
-          </p>
-          <p onClick={() => handleTabClick("tab2")} className={activeTab === "tab2" ? "active" : ""}>
+          </button>
+          <button type="button" role="tab" aria-selected={activeTab === "tab2"} onClick={() => handleTabClick("tab2")} className={activeTab === "tab2" ? "active" : ""}>
             New Arrivals
-          </p>
-          <p onClick={() => handleTabClick("tab3")} className={activeTab === "tab3" ? "active" : ""}>
+          </button>
+          <button type="button" role="tab" aria-selected={activeTab === "tab3"} onClick={() => handleTabClick("tab3")} className={activeTab === "tab3" ? "active" : ""}>
             Best Seller
-          </p>
-          <p onClick={() => handleTabClick("tab4")} className={activeTab === "tab4" ? "active" : ""}>
+          </button>
+          <button type="button" role="tab" aria-selected={activeTab === "tab4"} onClick={() => handleTabClick("tab4")} className={activeTab === "tab4" ? "active" : ""}>
             Top Rated
-          </p>
+          </button>
         </div>
 
-        <div className="trendyTabContent">
+        <div className="trendyTabContent" role="tabpanel">
           {activeTab === "tab1" && renderGrid(tabAll)}
           {activeTab === "tab2" && renderGrid(tabNew)}
           {activeTab === "tab3" && renderGrid(tabBest)}
@@ -522,10 +538,10 @@ const Trendy = () => {
 
       <div className="discoverMore">
         <Link to="/shop" onClick={scrollToTop}>
-          <p>Discover More</p>
+          Discover the full collection <FiArrowUpRight aria-hidden="true" />
         </Link>
       </div>
-    </div>
+    </section>
   );
 };
 

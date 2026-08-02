@@ -3,6 +3,11 @@
   background: #fbfaf8;
 }
 
+.blogDetailsSection,
+.blogDetailsSection * {
+  box-sizing: border-box;
+}
+
 .blogDetailsSectionContainer {
   width: min(1500px, 100%);
   margin: 0 auto;

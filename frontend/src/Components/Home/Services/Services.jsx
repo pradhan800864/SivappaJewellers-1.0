@@ -9,50 +9,64 @@ import { FaLock } from "react-icons/fa";
 import { GiDiamondRing } from "react-icons/gi";
 import { Link } from "react-router-dom";
 
-
 const Services = () => {
+  const serviceItems = [
+    {
+      icon: GiDiamondRing,
+      title: "Custom jewellery",
+      copy: "Speak with the store about a piece shaped around your occasion and preferences.",
+    },
+    {
+      icon: TfiHeadphoneAlt,
+      title: "Store guidance",
+      copy: "Get help with products, availability and every step of your order request.",
+    },
+    {
+      icon: MdVerified,
+      title: "Purity clarity",
+      copy: "Review applicable hallmark, purity and certificate details before billing.",
+    },
+    {
+      icon: AiOutlineReload,
+      title: "Clear policies",
+      copy: (
+        <Link to="/cancellations-returns-refunds">
+          See return, exchange and statutory-remedy eligibility.
+        </Link>
+      ),
+    },
+    {
+      icon: FaTools,
+      title: "Care & maintenance",
+      copy: "Ask your selected store about cleaning, resizing and repair services.",
+    },
+    {
+      icon: FaLock,
+      title: "Verified billing",
+      copy: "No payment is collected here; pay only after the store confirms the bill.",
+    },
+  ];
+
   return (
-    <>
-      <div className="services">
-         {/* Custom Jewelry Design */}
-        <div className="serviceBox">
-          <GiDiamondRing size={50} style={{ marginBottom: "20px", color: "gold" }} />
-          <h3>Custom Jewelry Design</h3>
-          <p>Get your jewelry personalized with custom designs</p>
-        </div>
-        <div className="serviceBox">
-          <TfiHeadphoneAlt size={50} style={{ marginBottom: "20px" }} />
-          <h3>Customer Support</h3>
-          <p>Contact our store team for product and order-request help</p>
-        </div>
-        {/* Certified Jewelry */}
-        <div className="serviceBox">
-          <MdVerified size={50} style={{ marginBottom: "20px", color: "gold" }} />
-          <h3>Certified & Authentic</h3>
-          <p>Review the applicable hallmark, purity and certificate details before billing</p>
-        </div>
-        {/* Easy Returns & Exchanges */}
-        <div className="serviceBox">
-          <AiOutlineReload size={50} style={{ marginBottom: "20px", color: "green" }} />
-          <h3>Clear Returns & Exchanges</h3>
-          <p><Link to="/cancellations-returns-refunds">See eligibility, exclusions and statutory remedies</Link></p>
-        </div>
-
-        {/* Jewelry Repair & Maintenance */}
-        <div className="serviceBox">
-          <FaTools size={50} style={{ marginBottom: "20px", color: "gray" }} />
-          <h3>Jewelry Repair & Maintenance</h3>
-          <p>Ask the selected store about available cleaning, resizing and repair services</p>
-        </div>
-
-        {/* Secure Payments */}
-        <div className="serviceBox">
-          <FaLock size={50} style={{ marginBottom: "20px", color: "blue" }} />
-          <h3>Verified Billing</h3>
-          <p>No payment is collected in the app; pay only after the store confirms the bill</p>
-        </div>
+    <section className="services" aria-labelledby="servicesTitle">
+      <div className="servicesHeading">
+        <p>Considered at every step</p>
+        <h2 id="servicesTitle">A thoughtful way to shop.</h2>
       </div>
-    </>
+
+      <div className="servicesGrid">
+        {serviceItems.map(({ icon: Icon, title, copy }, index) => (
+          <article className="serviceBox" key={title}>
+            <div className="serviceBoxTopline">
+              <Icon aria-hidden="true" />
+              <span>{String(index + 1).padStart(2, "0")}</span>
+            </div>
+            <h3>{title}</h3>
+            <p>{copy}</p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 };
 

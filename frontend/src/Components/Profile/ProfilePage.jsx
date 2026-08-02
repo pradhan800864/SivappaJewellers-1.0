@@ -6,6 +6,16 @@ import ReferralsPage from "../Referrals/ReferralsPage";
 import { AuthContext } from "../../Context/AuthContext";
 import { resolveImageUrl } from "../../utils/resolveImageUrl";
 import {
+  FiArrowUpRight,
+  FiBox,
+  FiChevronLeft,
+  FiEdit3,
+  FiHeart,
+  FiLogOut,
+  FiUser,
+  FiUsers,
+} from "react-icons/fi";
+import {
   getCustomerDisplayName,
   getCustomerEmailDisplay,
   getCustomerProfileValue,
@@ -540,53 +550,85 @@ const ProfilePage = () => {
   
     return "Wallet Update";
   };
-  
-  
-  
+
+  const profileTabDescriptions = {
+    "My Orders": "Review every invoice, item and store-confirmed billing detail.",
+    "My Favorites": "Your saved jewellery, gathered in one considered edit.",
+    "Account Settings": "Keep your personal and delivery information up to date.",
+    Referrals: "View your referral network and wallet activity.",
+  };
+
+  const displayName = getCustomerDisplayName(user);
+  const firstName = displayName.split(/\s+/).filter(Boolean)[0] || "there";
 
   return (
-    <div className="profileSection">
+    <main className="profilePage">
+      <header className="profileWelcome">
+        <div>
+          <p>Member space</p>
+          <h1>Welcome back, {firstName}.</h1>
+        </div>
+        <p>Manage your jewellery journey, from saved pieces to completed orders.</p>
+      </header>
+
+      <div className="profileSection">
       {/* Sidebar (Left) */}
-      <div className="profileSidebar">
-        <h3 className="profileHeading">My Account</h3>
-        <div className="profileCategories">
-          <p
+      <aside className="profileSidebar">
+        <div className="profileIdentity">
+          <div className="profileIdentityAvatar">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <span>My account</span>
+            <strong>{displayName}</strong>
+          </div>
+        </div>
+        <nav className="profileCategories" aria-label="Account sections">
+          <button
+            type="button"
             className={activeTab === "My Orders" ? "active" : ""}
             onClick={() => setActiveTab("My Orders")}
           >
-            My Orders
-          </p>
+            <FiBox aria-hidden="true" /> <span>My Orders</span>
+          </button>
 
-          <p
+          <button
+            type="button"
             className={activeTab === "My Favorites" ? "active" : ""}
             onClick={() => setActiveTab("My Favorites")}
           >
-            My Favorites
-          </p>
+            <FiHeart aria-hidden="true" /> <span>My Favorites</span>
+          </button>
 
-          <p
+          <button
+            type="button"
             className={activeTab === "Account Settings" ? "active" : ""}
             onClick={() => setActiveTab("Account Settings")}
           >
-            Account Settings
-          </p>
+            <FiUser aria-hidden="true" /> <span>Account Settings</span>
+          </button>
 
-          <p
+          <button
+            type="button"
             className={activeTab === "Referrals" ? "active" : ""}
             onClick={() => setActiveTab("Referrals")}
           >
-            Referrals
-          </p>
+            <FiUsers aria-hidden="true" /> <span>Referrals</span>
+          </button>
 
-          <p className="logout" onClick={handleLogout}>
-            Logout
-          </p>
-        </div>
-      </div>
+          <button type="button" className="logout" onClick={handleLogout}>
+            <FiLogOut aria-hidden="true" /> <span>Logout</span>
+          </button>
+        </nav>
+      </aside>
 
       {/* Details (Right) */}
       <div className="profileDetails">
-        <h3 className="profileHeading">{activeTab}</h3>
+        <header className="profileDetailsHeader">
+          <p>Account overview</p>
+          <h2>{activeTab}</h2>
+          <span>{profileTabDescriptions[activeTab]}</span>
+        </header>
 
         {/* ✅ My Orders (placeholder for now) */}
         {activeTab === "My Orders" && (
@@ -598,7 +640,10 @@ const ProfilePage = () => {
             ) : selectedOrderDetails ? (
               <div className="orderDetailsCard">
                 <div className="orderDetailsHead">
-                  <h4>Order Details</h4>
+                  <div>
+                    <span>Invoice record</span>
+                    <h4>Order Details</h4>
+                  </div>
                   <button
                     type="button"
                     className="orderBackBtn"
@@ -607,7 +652,7 @@ const ProfilePage = () => {
                       setOrderDetailsError("");
                     }}
                   >
-                    Back to Orders
+                    <FiChevronLeft aria-hidden="true" /> Back to Orders
                   </button>
                 </div>
 
@@ -717,50 +762,43 @@ const ProfilePage = () => {
                 )}
               </div>
             ) : orders.length === 0 ? (
-              <p>No orders found.</p>
+              <div className="profileEmptyState">
+                <FiBox aria-hidden="true" />
+                <h4>No orders found</h4>
+                <p>Your completed invoices will appear here.</p>
+              </div>
             ) : (
               <>
-                <div className="ordersTableWrap">
-                  <table className="ordersTable">
-                    <thead>
-                      <tr>
-                        <th>Invoice</th>
-                        <th>Date</th>
-                        <th>Items</th>
-                        <th>Subtotal</th>
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.map((o) => (
-                        <tr key={o.id}>
-                          <td className="mono">{o.invoice_number || "-"}</td>
-                          <td>
-                            {o.created_at
-                              ? new Date(o.created_at).toLocaleDateString()
-                              : "-"}
-                          </td>
-                          <td>{o.items_count ?? "-"}</td>
-                          <td>
-                            ₹
-                            {Number(o.subtotal || 0).toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </td>
-                          <td>
-                            <button
-                              type="button"
-                              className="invoiceViewBtn"
-                              onClick={() => handleViewOrderDetails(o.invoice_number)}
-                            >
-                              View Details
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="ordersList">
+                  {orders.map((o) => (
+                    <article className="orderHistoryCard" key={o.id}>
+                      <div className="orderHistoryInvoice">
+                        <span>Invoice</span>
+                        <strong className="mono">{o.invoice_number || "-"}</strong>
+                      </div>
+                      <dl className="orderHistoryMeta">
+                        <div>
+                          <dt>Date</dt>
+                          <dd>{o.created_at ? new Date(o.created_at).toLocaleDateString() : "-"}</dd>
+                        </div>
+                        <div>
+                          <dt>Items</dt>
+                          <dd>{o.items_count ?? "-"}</dd>
+                        </div>
+                        <div>
+                          <dt>Subtotal</dt>
+                          <dd>₹{formatINR(o.subtotal || 0)}</dd>
+                        </div>
+                      </dl>
+                      <button
+                        type="button"
+                        className="invoiceViewBtn"
+                        onClick={() => handleViewOrderDetails(o.invoice_number)}
+                      >
+                        View details <FiArrowUpRight aria-hidden="true" />
+                      </button>
+                    </article>
+                  ))}
                 </div>
 
                 <div className="ordersPager">
@@ -803,12 +841,17 @@ const ProfilePage = () => {
             ) : favError ? (
               <p style={{ color: "red" }}>{favError}</p>
             ) : favoriteProducts.length === 0 ? (
-              <p>No favorites yet.</p>
+              <div className="profileEmptyState">
+                <FiHeart aria-hidden="true" />
+                <h4>No favorites yet</h4>
+                <p>Save jewellery from the shop to build your personal edit.</p>
+              </div>
             ) : (
               <div className="favGrid">
                 {favoriteProducts.map((p) => (
-                  <div className="favCard" key={p.id}>
-                    <div
+                  <article className="favCard" key={p.id}>
+                    <button
+                      type="button"
                       className="favImgWrap"
                       onClick={() => navigate(`/product/${p.id}`)}
                       title="Open product"
@@ -821,7 +864,8 @@ const ProfilePage = () => {
                           e.currentTarget.src = "/images/placeholder.png";
                         }}
                       />
-                    </div>
+                      <span>View piece</span>
+                    </button>
 
                     <div className="favInfo">
                       <div className="favName">{p.name}</div>
@@ -830,13 +874,15 @@ const ProfilePage = () => {
                       </div>
                     </div>
 
-                    <button
-                      className="favRemoveBtn"
-                      onClick={() => removeFavorite(p.id)}
-                    >
-                      Remove
-                    </button>
-                  </div>
+                    <div className="favActions">
+                      <button className="favViewBtn" onClick={() => navigate(`/product/${p.id}`)}>
+                        View piece <FiArrowUpRight aria-hidden="true" />
+                      </button>
+                      <button className="favRemoveBtn" onClick={() => removeFavorite(p.id)}>
+                        Remove
+                      </button>
+                    </div>
+                  </article>
                 ))}
               </div>
             )}
@@ -853,6 +899,7 @@ const ProfilePage = () => {
                     {getCustomerDisplayName(user).charAt(0).toUpperCase()}
                   </div>
                   <div>
+                    <span className="accountKicker">Personal profile</span>
                     <h4>{getCustomerDisplayName(user)}</h4>
                     <p>Manage your personal details and delivery information.</p>
                   </div>
@@ -892,7 +939,7 @@ const ProfilePage = () => {
                     className="editButton"
                     onClick={startEditingProfile}
                   >
-                    Edit Profile
+                    <FiEdit3 aria-hidden="true" /> Edit Profile
                   </button>
                 </div>
               </div>
@@ -1156,7 +1203,8 @@ const ProfilePage = () => {
           </>
         )}
       </div>
-    </div>
+      </div>
+    </main>
   );
 };
 

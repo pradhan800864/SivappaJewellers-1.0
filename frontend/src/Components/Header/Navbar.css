@@ -2,20 +2,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(35px + env(safe-area-inset-top, 0px)) 160px 35px;
+  min-height: 72px;
+  padding: calc(13px + env(safe-area-inset-top, 0px)) clamp(28px, 7vw, 132px) 13px;
   position: relative;
   z-index: 10;
-  background-color: white;
+  background: rgba(255, 253, 249, 0.96);
   position: sticky;
   top: 0;
-  box-shadow: 0 10px 33px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e8ded1;
+  box-shadow: 0 8px 30px rgba(63, 18, 29, 0.055);
+  backdrop-filter: blur(16px);
 }
 
 .logoLinkContainer {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 60px;
+  gap: clamp(40px, 5vw, 78px);
 }
 
 .logoContainer {
@@ -32,14 +35,14 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #1b1b1b;
+  color: #28191b;
   text-decoration: none;
 }
 
 .brandLogoMark {
   width: 34px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: 9px;
   object-fit: cover;
   display: block;
   flex: 0 0 auto;
@@ -52,6 +55,7 @@
 }
 
 .brandLogoText span {
+  font-family: Georgia, "Times New Roman", serif;
   font-size: 19px;
   font-weight: 800;
   letter-spacing: 0;
@@ -59,7 +63,7 @@
 
 .brandLogoText small {
   margin-top: 3px;
-  color: #9c6a25;
+  color: #a27628;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.1px;
@@ -69,7 +73,7 @@
 .linkContainer ul {
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: clamp(25px, 2.4vw, 42px);
 }
 
 .linkContainer ul li {
@@ -78,25 +82,26 @@
 
 .linkContainer ul li a {
   text-decoration: none;
-  color: #1b1b1b;
-  font-size: 14px;
-  font-weight: 600;
+  color: #4b3b38;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.09em;
   position: relative;
 }
 
 .linkContainer ul li a::after {
   content: "";
   position: absolute;
-  bottom: -5px;
+  bottom: -9px;
   left: 0;
   width: 0;
   height: 2px;
-  background-color: #1b1b1b;
+  background-color: #6f1d2c;
   transition: width 0.3s ease-out;
 }
 
 .linkContainer ul li a:hover::after {
-  width: 60%;
+  width: 100%;
   transition-delay: 0.1s;
 }
 
@@ -104,7 +109,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 35px;
+  gap: 25px;
 }
 
 .iconContainer a {
@@ -112,7 +117,29 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  color: black;
+  color: #342324;
+}
+
+.iconContainer > svg,
+.iconContainer a svg {
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.iconContainer > svg:hover,
+.iconContainer a:hover svg {
+  color: #6f1d2c;
+  transform: translateY(-1px);
+}
+
+.iconContainer .MuiBadge-badge,
+.mobile-nav .MuiBadge-badge {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  color: #fff9ee;
+  background: #6f1d2c;
+  font-size: 9px;
+  font-weight: 750;
 }
 
 .mobile-nav {
@@ -128,16 +155,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: calc(20px + env(safe-area-inset-top, 0px)) 60px 20px;
-    position: relative;
+    min-height: 60px;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 34px 10px;
+    position: sticky;
+    top: 0;
     z-index: 10;
-    background-color: white;
+    background: rgba(255, 253, 249, 0.97);
+    border-bottom: 1px solid #e8ded1;
+    box-shadow: 0 8px 28px rgba(63, 18, 29, 0.055);
+    backdrop-filter: blur(16px);
   }
 }
 
 @media screen and (max-width: 450px) {
   .mobile-nav {
-    padding: 20px 15px;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 15px 10px;
   }
 }
 
@@ -148,9 +180,9 @@
   flex-direction: column;
   gap: 60px;
   height: 100vh;
-  background-color: #fff;
-  position: absolute;
-  top: 74px;
+  background-color: #fffaf3;
+  position: fixed;
+  top: 60px;
   right: 0;
   width: 100%;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -158,7 +190,7 @@
   transform: translateY(-100%);
   transition: transform 0.3s ease-out, opacity 0.3s ease-out;
   z-index: 9;
-  border-top: 1px solid #e4e4e4;
+  border-top: 1px solid #e8ded1;
 }
 
 .mobile-menu.open {
@@ -177,8 +209,9 @@
   justify-content: center;
   gap: 10px;
   padding: 10px 20px;
-  border: 1px solid #e4e4e4;
-  border-radius: 5px;
+  border: 1px solid #d9c8b8;
+  border-radius: 999px;
+  background: #fff;
 }
 
 .mobile-menuSearchBarContainer input {
@@ -203,14 +236,15 @@
 }
 
 .mobile-menuList ul li {
-  padding: 10px 20px;
+  padding: 14px 20px;
 }
 
 .mobile-menuList ul li a {
   text-decoration: none;
-  color: #1b1b1b;
-  font-size: 16px;
-  font-weight: 600;
+  color: #3b2528;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+  font-weight: 500;
 }
 
 .mobile-menuFooter {
@@ -292,9 +326,13 @@
 }
 
 .userGreeting {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
+  max-width: 150px;
+  overflow: hidden;
+  color: #4b3b38;
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .brandLogoLinkMobile {
   gap: 8px;
@@ -315,14 +353,15 @@
 }
 
 .brandLogoMobileText span {
-  font-size: 15px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 0;
 }
 
 .brandLogoMobileText small {
   margin-top: 2px;
-  color: #9c6a25;
+  color: #a27628;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.7px;

@@ -1,6 +1,4 @@
 export const policyMeta = {
-  version: "1.0",
-  effectiveDate: "17 July 2026",
   lastUpdated: "17 July 2026",
 };
 

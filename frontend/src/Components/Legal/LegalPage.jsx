@@ -13,8 +13,7 @@ export const LegalCentre = () => (
         jewellery pricing, privacy, fulfilment and after-sales support.
       </p>
       <div className="legalMeta">
-        <span>Version {policyMeta.version}</span>
-        <span>Effective {policyMeta.effectiveDate}</span>
+        <span>Updated {policyMeta.lastUpdated}</span>
       </div>
     </header>
 
@@ -62,8 +61,6 @@ const LegalPage = ({ policy }) => {
         <h1>{policy.title}</h1>
         <p>{policy.summary}</p>
         <div className="legalMeta">
-          <span>Version {policyMeta.version}</span>
-          <span>Effective {policyMeta.effectiveDate}</span>
           <span>Updated {policyMeta.lastUpdated}</span>
         </div>
       </header>

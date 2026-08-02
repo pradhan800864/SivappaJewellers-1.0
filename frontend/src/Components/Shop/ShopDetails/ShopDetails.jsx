@@ -6,8 +6,8 @@ import { addToCart } from "../../../Features/Cart/cartSlice";
 
 import Filter from "../Filters/Filter";
 import { Link } from "react-router-dom";
-import { FiHeart } from "react-icons/fi";
-import { IoFilterSharp, IoClose } from "react-icons/io5";
+import { FiHeart, FiSearch } from "react-icons/fi";
+import { IoFilterSharp } from "react-icons/io5";
 import { FaCartPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -35,6 +35,14 @@ const ShopDetails = () => {
     const onResize = () => setMAX_PAGES_VISIBLE(getMaxPagesVisible());
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = "The Collection | Sai Suryaa Jewellers";
+    return () => {
+      document.title = previousTitle;
+    };
   }, []);
 
   const dispatch = useDispatch();
@@ -393,31 +401,50 @@ const ShopDetails = () => {
           return undefined;
         }}
       />
-      <div className="shopDetails">
-        <div className="shopDetailMain">
-          <div className="shopDetails__left">
-            <Filter onFilterChange={handleFilterChange} facets={taxonomy} />
+      <header className="shopCollectionHeader">
+        <div className="shopCollectionHeader__inner">
+          <div className="shopDetailsBreadcrumbLink">
+            <Link to="/" onClick={scrollToTop}>Home</Link>
+            <span aria-hidden="true">/</span>
+            <span>The Shop</span>
           </div>
+          <p className="shopCollectionEyebrow">Curated Indian jewellery</p>
+          <h1>The Collection</h1>
+          <p className="shopCollectionIntro">
+            Discover pieces for celebrations, gifting and the moments that become
+            part of your everyday story.
+          </p>
+          <div className="shopCollectionMeta">
+            <span>Final availability and price are confirmed by your selected store</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="shopDetails">
+        <div className="shopDetailMain">
+          <aside className="shopDetails__left" aria-label="Product filters">
+            <div className="shopFilterHeading">
+              <div>
+                <span>Refine</span>
+                <small>{filterLabels.length} selected</small>
+              </div>
+              <IoFilterSharp aria-hidden="true" />
+            </div>
+            <Filter onFilterChange={handleFilterChange} facets={taxonomy} />
+          </aside>
 
           <div className="shopDetails__right">
             <div className="shopDetailsSorting">
-              {/* ✅ Left-most: Breadcrumb */}
-              <div className="shopDetailsBreadcrumbLink">
-                <Link to="/" onClick={scrollToTop}>Home</Link>
-                &nbsp;/&nbsp;
-                <Link to="/shop">The Shop</Link>
-              </div>
-
-              {/* ✅ Search icon + input */}
               <div className="shopSearchWrap">
-                <span className="shopSearchIcon">🔍</span>
+                <FiSearch className="shopSearchIcon" aria-hidden="true" />
 
                 <input
                   type="text"
-                  placeholder="Search products or labels..."
+                  placeholder="Search by name or label"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                   className="shopSearchInput"
+                  aria-label="Search jewellery"
                 />
 
                 {searchText && (
@@ -431,15 +458,8 @@ const ShopDetails = () => {
                 )}
               </div>
 
-              {/* ✅ Optional: Filter (left) */}
-              <div className="filterLeft" onClick={toggleDrawer}>
-                <IoFilterSharp />
-                <p>Filter</p>
-              </div>
-
-              {/* ✅ Right-most: Sorting */}
               <div className="shopDetailsSort">
-                {/* ✅ Desktop/Web */}
+                <label className="sortSelectLabel" htmlFor="sort">Sort by</label>
                 <select
                   className="sortSelectDesktop"
                   name="sort"
@@ -457,7 +477,6 @@ const ShopDetails = () => {
                   ))}
                 </select>
 
-                {/* ✅ Mobile dropdown */}
                 <div className="sortSelectMobile">
                   <button
                     type="button"
@@ -488,30 +507,58 @@ const ShopDetails = () => {
                   )}
                 </div>
 
-                {/* ✅ Optional: Filter (right) */}
-                <div className="filterRight" onClick={toggleDrawer}>
-                  <div className="filterSeprator"></div>
-                  <IoFilterSharp />
-                  <p>Filter</p>
-                </div>
+                <button type="button" className="filterRight" onClick={toggleDrawer}>
+                  <IoFilterSharp aria-hidden="true" />
+                  <span>Filters</span>
+                  {filterLabels.length > 0 && <b>{filterLabels.length}</b>}
+                </button>
               </div>
             </div>
-
 
             <div className="shopDetailsProducts">
               <div className="shopDetailsProductsContainer">
                 {currentProducts.map((product) => (
-                  <div className="sdProductContainer" key={product.id}>
-                    <div className="sdProductImages">
-                      <Link to={`/product/${product.id}`} onClick={scrollToTop}>
-                        <img src={resolveImageUrl(product.frontImg)} alt="" className="sdProduct_front" loading="lazy" decoding="async" />
-                        <img src={resolveImageUrl(product.backImg)} alt="" className="sdProduct_back" loading="lazy" decoding="async" />
+                  <article className="sdProductContainer" key={product.id}>
+                    <div className={`sdProductImages ${product.backImg ? "hasBackImage" : ""}`}>
+                      <Link
+                        to={`/product/${product.id}`}
+                        onClick={scrollToTop}
+                        aria-label={`View ${product.name}`}
+                      >
+                        <img
+                          src={resolveImageUrl(product.frontImg)}
+                          alt={product.name}
+                          className="sdProduct_front"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        {product.backImg && (
+                          <img
+                            src={resolveImageUrl(product.backImg)}
+                            alt=""
+                            className="sdProduct_back"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        )}
                       </Link>
-                      <h4 onClick={() => handleAddToCart(product)}>Add to Cart</h4>
-                    </div>
-
-                    <div className="sdProductImagesCart" onClick={() => handleAddToCart(product)}>
-                      <FaCartPlus />
+                      <button
+                        type="button"
+                        className="sdWishlistButton"
+                        onClick={() => handleWishlistClick(product.id)}
+                        aria-label={wishList[product.id] ? `Remove ${product.name} from favourites` : `Save ${product.name} to favourites`}
+                        aria-pressed={Boolean(wishList[product.id])}
+                      >
+                        <FiHeart className={wishList[product.id] ? "isFavorite" : ""} />
+                      </button>
+                      <button
+                        type="button"
+                        className="sdAddToCart"
+                        onClick={() => handleAddToCart(product)}
+                      >
+                        <FaCartPlus aria-hidden="true" />
+                        <span>Add to cart</span>
+                      </button>
                     </div>
 
                     <div className="sdProductInfo">
@@ -522,13 +569,7 @@ const ShopDetails = () => {
                             product.type ||
                             "Jewellery"}
                         </p>
-                        <FiHeart
-                          onClick={() => handleWishlistClick(product.id)}
-                          style={{
-                            color: wishList[product.id] ? "red" : "#767676",
-                            cursor: "pointer",
-                          }}
-                        />
+                        <span>View piece</span>
                       </div>
 
                       <div className="sdProductNameInfo">
@@ -538,75 +579,78 @@ const ShopDetails = () => {
                         <p>
                           ₹{Number(product.final_price ?? product.price ?? 0).toLocaleString("en-IN")}
                         </p>
-                        <div className="sdProductRatingReviews"></div>
                       </div>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             </div>
 
-            {/* ✅ Pagination (mobile-safe) */}
-            <div className="shopDetailsPagination">
-              <div className="sdPaginationPrev">
-                <p
+            {totalPages > 1 && (
+              <nav className="shopDetailsPagination" aria-label="Shop pages">
+                <button
+                  type="button"
                   onClick={() => {
                     if (currentPage > 1) {
                       setCurrentPage(currentPage - 1);
                       scrollToTop();
                     }
                   }}
-                  className={currentPage === 1 ? "disabled" : ""}
+                  disabled={currentPage === 1}
+                  className="sdPaginationPrev"
                 >
                   <GoChevronLeft /> Prev
-                </p>
-              </div>
+                </button>
 
-              <div className="sdPaginationNumber">
                 <div className="paginationNum">
                   {visiblePages.map((pageNum) => (
-                    <p
+                    <button
+                      type="button"
                       key={pageNum}
                       onClick={() => {
                         setCurrentPage(pageNum);
                         scrollToTop();
                       }}
                       className={currentPage === pageNum ? "active" : ""}
+                      aria-current={currentPage === pageNum ? "page" : undefined}
                     >
                       {pageNum}
-                    </p>
+                    </button>
                   ))}
 
                   {visiblePages[visiblePages.length - 1] < totalPages && (
                     <span className="ellipsis">…</span>
                   )}
                 </div>
-              </div>
 
-              <div className="sdPaginationNext">
-                <p
+                <button
+                  type="button"
                   onClick={() => {
                     if (currentPage < totalPages) {
                       setCurrentPage(currentPage + 1);
                       scrollToTop();
                     }
                   }}
-                  className={currentPage === totalPages ? "disabled" : ""}
+                  disabled={currentPage >= totalPages}
+                  className="sdPaginationNext"
                 >
                   Next <GoChevronRight />
-                </p>
-              </div>
-            </div>
+                </button>
+              </nav>
+            )}
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Drawer */}
+      {isDrawerOpen && (
+        <button
+          type="button"
+          className="filterBackdrop"
+          onClick={closeDrawer}
+          aria-label="Close filters"
+        />
+      )}
       <div className={`filterDrawer ${isDrawerOpen ? "open" : ""}`}>
-        <div className="drawerHeader">
-          <p>Filter By</p>
-          <IoClose onClick={closeDrawer} className="closeButton" size={26} />
-        </div>
         <div className="drawerContent">
           <Filter onFilterChange={handleFilterChange} facets={taxonomy} onClose={closeDrawer}/>
         </div>

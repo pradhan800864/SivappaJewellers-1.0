@@ -2,6 +2,7 @@ import React from "react";
 import "./CollectionBox.css";
 
 import { Link } from "react-router-dom";
+import { FiArrowUpRight } from "react-icons/fi";
 
 const CollectionBox = () => {
   const scrollToTop = () => {
@@ -12,57 +13,54 @@ const CollectionBox = () => {
   };
 
   return (
-    <>
-      <div className="collection">
-        <div className="collectionLeft">
-          <p className="col-p">Hot List</p>
-          <h3 className="col-h3">
-            <span>Oriana</span> Collection
-          </h3>
-          <p>Light weight jewellery</p>
-          <div className="col-link">
-            <Link to="/shop" onClick={scrollToTop}>
-              <h5>Shop Now</h5>
-            </Link>
-          </div>
+    <section className="collection" id="homeCollections" aria-labelledby="collectionTitle">
+      <div className="collectionHeading">
+        <div>
+          <p>Find your expression</p>
+          <h2 id="collectionTitle">Discover by collection</h2>
         </div>
-        <div className="collectionRight">
-          <div className="collectionTop">
-            <h3 className="col-h3">
-              <span>Authentic</span> Collection
-            </h3>
-            <div className="col-link">
-              <Link to="/shop" onClick={scrollToTop}>
-                <h5>Shop Now</h5>
-              </Link>
-            </div>
-          </div>
-          <div className="collectionBottom">
-            <div className="box1">
-              <p className="col-p">Hot List</p>
-              <h3 className="col-h3">
-                <span>Kids</span> Collection
-              </h3>
-              <div className="col-link">
-                <Link to="/shop" onClick={scrollToTop}>
-                  <h5>Shop Now</h5>
-                </Link>
-              </div>
-            </div>
-            <div className="box2">
-              <h3 className="col-h3">
-                <span>E-gift</span> Cards
-              </h3>
-              <div className="col-link">
-                <Link to="/shop" onClick={scrollToTop}>
-                  <h5>Shop Now</h5>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        <p className="collectionIntro">
+          From heirloom silhouettes to pieces made for every day, explore
+          jewellery for every chapter.
+        </p>
       </div>
-    </>
+
+      <div className="collectionGrid">
+        <Link className="collectionCard collectionCard--heritage" to="/shop" onClick={scrollToTop}>
+          <span className="collectionNumber">01</span>
+          <div className="collectionCardContent">
+            <p>Rooted in tradition</p>
+            <h3>Bridal &amp; temple</h3>
+            <span className="collectionCardLink">
+              Explore collection <FiArrowUpRight aria-hidden="true" />
+            </span>
+          </div>
+        </Link>
+
+        <Link className="collectionCard collectionCard--men" to="/shop" onClick={scrollToTop}>
+          <span className="collectionNumber">02</span>
+          <div className="collectionCardContent">
+            <p>Quiet confidence</p>
+            <h3>For him</h3>
+            <span className="collectionCardLink">
+              Explore collection <FiArrowUpRight aria-hidden="true" />
+            </span>
+          </div>
+        </Link>
+
+        <Link className="collectionCard collectionCard--everyday" to="/shop" onClick={scrollToTop}>
+          <span className="collectionNumber">03</span>
+          <div className="collectionCardContent">
+            <p>Light, lovely, lasting</p>
+            <h3>Everyday gold</h3>
+            <span className="collectionCardLink">
+              Explore collection <FiArrowUpRight aria-hidden="true" />
+            </span>
+          </div>
+        </Link>
+
+      </div>
+    </section>
   );
 };
 
