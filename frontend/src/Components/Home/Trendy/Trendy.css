@@ -114,7 +114,7 @@
 .trendyProductImages {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background: #f0ebe5;
 }
@@ -132,6 +132,7 @@
   height: 100%;
   display: block;
   object-fit: cover;
+  object-position: center;
   transition: opacity 360ms ease, transform 650ms ease;
 }
 
